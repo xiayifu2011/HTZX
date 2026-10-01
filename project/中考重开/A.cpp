@@ -162,7 +162,7 @@ struct Talented {
 				tmp_.push(now_);
 				//将其矛盾项标记为不可拥有
 				for (auto i : inconsistent[now_]) {
-					cannot_be_own[id[now_]] = 1;
+					cannot_be_own[id[i]] = 1;
 				}
 			}
 			posses.pop();
@@ -243,7 +243,7 @@ void calcuate_property() {
 	} else {
 		property["效率"] += rand() % 20 - 10 + (property["健康"] - 100) -20 * (talent.have("多动症"));
 	}
-	property["效率"] = min(150, property["健康"]);
+	property["效率"] = min(150, property["效率"]);
 
 
 	if (talent.have("社交牛逼症")) {
