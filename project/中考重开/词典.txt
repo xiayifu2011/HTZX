@@ -1,0 +1,10 @@
+talent 天赋
+inconsistent 前后矛盾的
+posses 拥有
+conflict 冲突
+event 事件
+happen 发生
+property 属性,所有物
+calcuate 计算
+content 内容
+option 选项
