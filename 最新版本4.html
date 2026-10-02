@@ -1,0 +1,1067 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中考模拟器 · 学生视角</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background:#121417;
+    color:#e2e5e9;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width:1100px;
+    margin:60px auto;
+    padding:0 24px;
+    line-height:1.75;
+    position: relative;
+    overflow-x:hidden;
+}
+#bgCanvas{
+    position: fixed; left:0; top:0;
+    width:100vw; height:100vh;
+    z-index:-1; opacity:0.22;
+    pointer-events: none;
+}
+h1{font-size:2.4rem; margin-bottom:6px;}
+.subtitle{color:#9ca3af; margin-bottom:32px; font-size:1.1rem;}
+.story{
+    font-size:1.05rem; color:#d1d5db; margin-bottom:40px;
+    border-left: 4px solid #8b5cf6;
+    padding: 16px 20px;
+    background: rgba(139,92,246,0.08);
+    border-radius: 0 10px 10px 0;
+}
+.btn-block{display:flex; flex-direction:column; gap:14px; margin-bottom:48px;}
+a.btn, button.btn{
+    display:block; padding:12px 16px;
+    background:#8b5cf6; color:white;
+    text-decoration:none; border:none; border-radius:8px;
+    text-align:center; font-size:1.15rem;
+    font-family:inherit; transition:0.15s;
+    cursor:pointer; user-select: none;
+}
+a.btn:hover, button.btn:hover{background:#7c3aed; transform: scale(1.02);}
+button.btn.secondary{background:#272a30; color:#e5e7eb;}
+button.btn.secondary:hover{background:#33373f;}
+.section-title{
+    font-size:1.3rem; margin:36px 0 12px;
+    border-bottom:1px solid #2a2e36; padding-bottom:6px;
+}
+.log-item{margin-bottom:16px;}
+.log-date{color:#a78bfa; font-weight:500;}
+.log-desc{color:#b0b8c4; padding-left:12px;}
+.footer{margin-top:60px; color:#6b7280; font-size:0.9rem;}
+.footer a{color:#a78bfa; text-decoration:none;}
+.student-tag {
+    display: inline-block; background: #4c1d95; color: #ddd6fe;
+    font-size: 0.8rem; padding: 2px 10px; border-radius: 30px;
+    margin-left: 12px; vertical-align: middle;
+    letter-spacing: 1px; border: 1px solid #8b5cf6;
+}
+.week-info{
+    display:inline-block; background:#4c1d95; color:#ddd6fe;
+    font-size:0.85rem; padding:3px 14px; border-radius:30px;
+    margin-bottom:24px; border:1px solid #8b5cf6; letter-spacing:1px;
+}
+/* ===== 天赋界面 ===== */
+.talent-layout{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    gap:24px;
+    align-items:start;
+}
+.talent-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:12px;
+    margin-bottom:24px;
+}
+.talent-card{
+    background:#181b20; border:1px solid #2a2e36;
+    border-radius:10px; padding:14px 16px;
+    cursor:pointer; transition:0.15s;
+    user-select:none; position:relative;
+}
+.talent-card:hover{border-color:#8b5cf6; transform:translateY(-2px);}
+.talent-card.owned{background:rgba(139,92,246,0.15); border-color:#8b5cf6;}
+.talent-card.blocked{opacity:0.45; border-style:dashed;}
+.talent-name{font-size:1.05rem; font-weight:600; color:#e2e5e9; margin-bottom:4px;}
+.talent-card.owned .talent-name{color:#c4b5fd;}
+.talent-meta{font-size:0.82rem; color:#9ca3af;}
+.talent-color{
+    display:inline-block; padding:1px 8px; border-radius:20px;
+    font-size:0.75rem; margin-left:6px; border:1px solid;
+}
+.color-2{color:#93c5fd; border-color:#3b82f6; background:rgba(59,130,246,0.1);}
+.color-3{color:#c4b5fd; border-color:#8b5cf6; background:rgba(139,92,246,0.1);}
+.color-4{color:#fcd34d; border-color:#f59e0b; background:rgba(245,158,11,0.1);}
+.color-5{color:#f87171; border-color:#ef4444; background:rgba(239,68,68,0.1);}
+.color-6{color:#f0abfc; border-color:#d946ef; background:rgba(217,70,239,0.15);}
+.talent-badge{
+    position:absolute; top:10px; right:12px;
+    font-size:0.7rem; padding:2px 8px; border-radius:20px;
+}
+.badge-owned{background:#8b5cf6; color:white;}
+.badge-blocked{background:#3f3f46; color:#d4d4d8;}
+/* 统一属性条 */
+.status-panel { display:grid; grid-template-columns:1fr; gap:10px; }
+.status-item {
+    background:#181b20; border:1px solid #2a2e36;
+    border-radius:10px; padding:10px 14px;
+}
+.status-label {
+    color:#9ca3af; font-size:0.85rem; margin-bottom:2px;
+    display:flex; justify-content:space-between; align-items:center;
+}
+.status-value { font-size:1.3rem; font-weight:600; color:#c4b5fd; }
+.status-bar {
+    height:6px; background:#272a30; border-radius:3px;
+    margin-top:6px; overflow:hidden;
+}
+.status-bar-fill {
+    height:100%; background:#8b5cf6; border-radius:3px;
+    transition:width 0.4s ease;
+}
+.status-bar-fill.over{background:#f59e0b;}
+.status-bar-fill.low{background:#f87171;}
+.status-change{font-size:0.85rem;}
+.change-up{color:#4ade80;}
+.change-down{color:#f87171;}
+/* 周末活动左右两栏 */
+.weekend-layout{
+    display:grid; grid-template-columns:320px 1fr;
+    gap:24px; align-items:start; margin-bottom:32px;
+}
+.col-left{position:sticky; top:24px;}
+.col-right{min-width:0;}
+.activity-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr);
+    gap:12px; margin-bottom:24px;
+}
+.activity-grid button.btn{
+    text-align:left; padding:14px 16px;
+    font-size:1rem; line-height:1.4;
+}
+.activity-grid button.btn .idx{
+    display:inline-block; width:22px; height:22px;
+    line-height:22px; text-align:center;
+    background:rgba(255,255,255,0.18);
+    border-radius:6px; margin-right:8px; font-size:0.85rem;
+}
+.result{
+    background:rgba(139,92,246,0.08);
+    border-left:4px solid #8b5cf6;
+    border-radius:0 10px 10px 0;
+    padding:14px 18px; margin-bottom:24px;
+    color:#d1d5db; min-height:56px; font-size:1.05rem;
+}
+.exam-score{
+    font-size:1.8rem; font-weight:700; color:#c4b5fd;
+    margin:10px 0; text-align:center;
+}
+.exam-school{
+    font-size:1.15rem; font-weight:600; color:#4ade80;
+    text-align:center; margin-bottom:6px;
+}
+.exam-bad{ color:#f87171; }
+.history-box{
+    background:#181b20; border:1px solid #2a2e36;
+    border-radius:10px; padding:16px 18px;
+    max-height:360px; overflow-y:auto;
+}
+.history-box .empty{color:#6b7280; font-size:0.95rem;}
+.history-entry{border-bottom:1px dashed #2a2e36; padding:10px 0; font-size:0.95rem;}
+.history-entry:last-child{border-bottom:none;}
+.history-head{color:#c4b5fd; font-weight:600; margin-bottom:4px;}
+.history-changes{
+    display:flex; flex-wrap:wrap;
+    gap:6px 14px; color:#b0b8c4; font-size:0.88rem;
+}
+.history-changes .up{color:#4ade80;}
+.history-changes .down{color:#f87171;}
+.log-box{
+    background:#181b20; border:1px solid #2a2e36;
+    border-radius:10px; padding:14px 16px;
+    max-height:240px; overflow-y:auto;
+    font-size:0.88rem; color:#b0b8c4;
+    font-family:"Fira Code","Cascadia Code",monospace;
+}
+.log-box .empty{color:#6b7280;}
+.log-line{padding:3px 0; border-bottom:1px dashed #2a2e36;}
+.log-line:last-child{border-bottom:none;}
+.log-ok{color:#4ade80;}
+.log-fail{color:#f87171;}
+.log-info{color:#a78bfa;}
+.hint{color:#6b7280; font-size:0.85rem; margin-bottom:14px;}
+/* 页面切换 */
+.page{display:none;}
+.page.active{ display:block; animation:fadeIn 0.25s ease; }
+@keyframes fadeIn{
+    from{opacity:0; transform:translateY(8px);}
+    to{opacity:1; transform:translateY(0);}
+}
+/* 随机事件面板 */
+.event-panel {
+    background:#181b20; border:1px solid #2a2e36;
+    border-radius:10px; padding:18px 20px;
+    margin-bottom:24px; border-left: 4px solid #f59e0b;
+}
+.event-title {
+    font-size:1.2rem; font-weight:600;
+    color:#fcd34d; margin-bottom:8px;
+}
+.event-content {
+    color:#d1d5db; font-size:0.98rem;
+    margin-bottom:14px; white-space:pre-line;
+}
+.event-options { display:flex; flex-direction:column; gap:8px; }
+.event-options button.btn {
+    text-align:left; padding:10px 14px;
+    font-size:0.95rem; background:#272a30; color:#e5e7eb;
+}
+.event-options button.btn:hover { background:#33373f; }
+/* 难度选择 */
+.difficulty-panel {
+    display:grid; grid-template-columns:repeat(3, 1fr);
+    gap:12px; margin-bottom:32px;
+}
+.difficulty-panel button.btn {
+    padding:16px 12px; font-size:1rem; line-height:1.5;
+}
+.difficulty-panel .diff-title {
+    font-size:1.1rem; font-weight:600; display:block; margin-bottom:4px;
+}
+.difficulty-panel .diff-desc {
+    font-size:0.8rem; opacity:0.85; font-weight:400;
+}
+@media (max-width:900px){
+    .talent-layout, .weekend-layout{grid-template-columns:1fr;}
+    .col-left{position:static;}
+    .talent-grid{grid-template-columns:1fr;}
+    .activity-grid{grid-template-columns:repeat(2, 1fr);}
+    .difficulty-panel{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<!-- ==================== 主菜单 ==================== -->
+<div id="page-main" class="page active">
+    <h1>中考模拟器 <span class="student-tag">学生视角</span></h1>
+    <div class="subtitle">High School Entrance Exam Simulator · 参考「八中重开模拟器」</div>
+    <div class="story">
+        <strong>🌱 初一开学第一天，你背着新书包走进教室。</strong><br>
+        黑板擦得干干净净，窗台上摆着几盆绿植，同学们三三两两聊着暑假去了哪里。<br><br>
+        你找到自己的座位坐下，翻开崭新的数学课本，第一页写着“有理数”。<br>
+        窗外的蝉还在叫，阳光斜斜地打在课桌上。<br><br>
+        初中三年，从这一刻正式开始。<br>
+        你不知道未来会遇到什么，但你知道——<br>
+        <span style="color:#a78bfa;">“如果是你，能在这所学校里活得更精彩吗？”</span>
+    </div>
+
+    <h2 class="section-title">🎯 选择开局难度</h2>
+    <div class="difficulty-panel">
+        <button class="btn" onclick="selectDifficulty('easy')">
+            <span class="diff-title">简单</span>
+            <span class="diff-desc">属性大幅提升，更易获得高分</span>
+        </button>
+        <button class="btn" onclick="selectDifficulty('normal')">
+            <span class="diff-title">现实</span>
+            <span class="diff-desc">标准难度，体验真实高中生活</span>
+        </button>
+        <button class="btn secondary" onclick="selectDifficulty('hard')">
+            <span class="diff-title">地狱</span>
+            <span class="diff-desc">属性降低，挑战自我</span>
+        </button>
+    </div>
+
+    <h2 class="section-title">📋 更新日志</h2>
+    <div class="log-item"><div class="log-date">2026‑09‑24 — v0.1.0</div><div class="log-desc"><div>完成开始游戏主页面</div><div>增加01代码雨流动背景效果</div><div>实现本地存档与清除存档功能</div></div></div>
+    <div class="log-item"><div class="log-date">2026‑09‑26 — v0.2.0 ~ v0.8.0</div><div class="log-desc"><div>接入周末活动系统</div><div>新增八项属性：压力、健康、学习、金钱、心情、体力、专注、人缘</div><div>融入天赋系统，流程改为：开始 → 天赋选择 → 周末活动</div></div></div>
+    <div class="log-item"><div class="log-date">2026‑09‑26 — v1.0.0 ~ v1.1.0</div><div class="log-desc"><div>统一八项属性显示</div><div>接入完整中考录取判定系统（玉溪本地分数线）</div><div>新增压力、健康、专注、人缘四项结局判定</div></div></div>
+    <div class="log-item"><div class="log-date">2026‑10‑01 — v1.2.0 ~ v1.3.0</div><div class="log-desc"><div>天赋系统与 A.cpp 对齐，新增天行健、七窍玲珑等</div><div>周末活动前加入随机事件系统</div><div>事件包含「开学了」及各类天赋解锁事件</div></div></div>
+    <div class="log-item"><div class="log-date">2026‑10‑01 — v1.4.0</div><div class="log-desc"><div>参考「八中重开模拟器」，新增难度选择</div><div>增加社团、刷题、运动会、找老师答疑等周末活动</div><div>新增月考、运动会、社团招新等随机事件</div><div>天赋扩展：自律、拖延症、天赋异禀、社恐、乐观、悲观</div></div></div>
+    <div class="footer">作者 · GitHub: <a target="_blank" href="https://github.com/linyuhang0927">https://github.com/linyuhang0927</a><br><span style="font-size:0.8rem; opacity:0.6;">初中三年，从初一开始。</span></div>
+</div>
+
+<!-- ==================== 天赋选择页 ==================== -->
+<div id="page-talent" class="page">
+    <h1>天赋选择</h1>
+    <div class="subtitle">点击天赋卡片解锁 / 删除，矛盾天赋按等级自动处理</div>
+    <div class="talent-layout">
+        <div>
+            <h2 class="section-title" style="margin-top:0;">🧬 天赋列表</h2>
+            <div class="hint">点击卡片切换拥有状态。矛盾天赋会按颜色等级自动处理。</div>
+            <div class="talent-grid" id="talentGrid"></div>
+            <div class="btn-block" style="margin-bottom:16px;">
+                <button class="btn" onclick="goWeekend()">确认天赋，进入周末活动</button>
+                <button class="btn secondary" onclick="resetAll()">重置全部天赋</button>
+                <button class="btn secondary" onclick="goMain()">返回主菜单</button>
+            </div>
+        </div>
+        <div>
+            <h2 class="section-title" style="margin-top:0;">📊 属性预览</h2>
+            <div class="status-panel" id="talentPropertyPanel"></div>
+            <h2 class="section-title">📝 处理日志</h2>
+            <div class="log-box" id="logBox">
+                <div class="empty">还没有操作记录。</div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">中考模拟器 · 学生视角<br><span style="font-size:0.8rem; opacity:0.6;">初中三年，从初一开始。</span></div>
+</div>
+
+<!-- ==================== 周末活动页 ==================== -->
+<div id="page-weekend" class="page">
+    <h1>周末活动</h1>
+    <div class="subtitle">Weekend Activities</div>
+    <div class="week-info" id="weekInfo">第 1 周 / 共 5 周</div>
+    <div class="weekend-layout">
+        <div class="col-left">
+            <div class="status-panel" id="gameStatusPanel"></div>
+        </div>
+        <div class="col-right">
+            <div class="event-panel" id="eventPanel" style="display:none;">
+                <div class="event-title" id="eventTitle"></div>
+                <div class="event-content" id="eventContent"></div>
+                <div class="event-options" id="eventOptions"></div>
+            </div>
+            <div class="activity-grid" id="choices" style="display:none;"></div>
+            <div class="result" id="result">选择这周末要做的事情吧。</div>
+            <h2 class="section-title" style="margin-top:0;">📝 活动记录</h2>
+            <div class="history-box" id="historyBox">
+                <div class="empty">还没有活动记录，选择一次周末活动后这里会显示记录。</div>
+            </div>
+        </div>
+    </div>
+    <div class="btn-block">
+        <button class="btn secondary" onclick="goMain()">返回主菜单</button>
+    </div>
+    <div class="footer">中考模拟器 · 学生视角<br><span style="font-size:0.8rem; opacity:0.6;">初中三年，从初一开始。</span></div>
+</div>
+
+<script>
+// ====================== 01字符串流动背景 ======================
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let w, h, columns, drops = [], speeds = [];
+const fontSize = 16;
+function resizeCanvas(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    columns = Math.floor(w / fontSize);
+    drops = Array(columns).fill(0).map(() => Math.random() * -100);
+    speeds = Array(columns).fill(0).map(() => 0.5 + Math.random() * 1.2);
+}
+function drawMatrix(){
+    ctx.fillStyle = 'rgba(18,20,23,0.07)';
+    ctx.fillRect(0,0,w,h);
+    ctx.font = fontSize + 'px "Fira Code", "Cascadia Code", monospace';
+    ctx.textBaseline = 'top';
+    for(let i = 0; i < columns; i++){
+        const char = Math.random() > 0.5 ? '1' : '0';
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        const brightness = 0.6 + (Math.sin(i * 0.5 + Date.now() * 0.002) * 0.2);
+        ctx.fillStyle = `rgba(167, 139, 250, ${brightness})`;
+        if (Math.random() > 0.98) ctx.fillStyle = '#c4b5fd';
+        ctx.fillText(char, x, y);
+        if(y > h && Math.random() > 0.975){
+            drops[i] = Math.random() * -20;
+            speeds[i] = 0.5 + Math.random() * 1.2;
+        } else {
+            drops[i] += speeds[i] * 0.8;
+        }
+    }
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+let lastTime = 0;
+const interval = 45;
+function animate(t){
+    if(!lastTime) lastTime = t;
+    if(t - lastTime >= interval){ drawMatrix(); lastTime = t; }
+    requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// ====================== 页面切换 ======================
+const pageMain = document.getElementById('page-main');
+const pageTalent = document.getElementById('page-talent');
+const pageWeekend = document.getElementById('page-weekend');
+function showPage(page){
+    pageMain.classList.remove('active');
+    pageTalent.classList.remove('active');
+    pageWeekend.classList.remove('active');
+    page.classList.add('active');
+    window.scrollTo(0, 0);
+}
+function goMain(){ showPage(pageMain); }
+function goTalent(){ showPage(pageTalent); recalcTalent(); }
+function goWeekend(){
+    applyTalentToGame();
+    resetWeekendUI();
+    updateGameStatusPanel();
+    renderHistory();
+    showPage(pageWeekend);
+    triggerRandomEvent();
+}
+
+// ====================== 难度选择 ======================
+let DIFFICULTY = 'normal';
+function selectDifficulty(diff){
+    DIFFICULTY = diff;
+    // 应用难度加成到天赋初始属性
+    if(diff === 'easy'){
+        DIFFICULTY_BONUS = { '心态':20, '经济':50, '健康':20, '效率':15, '社交':15, '悟性':10 };
+    } else if(diff === 'hard'){
+        DIFFICULTY_BONUS = { '心态':-15, '经济':-30, '健康':-15, '效率':-10, '社交':-10, '悟性':-5 };
+    } else {
+        DIFFICULTY_BONUS = { '心态':0, '经济':0, '健康':0, '效率':0, '社交':0, '悟性':0 };
+    }
+    goTalent();
+}
+let DIFFICULTY_BONUS = { '心态':0, '经济':0, '健康':0, '效率':0, '社交':0, '悟性':0 };
+
+// ====================== 天赋系统 ======================
+const TALENTS = [
+    // 6级天赋
+    { name:'天行健',     color:6, inconsistent:['玻璃心','内耗者','多动症','体弱多病','学习特困生','迟钝'] },
+    // 5级天赋
+    { name:'道心如铁',   color:5, inconsistent:['玻璃心','内耗者','多动症','豪'] },
+    { name:'家财万贯',   color:5, inconsistent:['家徒四壁'] },
+    { name:'七窍玲珑',   color:5, inconsistent:['学习特困生','迟钝'] },
+    { name:'天赋异禀',   color:5, inconsistent:['学习特困生'] },
+    // 4级天赋
+    { name:'社交牛逼症', color:4, inconsistent:['高冷','社恐'] },
+    { name:'自律',       color:4, inconsistent:['拖延症'] },
+    // 3级天赋
+    { name:'内耗者',     color:2, inconsistent:['天行健','道心如铁'] },
+    { name:'大胃袋',     color:3, inconsistent:[] },
+    { name:'体弱多病',   color:3, inconsistent:['天行健','钢筋铁骨'] },
+    { name:'家徒四壁',   color:3, inconsistent:['家财万贯'] },
+    { name:'学习特困生', color:3, inconsistent:['七窍玲珑','天行健','天赋异禀'] },
+    { name:'迟钝',       color:3, inconsistent:['七窍玲珑','天行健'] },
+    { name:'乐观',       color:3, inconsistent:['玻璃心','悲观'] },
+    // 2级天赋
+    { name:'高冷',       color:2, inconsistent:['社交牛逼症','热情','豪'] },
+    { name:'玻璃心',     color:2, inconsistent:['道心如铁','乐观'] },
+    { name:'热情',       color:2, inconsistent:['高冷'] },
+    { name:'豪',         color:2, inconsistent:['高冷','道心如铁'] },
+    { name:'拖延症',     color:2, inconsistent:['自律'] },
+    { name:'社恐',       color:2, inconsistent:['社交牛逼症'] },
+    { name:'悲观',       color:2, inconsistent:['乐观'] },
+];
+const TALENT_MAP = {};
+TALENTS.forEach(t => TALENT_MAP[t.name] = t);
+let owned = {};
+let cannotBeOwn = {};
+let logs = [];
+let TALENT_PROPERTY = { '心态':100, '经济':100, '健康':100, '效率':100, '社交':100, '悟性':100 };
+
+function log(msg, type='info'){
+    logs.push({ msg, type, time: new Date().toLocaleTimeString() });
+    renderLog();
+}
+function renderLog(){
+    const box = document.getElementById('logBox');
+    if(logs.length === 0){
+        box.innerHTML = '<div class="empty">还没有操作记录。</div>';
+        return;
+    }
+    box.innerHTML = logs.map(l =>
+        `<div class="log-line log-${l.type}">[${l.time}] ${l.msg}</div>`
+    ).join('');
+    box.scrollTop = box.scrollHeight;
+}
+function solveConflict(){
+    cannotBeOwn = {};
+    owned = {};
+    const queue = TALENTS
+        .filter(t => t._pushed)
+        .sort((a, b) => {
+            if(b.color !== a.color) return b.color - a.color;
+            return a.name.localeCompare(b.name);
+        });
+    for(const t of queue){
+        if(!cannotBeOwn[t.name]){
+            owned[t.name] = true;
+            for(const inc of t.inconsistent){
+                cannotBeOwn[inc] = true;
+            }
+        }
+    }
+}
+function unlock(name){
+    const t = TALENT_MAP[name];
+    if(!t) return false;
+    t._pushed = true;
+    owned[name] = true;
+    solveConflict();
+    const ok = !!owned[name];
+    if(ok) log(`解锁「${name}」成功`, 'ok');
+    else log(`解锁「${name}」失败（被更高等级矛盾项压制）`, 'fail');
+    return ok;
+}
+function del(name){
+    const t = TALENT_MAP[name];
+    if(!t) return;
+    t._pushed = false;
+    solveConflict();
+    log(`删除「${name}」`, 'info');
+}
+function rand(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randPercent20(){ return rand(-10, 9); }
+function randPercent5(){ return rand(0, 4); }
+function randPercent10(){ return rand(-5, 4); }
+
+function calcProperty(){
+    solveConflict();
+    TALENT_PROPERTY = { '心态':100, '经济':100, '健康':100, '效率':100, '社交':100, '悟性':100 };
+
+    // 应用难度加成
+    for(const k in DIFFICULTY_BONUS){
+        TALENT_PROPERTY[k] += DIFFICULTY_BONUS[k];
+    }
+
+    // 心态
+    if(owned['道心如铁']) TALENT_PROPERTY['心态'] = 130;
+    else TALENT_PROPERTY['心态'] += randPercent20() - 10 * (owned['内耗者'] ? 1 : 0);
+    if(owned['乐观']) TALENT_PROPERTY['心态'] += 10;
+    if(owned['悲观']) TALENT_PROPERTY['心态'] -= 10;
+    TALENT_PROPERTY['心态'] = Math.min(150, TALENT_PROPERTY['心态']);
+    TALENT_PROPERTY['心态'] = Math.max(10, TALENT_PROPERTY['心态']);
+
+    // 经济
+    if(owned['家财万贯']) TALENT_PROPERTY['经济'] += 150;
+    else TALENT_PROPERTY['经济'] += (rand(-20, 19))
+        - 10 * (owned['家徒四壁'] ? 1 : 0)
+        - 10 * (owned['大胃袋'] ? 1 : 0);
+    TALENT_PROPERTY['经济'] = Math.max(0, TALENT_PROPERTY['经济']);
+
+    // 健康
+    if(owned['钢筋铁骨'] || owned['天行健']) TALENT_PROPERTY['健康'] = 130;
+    else TALENT_PROPERTY['健康'] += randPercent20()
+        - randPercent5() * (owned['体弱多病'] ? 1 : 0)
+        + 10 * (owned['大胃袋'] ? 1 : 0);
+    TALENT_PROPERTY['健康'] = Math.min(150, TALENT_PROPERTY['健康']);
+    TALENT_PROPERTY['健康'] = Math.max(10, TALENT_PROPERTY['健康']);
+
+    // 效率
+    if(owned['天行健']) TALENT_PROPERTY['效率'] = 130;
+    else TALENT_PROPERTY['效率'] += randPercent20()
+        + (TALENT_PROPERTY['健康'] - 100)
+        - 20 * (owned['多动症'] ? 1 : 0);
+    if(owned['自律']) TALENT_PROPERTY['效率'] += 15;
+    if(owned['拖延症']) TALENT_PROPERTY['效率'] -= 15;
+    TALENT_PROPERTY['效率'] = Math.min(150, TALENT_PROPERTY['效率']);
+    TALENT_PROPERTY['效率'] = Math.max(10, TALENT_PROPERTY['效率']);
+
+    // 社交
+    if(owned['社交牛逼症']) TALENT_PROPERTY['社交'] = 130;
+    else TALENT_PROPERTY['社交'] += randPercent20()
+        - 5 * (owned['高冷'] ? 1 : 0)
+        + 10 * (owned['热情'] ? 1 : 0)
+        - randPercent10() * (owned['豪'] ? 1 : 0);
+    if(owned['社恐']) TALENT_PROPERTY['社交'] -= 15;
+    TALENT_PROPERTY['社交'] = Math.min(150, TALENT_PROPERTY['社交']);
+    TALENT_PROPERTY['社交'] = Math.max(10, TALENT_PROPERTY['社交']);
+
+    // 悟性
+    TALENT_PROPERTY['悟性'] += 1 + rand(0, 4) * (!owned['迟钝'] ? 1 : 0) + 5 * (owned['七窍玲珑'] ? 1 : 0);
+    if(owned['天赋异禀']) TALENT_PROPERTY['悟性'] += 20;
+    TALENT_PROPERTY['悟性'] = Math.min(150, TALENT_PROPERTY['悟性']);
+    TALENT_PROPERTY['悟性'] = Math.max(10, TALENT_PROPERTY['悟性']);
+
+    renderTalentPropertyPanel();
+}
+
+function renderTalentPropertyPanel(){
+    const panel = document.getElementById('talentPropertyPanel');
+    const order = ['心态','经济','健康','效率','社交','悟性'];
+    panel.innerHTML = order.map(k => {
+        const v = TALENT_PROPERTY[k];
+        let pct = Math.min(100, v / 150 * 100);
+        let cls = 'status-bar-fill';
+        if(v >= 130) cls += ' over';
+        else if(v < 60) cls += ' low';
+        return `
+            <div class="status-item">
+                <div class="status-label"><span>${k}</span><span class="status-value" style="font-size:1.1rem;">${v}</span></div>
+                <div class="status-bar"><div class="${cls}" style="width:${pct}%"></div></div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderTalents(){
+    const grid = document.getElementById('talentGrid');
+    grid.innerHTML = TALENTS.map(t => {
+        const isOwned = !!owned[t.name];
+        const isBlocked = !!cannotBeOwn[t.name] && !isOwned;
+        let cls = 'talent-card';
+        if(isOwned) cls += ' owned';
+        if(isBlocked) cls += ' blocked';
+        let badge = '';
+        if(isOwned) badge = '<span class="talent-badge badge-owned">拥有</span>';
+        else if(isBlocked) badge = '<span class="talent-badge badge-blocked">被压制</span>';
+        return `
+            <div class="${cls}" onclick="toggle('${t.name}')">
+                ${badge}
+                <div class="talent-name">${t.name}<span class="talent-color color-${t.color}">Lv.${t.color}</span></div>
+                <div class="talent-meta">矛盾：${t.inconsistent.length ? t.inconsistent.join('、') : '无'}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggle(name){
+    const t = TALENT_MAP[name];
+    if(!t) return;
+    if(t._pushed) del(name);
+    else unlock(name);
+    renderTalents();
+    recalcTalent();
+}
+function recalcTalent(){
+    calcProperty();
+    renderTalents();
+}
+function resetAll(){
+    TALENTS.forEach(t => t._pushed = false);
+    owned = {};
+    cannotBeOwn = {};
+    logs = [];
+    renderLog();
+    renderTalents();
+    TALENT_PROPERTY = { '心态':100, '经济':100, '健康':100, '效率':100, '社交':100, '悟性':100 };
+    calcProperty();
+    log('已重置全部天赋', 'info');
+}
+
+// ====================== 天赋 → 游戏属性映射 ======================
+function applyTalentToGame(){
+    const save = JSON.parse(localStorage.getItem('zhongkao_sim_save') || 'null');
+    if(!save){
+        resetGame();
+    } else {
+        GAME.yali     = save.yali     ?? 50;
+        GAME.jiankang = save.jiankang ?? 80;
+        GAME.xuexi    = save.xuexi    ?? 0;
+        GAME.jinqian  = save.jinqian  ?? 0;
+        GAME.xinqing  = save.xinqing  ?? 70;
+        GAME.tili     = save.tili     ?? 80;
+        GAME.zhuanzhu = save.zhuanzhu ?? 60;
+        GAME.renyuan  = save.renyuan  ?? 50;
+        GAME.week     = save.week     ?? 1;
+        GAME.history  = save.history  ?? [];
+        if(GAME.week > MAX_WEEK) GAME.week = 1;
+    }
+    GAME.xinqing  = clamp(Math.round(TALENT_PROPERTY['心态'] * 0.7), 0, 100);
+    GAME.jinqian  = TALENT_PROPERTY['经济'] - 100;
+    GAME.jiankang = clamp(Math.round(TALENT_PROPERTY['健康'] * 0.8), 0, 100);
+    GAME.zhuanzhu = clamp(Math.round(TALENT_PROPERTY['效率'] * 0.6), 0, 100);
+    GAME.renyuan  = clamp(Math.round(TALENT_PROPERTY['社交'] * 0.6), 0, 100);
+    GAME.tili     = clamp(Math.round(TALENT_PROPERTY['健康'] * 0.8), 0, 100);
+    saveGame();
+    log('天赋属性已应用到周末活动初始值', 'info');
+}
+
+// ====================== 游戏状态 ======================
+const MAX_WEEK = 5;
+const GAME = {
+    yali: 50, jiankang: 80, xuexi: 0, jinqian: 0,
+    xinqing: 70, tili: 80, zhuanzhu: 60, renyuan: 50,
+    week: 1, history: []
+};
+function resetGame(){
+    GAME.yali = 50; GAME.jiankang = 80; GAME.xuexi = 0; GAME.jinqian = 0;
+    GAME.xinqing = 70; GAME.tili = 80; GAME.zhuanzhu = 60; GAME.renyuan = 50;
+    GAME.week = 1; GAME.history = [];
+}
+function saveGame(){
+    localStorage.setItem('zhongkao_sim_save', JSON.stringify({
+        yali: GAME.yali, jiankang: GAME.jiankang, xuexi: GAME.xuexi, jinqian: GAME.jinqian,
+        xinqing: GAME.xinqing, tili: GAME.tili, zhuanzhu: GAME.zhuanzhu, renyuan: GAME.renyuan,
+        week: GAME.week, history: GAME.history, timestamp: Date.now()
+    }));
+    localStorage.setItem('zhongkao_week', GAME.week);
+}
+function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+const weekInfo = document.getElementById('weekInfo');
+const result = document.getElementById('result');
+const choices = document.getElementById('choices');
+const historyBox = document.getElementById('historyBox');
+const gameStatusPanel = document.getElementById('gameStatusPanel');
+const eventPanel = document.getElementById('eventPanel');
+const eventTitle = document.getElementById('eventTitle');
+const eventContent = document.getElementById('eventContent');
+const eventOptions = document.getElementById('eventOptions');
+
+const ATTR_NAMES = {
+    yali:'压力', jiankang:'健康', xuexi:'学习', jinqian:'金钱',
+    xinqing:'心情', tili:'体力', zhuanzhu:'专注', renyuan:'人缘'
+};
+const ATTR_KEYS = ['yali','jiankang','xuexi','jinqian','xinqing','tili','zhuanzhu','renyuan'];
+
+// ====================== 周末活动（已扩展） ======================
+const activities = {
+    1:{ name:'预习新课内容', yali:[2,8], jiankang:[-8,-2], xuexi:[8,15], jinqian:[0,0], xinqing:[-6,-2], tili:[-8,-3], zhuanzhu:[6,12], renyuan:[-3,0] },
+    2:{ name:'复习已学内容', yali:[3,10], jiankang:[-6,-2], xuexi:[6,12], jinqian:[0,0], xinqing:[-5,-1], tili:[-6,-2], zhuanzhu:[5,10], renyuan:[-3,0] },
+    3:{ name:'阅读课外书', yali:[-8,-2], jiankang:[-2,2], xuexi:[4,10], jinqian:[0,0], xinqing:[2,8], tili:[-3,0], zhuanzhu:[4,9], renyuan:[-2,1] },
+    4:{ name:'与朋友出去玩', yali:[-15,-5], jiankang:[2,8], xuexi:[-4,-1], jinqian:[-20,-8], xinqing:[10,20], tili:[-5,-1], zhuanzhu:[-8,-3], renyuan:[8,15] },
+    5:{ name:'打球', yali:[-12,-4], jiankang:[6,15], xuexi:[-3,0], jinqian:[-10,-3], xinqing:[6,14], tili:[-10,-4], zhuanzhu:[-5,-1], renyuan:[5,12] },
+    6:{ name:'打游戏', yali:[-10,-3], jiankang:[-6,-1], xuexi:[-6,-2], jinqian:[-8,-2], xinqing:[10,18], tili:[-6,-2], zhuanzhu:[-10,-4], renyuan:[-3,2] },
+    7:{ name:'睡觉', yali:[-15,-6], jiankang:[8,18], xuexi:[-2,0], jinqian:[0,0], xinqing:[5,12], tili:[12,25], zhuanzhu:[-3,1], renyuan:[-2,1] },
+    8:{ name:'参加社团', yali:[-5,0], jiankang:[0,5], xuexi:[1,4], jinqian:[-5,0], xinqing:[5,12], tili:[-4,0], zhuanzhu:[1,4], renyuan:[8,15] },
+    9:{ name:'刷题', yali:[5,12], jiankang:[-5,-1], xuexi:[10,18], jinqian:[-5,0], xinqing:[-8,-2], tili:[-6,-2], zhuanzhu:[8,15], renyuan:[-3,0] },
+    10:{ name:'找老师答疑', yali:[2,6], jiankang:[-3,0], xuexi:[6,12], jinqian:[0,0], xinqing:[-2,3], tili:[-4,-1], zhuanzhu:[6,10], renyuan:[2,6] },
+    11:{ name:'参加运动会', yali:[-8,-2], jiankang:[5,12], xuexi:[-2,0], jinqian:[-5,0], xinqing:[8,15], tili:[-8,-3], zhuanzhu:[-3,0], renyuan:[10,18] },
+};
+
+// ====================== 随机事件系统（已扩展） ======================
+const EVENTS = [
+    // ===== 固定事件 =====
+    {
+        title: '开学了',
+        content: '新的学期，新的开始',
+        options: [
+            { text: '雄关漫道真如铁,而今迈步从头越', talent: '道心如铁' },
+            { text: '(大声喧哗)哈哈哈哈,是时候展现王的风采了', talent: '豪' },
+            { text: '(默默收书)', talent: '高冷' },
+            { text: '搭讪陌生同学', talent: '社交牛逼症' }
+        ]
+    },
+    // ===== 天赋解锁事件 =====
+    { title: '解锁天赋--天行健', content: '天行健,君子以自强不息\n天行健,6级天赋:身体,学习全面加强', options: [{ text: '确认' }] },
+    { title: '解锁天赋--道心如铁', content: '炼心如炼铁，百炼转精坚\n道心如铁,5级天赋:心态稳定，效率高', options: [{ text: '确认' }] },
+    { title: '解锁天赋--高冷', content: '又高又冷的大冰箱~~\n高冷,2级天赋:社交能力下降,社交类事件发生概率下降', options: [{ text: '确认' }] },
+    { title: '解锁天赋--豪', content: '请允许我自豪,抱歉,豪到你了吗?\n豪,2级天赋:社交类事件发生概率上升', options: [{ text: '确认' }] },
+    { title: '解锁天赋--社交牛逼症', content: '嘿bro\n社交牛逼症,4级天赋:社交能力上升,社交类事件发生概率上升', options: [{ text: '确认' }] },
+    // ===== 新增校园事件 =====
+    {
+        title: '月考',
+        content: '第一次月考来了，你准备得怎么样？',
+        options: [
+            { text: '认真复习，争取好成绩', effect: { xuexi: 5, yali: 5, xinqing: -3 } },
+            { text: '随便考考，重在参与', effect: { xuexi: -2, yali: -3, xinqing: 3 } },
+            { text: '熬夜突击', effect: { xuexi: 8, jiankang: -5, tili: -8, yali: 8 } }
+        ]
+    },
+    {
+        title: '运动会',
+        content: '学校运动会，你报名了什么项目？',
+        options: [
+            { text: '长跑', effect: { jiankang: 8, tili: -10, renyuan: 5, xinqing: 5 } },
+            { text: '跳远', effect: { jiankang: 5, tili: -5, renyuan: 3 } },
+            { text: '当观众', effect: { xinqing: 5, renyuan: 2 } }
+        ]
+    },
+    {
+        title: '社团招新',
+        content: '各大社团开始招新，你想加入哪个？',
+        options: [
+            { text: '文学社', effect: { xuexi: 3, xinqing: 5, renyuan: 5 } },
+            { text: '篮球社', effect: { jiankang: 5, tili: -3, renyuan: 8 } },
+            { text: '不参加', effect: { xuexi: 2, xinqing: -2 } }
+        ]
+    },
+    {
+        title: '周末补课',
+        content: '周末被安排了补课，你怎么选？',
+        options: [
+            { text: '认真听讲', effect: { xuexi: 8, yali: 5, xinqing: -5, tili: -5 } },
+            { text: '偷偷看小说', effect: { xuexi: 1, xinqing: 5, yali: -2 } },
+            { text: '请假不去', effect: { xuexi: -5, yali: -5, xinqing: 8 } }
+        ]
+    },
+    {
+        title: '深夜刷题',
+        content: '夜深了，你还在刷题……',
+        options: [
+            { text: '继续刷到凌晨', effect: { xuexi: 10, jiankang: -8, tili: -10, yali: 8 } },
+            { text: '做几道就睡', effect: { xuexi: 4, jiankang: -3, yali: 3 } },
+            { text: '立刻睡觉', effect: { tili: 8, jiankang: 3, xinqing: 2 } }
+        ]
+    },
+];
+
+function triggerRandomEvent(){
+    choices.style.display = 'none';
+    eventPanel.style.display = 'block';
+    result.textContent = '随机事件发生……';
+
+    const evt = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+
+    if(evt.title.startsWith('解锁天赋--')){
+        const talentName = evt.title.replace('解锁天赋--', '');
+        const ok = unlock(talentName);
+        renderTalents();
+        eventTitle.textContent = evt.title;
+        if(ok){
+            eventContent.textContent = evt.content;
+        } else {
+            const t = TALENT_MAP[talentName];
+            let reasons = [];
+            if(t){
+                for(const inc of t.inconsistent){
+                    const it = TALENT_MAP[inc];
+                    if(it && it.color > t.color && owned[inc]){
+                        reasons.push(inc);
+                    }
+                }
+            }
+            eventContent.textContent = `解锁失败\n原因：被 ${reasons.join('、') || '更高等级矛盾项'} 压制`;
+        }
+        eventOptions.innerHTML = `<button class="btn" onclick="afterEvent()">确认</button>`;
+    } else {
+        eventTitle.textContent = evt.title;
+        eventContent.textContent = evt.content;
+        eventOptions.innerHTML = evt.options.map((opt, i) =>
+            `<button class="btn" onclick="chooseEventOption(${i})">${opt.text}</button>`
+        ).join('');
+        window._currentEvent = evt;
+    }
+}
+
+function chooseEventOption(idx){
+    const evt = window._currentEvent;
+    if(!evt) return;
+    const opt = evt.options[idx];
+    if(opt && opt.talent){
+        unlock(opt.talent);
+        renderTalents();
+    }
+    if(opt && opt.effect){
+        for(const key in opt.effect){
+            if(GAME[key] !== undefined){
+                GAME[key] += opt.effect[key];
+                if(key === 'xuexi' || key === 'xinqing' || key === 'tili'){
+                    GAME[key] = clamp(GAME[key], 0, 100);
+                }
+            }
+        }
+        updateGameStatusPanel();
+    }
+    afterEvent();
+}
+
+function afterEvent(){
+    eventPanel.style.display = 'none';
+    choices.style.display = 'grid';
+    result.textContent = '选择这周末要做的事情吧。';
+}
+
+// ====================== 属性面板 ======================
+function updateGameStatusPanel(){
+    if(!gameStatusPanel) return;
+    const labels = ATTR_NAMES;
+    const html = ATTR_KEYS.map(key => {
+        const val = GAME[key];
+        const label = labels[key];
+        const valColor = (key === 'jinqian' && val < 0) ? '#f87171' : '#c4b5fd';
+        const width = clamp(val, 0, 100) + '%';
+        const chgId = 'chg-' + key;
+        let barClass = 'status-bar-fill';
+        if(val >= 100 && (key === 'yali')) barClass += ' over';
+        if(val <= 0 && (key === 'jiankang' || key === 'zhuanzhu' || key === 'renyuan')) barClass += ' low';
+        return `
+            <div class="status-item">
+                <div class="status-label">
+                    <span>${label}</span>
+                    <span class="status-change" id="${chgId}"></span>
+                </div>
+                <div class="status-value" id="val-${key}" style="color:${valColor};">${val}</div>
+                <div class="status-bar">
+                    <div class="${barClass}" id="bar-${key}" style="width:${width}"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    gameStatusPanel.innerHTML = html;
+}
+
+function showChange(id, value){
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(value > 0){ el.textContent = '+' + value; el.className = 'status-change change-up'; }
+    else if(value < 0){ el.textContent = value; el.className = 'status-change change-down'; }
+    else { el.textContent = ''; }
+}
+
+function updateWeek(){
+    weekInfo.textContent = '第 ' + GAME.week + ' 周 / 共 ' + MAX_WEEK + ' 周';
+}
+
+function resetWeekendUI(){
+    updateWeek();
+    result.textContent = '选择这周末要做的事情吧。';
+    eventPanel.style.display = 'none';
+    choices.style.display = 'grid';
+    // 动态生成活动按钮
+    choices.innerHTML = Object.keys(activities).map(k => {
+        const act = activities[k];
+        return `<button class="btn" onclick="choose(${k})"><span class="idx">${k}</span>${act.name}</button>`;
+    }).join('');
+}
+
+function renderHistory(){
+    if(!GAME.history || GAME.history.length === 0){
+        historyBox.innerHTML = '<div class="empty">还没有活动记录，选择一次周末活动后这里会显示记录。</div>';
+        return;
+    }
+    historyBox.innerHTML = GAME.history.map(h => {
+        const changes = Object.keys(h.changes).map(k => {
+            const v = h.changes[k];
+            const cls = v > 0 ? 'up' : (v < 0 ? 'down' : '');
+            const sign = v > 0 ? '+' : '';
+            return `<span class="${cls}">${ATTR_NAMES[k]} ${sign}${v}</span>`;
+        }).join('');
+        return `
+            <div class="history-entry">
+                <div class="history-head">第 ${h.week} 周 · ${h.name}</div>
+                <div class="history-changes">${changes || '无属性变化'}</div>
+            </div>
+        `;
+    }).join('');
+    historyBox.scrollTop = historyBox.scrollHeight;
+}
+
+// ====================== 中考结算 ======================
+function calcExamResult(){
+    const score = 600 + GAME.xuexi * 1.0;
+    let html = `<div class="exam-score">中考总分：${score.toFixed(2)} 分</div>`;
+    let hasBadEnd = false;
+
+    if (GAME.yali > 100) {
+        html += `<div class="exam-school exam-bad">压力太大了，你苦不堪言，没能坚持下去</div>`;
+        hasBadEnd = true;
+    }
+    if (GAME.jiankang <= 0) {
+        html += `<div class="exam-school exam-bad">身体是革命的本钱，你的身体垮掉了，没能走出初中三年</div>`;
+        hasBadEnd = true;
+    }
+    if (GAME.zhuanzhu <= 0) {
+        html += `<div class="exam-school exam-bad">专注很重要，你无法集中精力在一件事情上，慢慢的跟不上大家的节奏</div>`;
+        hasBadEnd = true;
+    }
+    if (GAME.renyuan <= 0) {
+        html += `<div class="exam-school exam-bad">由于性格原因，你人脉过差，集体孤立你，你最终转学了，但你无法适应新的学校，中考落榜</div>`;
+        hasBadEnd = true;
+    }
+
+    if(hasBadEnd) return html;
+
+    if (score >= 648.15 && score <= 689.1) {
+        html += `<div class="exam-school">恭喜你考入玉溪一中</div>`;
+    } else if (score > 689.1) {
+        html += `<div class="exam-school">你的成绩超越了2026年玉溪市中考成绩第一名</div>`;
+    } else if (score >= 639 && score <= 648) {
+        html += `<div class="exam-school">恭喜考入玉溪师范学院附属中学</div>`;
+    } else if (score >= 628.8 && score <= 645.25) {
+        html += `<div class="exam-school">恭喜考入玉溪市民族中学</div>`;
+    } else {
+        html += `<div class="exam-school exam-bad">未能考入重点高中，继续加油</div>`;
+    }
+    return html;
+}
+
+// ====================== 选择周末活动 ======================
+function choose(n){
+    const act = activities[n];
+    if(!act) return;
+
+    const dYali     = randInt(act.yali[0], act.yali[1]);
+    const dJiankang = randInt(act.jiankang[0], act.jiankang[1]);
+    const dXuexi    = randInt(act.xuexi[0], act.xuexi[1]);
+    const dJinqian  = randInt(act.jinqian[0], act.jinqian[1]);
+    const dXinqing  = randInt(act.xinqing[0], act.xinqing[1]);
+    const dTili     = randInt(act.tili[0], act.tili[1]);
+    const dZhuanzhu = randInt(act.zhuanzhu[0], act.zhuanzhu[1]);
+    const dRenyuan  = randInt(act.renyuan[0], act.renyuan[1]);
+
+    GAME.yali     = GAME.yali + dYali;
+    GAME.jiankang = GAME.jiankang + dJiankang;
+    GAME.xuexi    = clamp(GAME.xuexi + dXuexi, 0, 100);
+    GAME.jinqian  = GAME.jinqian + dJinqian;
+    GAME.xinqing  = clamp(GAME.xinqing + dXinqing, 0, 100);
+    GAME.tili     = clamp(GAME.tili + dTili, 0, 100);
+    GAME.zhuanzhu = GAME.zhuanzhu + dZhuanzhu;
+    GAME.renyuan  = GAME.renyuan + dRenyuan;
+
+    updateGameStatusPanel();
+    showChange('chg-yali', dYali);
+    showChange('chg-jiankang', dJiankang);
+    showChange('chg-xuexi', dXuexi);
+    showChange('chg-jinqian', dJinqian);
+    showChange('chg-xinqing', dXinqing);
+    showChange('chg-tili', dTili);
+    showChange('chg-zhuanzhu', dZhuanzhu);
+    showChange('chg-renyuan', dRenyuan);
+
+    GAME.history.push({
+        week: GAME.week,
+        name: act.name,
+        changes: {
+            yali: dYali, jiankang: dJiankang, xuexi: dXuexi, jinqian: dJinqian,
+            xinqing: dXinqing, tili: dTili, zhuanzhu: dZhuanzhu, renyuan: dRenyuan
+        }
+    });
+    renderHistory();
+    result.textContent = `你选择了「${act.name}」。`;
+    saveGame();
+
+    GAME.week++;
+    if(GAME.week > MAX_WEEK){
+        weekInfo.textContent = MAX_WEEK + ' 周结束 · 中考结算';
+        result.innerHTML = calcExamResult();
+        choices.style.display = 'none';
+        eventPanel.style.display = 'none';
+        choices.innerHTML =
+            '<button class="btn secondary" onclick="restartGame()" style="grid-column:1/-1;">重新开始</button>' +
+            '<button class="btn secondary" onclick="goMain()" style="grid-column:1/-1;">返回主菜单</button>';
+        choices.style.display = 'grid';
+        GAME.week = 1;
+        saveGame();
+        return;
+    }
+    saveGame();
+    setTimeout(() => {
+        updateWeek();
+        triggerRandomEvent();
+    }, 500);
+}
+
+function restartGame(){
+    resetGame();
+    saveGame();
+    resetWeekendUI();
+    updateGameStatusPanel();
+    renderHistory();
+    triggerRandomEvent();
+}
+
+// ====================== 清除存档 ======================
+function clearSave(){
+    if(confirm("确定清除全部存档数据？该操作不可恢复！")){
+        localStorage.removeItem("zhongkao_sim_save");
+        localStorage.removeItem("zhongkao_week");
+        alert("存档已清除，刷新页面生效。");
+    }
+}
+
+// ====================== 初始化 ======================
+renderTalents();
+renderTalentPropertyPanel();
+renderLog();
+log('天赋系统已加载，点击卡片开始', 'info');
+window.addEventListener('load', () => {
+    console.log('📚 中考模拟器 · 学生视角已加载，01流动背景运行中。');
+});
+</script>
+</body>
+</html>
