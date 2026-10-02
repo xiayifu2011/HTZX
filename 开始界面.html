@@ -1,0 +1,255 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>中考模拟器 · 学生视角</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+body{
+    background:#121417;
+    color:#e2e5e9;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width:720px;
+    margin:60px auto;
+    padding:0 24px;
+    line-height:1.75;
+    position: relative;
+    overflow-x:hidden;
+}
+#bgCanvas{
+    position: fixed;
+    left:0;
+    top:0;
+    width:100vw;
+    height:100vh;
+    z-index:-1;
+    opacity:0.22;
+    pointer-events: none;
+}
+h1{
+    font-size:2.4rem;
+    margin-bottom:6px;
+}
+.subtitle{
+    color:#9ca3af;
+    margin-bottom:32px;
+    font-size:1.1rem;
+}
+.story{
+    font-size:1.05rem;
+    color:#d1d5db;
+    margin-bottom:40px;
+    border-left: 4px solid #8b5cf6;
+    padding-left: 18px;
+    background: rgba(139,92,246,0.08);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+}
+.btn-block{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-bottom:48px;
+}
+a.btn, button.btn{
+    display:block;
+    padding:12px 16px;
+    background:#8b5cf6;
+    color:white;
+    text-decoration:none;
+    border:none;
+    border-radius:8px;
+    text-align:center;
+    font-size:1.15rem;
+    font-family:inherit;
+    transition:0.15s;
+    cursor:pointer;
+    user-select: none;
+}
+a.btn:hover, button.btn:hover{
+    background:#7c3aed;
+    transform: scale(1.02);
+}
+button.btn.secondary{
+    background:#272a30;
+    color:#e5e7eb;
+}
+button.btn.secondary:hover{
+    background:#33373f;
+}
+.section-title{
+    font-size:1.3rem;
+    margin:36px 0 12px;
+    border-bottom:1px solid #2a2e36;
+    padding-bottom:6px;
+}
+.log-item{
+    margin-bottom:16px;
+}
+.log-date{
+    color:#a78bfa;
+    font-weight:500;
+}
+.log-desc{
+    color:#b0b8c4;
+    padding-left:12px;
+}
+.footer{
+    margin-top:60px;
+    color:#6b7280;
+    font-size:0.9rem;
+}
+.footer a{
+    color:#a78bfa;
+    text-decoration:none;
+}
+.student-tag {
+    display: inline-block;
+    background: #4c1d95;
+    color: #ddd6fe;
+    font-size: 0.8rem;
+    padding: 2px 10px;
+    border-radius: 30px;
+    margin-left: 12px;
+    vertical-align: middle;
+    letter-spacing: 1px;
+    border: 1px solid #8b5cf6;
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<h1>中考模拟器 <span class="student-tag">学生视角</span></h1>
+<div class="subtitle">High School Entrance Exam Simulator</div>
+
+<div class="story">
+    <strong>🌱 初一开学第一天，你背着新书包走进教室。</strong><br>
+    黑板擦得干干净净，窗台上摆着几盆绿植，同学们三三两两聊着暑假去了哪里。<br><br>
+    你找到自己的座位坐下，翻开崭新的数学课本，第一页写着“有理数”。<br>
+    窗外的蝉还在叫，阳光斜斜地打在课桌上。<br><br>
+    初中三年，从这一刻正式开始。<br>
+    你不知道未来会遇到什么，但你知道——<br>
+    <span style="color:#a78bfa;">“每一步，都算数。”</span>
+</div>
+
+<div class="btn-block">
+    <a class="btn" href="weekend.html">开始游戏</a>
+    <button class="btn secondary" onclick="alert('成就系统开发中…… 先专心学习吧！')">成 就</button>
+    <button class="btn secondary" onclick="clearSave()">清除存档</button>
+</div>
+
+<h2 class="section-title">📋 更新日志</h2>
+
+<div class="log-item">
+    <div class="log-date">2026‑09‑24 — v0.1.0</div>
+    <div class="log-desc">
+        <div>完成开始游戏主页面</div>
+        <div>增加01代码雨流动背景效果</div>
+        <div>预留班级、学生、考试系统接口</div>
+        <div>实现本地存档与清除存档功能</div>
+    </div>
+</div>
+
+<div class="log-item">
+    <div class="log-date">2026‑09‑26 — v0.2.0</div>
+    <div class="log-desc">
+        <div>点击「开始游戏」跳转至独立周末活动页面</div>
+        <div>接入周末活动系统（预习、复习、阅读、出去玩、打球、打游戏、睡觉）</div>
+        <div>主题色统一为紫色</div>
+    </div>
+</div>
+
+<div class="footer">
+作者 · GitHub: <a target="_blank" href="https://github.com/linyuhang0927">https://github.com/linyuhang0927</a><br>
+<span style="font-size:0.8rem; opacity:0.6;">初中三年，从初一开始。</span>
+</div>
+
+<script>
+// ====================== 01字符串流动背景 ======================
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+
+let w, h;
+let columns;
+let drops = [];
+let speeds = [];
+const fontSize = 16;
+
+function resizeCanvas(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    columns = Math.floor(w / fontSize);
+    
+    drops = Array(columns).fill(0).map(() => Math.random() * -100);
+    speeds = Array(columns).fill(0).map(() => 0.5 + Math.random() * 1.2);
+}
+
+function drawMatrix(){
+    ctx.fillStyle = 'rgba(18,20,23,0.07)';
+    ctx.fillRect(0,0,w,h);
+    
+    ctx.font = fontSize + 'px "Fira Code", "Cascadia Code", monospace';
+    ctx.textBaseline = 'top';
+    
+    for(let i = 0; i < columns; i++){
+        const char = Math.random() > 0.5 ? '1' : '0';
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        
+        const brightness = 0.6 + (Math.sin(i * 0.5 + Date.now() * 0.002) * 0.2);
+        ctx.fillStyle = `rgba(167, 139, 250, ${brightness})`;
+        
+        if (Math.random() > 0.98) {
+            ctx.fillStyle = '#c4b5fd';
+        }
+        
+        ctx.fillText(char, x, y);
+        
+        if(y > h && Math.random() > 0.975){
+            drops[i] = Math.random() * -20;
+            speeds[i] = 0.5 + Math.random() * 1.2;
+        } else {
+            drops[i] += speeds[i] * 0.8;
+        }
+    }
+}
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+let lastTime = 0;
+const interval = 45;
+
+function animate(currentTime) {
+    if (!lastTime) lastTime = currentTime;
+    const delta = currentTime - lastTime;
+    
+    if (delta >= interval) {
+        drawMatrix();
+        lastTime = currentTime;
+    }
+    requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// ===================== 清除存档 =====================
+function clearSave(){
+    if(confirm("确定清除全部存档数据？该操作不可恢复！")){
+        localStorage.removeItem("zhongkao_sim_save");
+        localStorage.removeItem("zhongkao_week");
+        alert("存档已清除，刷新页面生效。");
+    }
+}
+
+window.addEventListener('load', () => {
+    console.log('📚 中考模拟器 · 学生视角已加载，时间线：初一开学，01流动背景运行中。');
+});
+</script>
+
+</body>
+</html>
