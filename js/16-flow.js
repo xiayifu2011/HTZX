@@ -1,0 +1,579 @@
+/* ==================================================================
+ * 引擎层 · 主循环
+ * ==================================================================
+ * 一周的完整流程：开周 → 选行动 → 弹事件 → 结算 → 下一周。
+ * 事件链（一次一弹、连锁概率）也在这里。
+ *
+ * 维护等级：引擎层（一般不动）
+ * ============================================================ */
+
+    function weekInTerm() {return S.week % (WEEKS_PER_TERM + 1)}
+
+    function gradeName() {return GRADES[Math.min(2, Math.floor(S.term / 2))]}
+
+    function termName() {return (S.term % 2 === 0) ? "上学期" : "下学期"}
+
+    function nextWeek() {
+      if (S.over) return;
+      S.week++;
+      saveGame(false);
+      startWeek();
+    }
+
+    function ensureActionPanel() {
+      if (!S || S.over || popupBusy) return;   // 有弹窗正在处理时不补行动面板
+      const panel = document.getElementById("actionPanel");
+      if (!panel) return;
+      if (panel.innerHTML !== "") return;
+      const wit = weekInTerm();
+      const fixed = fixedEventOf(S.term, wit);
+      if (!fixed) offerActions();
+    }
+
+    function startWeek() {
+      if (S) {
+        S.evWeekTotal = 0;           // 新的一周：事件计数清零
+        S.evCountWeek = 0;
+        S.evCntWeek = {};
+        S.actCount = 0;
+        S.actQuota = 0;
+        flushPending();              // 清掉过期的后续事件
+        // 生成本周的时段序列（周中 → 周末，顺序固定；数量可动态增减）
+        S.slotPlan = buildWeekSlots();
+        S.slotIdx = 0;
+        S.slot = S.slotPlan[0];
+        S.actQuota = S.slotPlan.length;
+      }
+      const wit0 = weekInTerm();
+      if (S && !fixedEventOf(S.term, wit0)) S.actQuota = num(S.slotPlan && S.slotPlan.length, actionQuota());
+      renderHUD();
+      if (S.over) return;
+      if (S.week > 0 && weekInTerm() === 0 && S.term >= TERMS) {return zhongkao();}
+      const wit = weekInTerm();
+      const wi = weekInfo(S.week, S.term);
+      say(`—— 第 ${S.week} 周 · ${gradeName()}${termName()} · ${wi.month}月${wi.seasonIcon}${wi.season} ——`, "week-head");
+      const fixed = fixedEventOf(S.term, wit);
+      if (fixed) runFixed(fixed);
+      else offerActions();
+    }
+
+    /* 是否需要抢社团
+     * ------------------------------------------------------------------
+     * 规则：
+     *   1. 只在「上学期」开放（初一上 / 初二上 / 初三上，term 0 / 2 / 4）
+     *   2. 窗口是每学期第 3~5 周的周末
+     *   3. 整个窗口只弹一次 —— 抢不上就这一年没有社团
+     *   4. 已经选中过「不报了」的，这一年不再问
+     * ================================================================== */
+    function needClubGrab() {
+      if (!S) return false;
+      const term = clampNum(S.term, 0, 9, 0);
+      if (term % 2 !== 0) return false;               // 只有上学期
+      if (S.clubTerm === term) return false;          // 这一年已经处理过了
+      if (S.clubSkipTerm === term) return false;      // 这一年主动放弃了
+      const wit = weekInTerm();
+      if (wit < 3 || wit > 5) return false;           // 第 3~5 周
+      if (S.slot !== "weekend") return false;
+      return true;
+    }
+
+    function showClubGrab() {
+      S.clubTerm = clampNum(S.term, 0, 9, 0);     // 这一年只问这一次
+      const wi = weekInfo(S.week, S.term);
+      showPopup({
+        kind: "free",
+        badge: "🎉 社团 · 周末",
+        title: CLUB_GRAB_EVENT.t,
+        body: `<div style="line-height:2">${String(CLUB_GRAB_EVENT.c).replace(/\n/g, "<br>")}
+          <br><span style="color:var(--dim);font-size:.85rem">${wi.month}月 · ${wi.seasonIcon}${wi.season} · ${gradeName()}上学期 · 报名窗口只有这一次</span></div>`,
+        options: (typeof buildClubGrabOpts === "function") ? buildClubGrabOpts() : [{t: "知道了", fn: () => {ensureActionPanel();}}]
+      }, () => {ensureActionPanel();});
+    }
+
+    function offerActions() {
+      // 开学第 3~5 周的周末：抢社团（红塔中学特色，手慢无，每学年上学期一次）
+      if (needClubGrab()) {showClubGrab(); return;}
+
+      // 周三社团课：行动选项换成社团专属的
+      if (S.slot === "clubday") {offerClubActions(); return;}
+
+      const acts = [
+        {k: "study", t: "📖 努力学习"},
+        {k: "rest", t: "😴 好好休息"},
+        {k: "social", t: "👥 社交活动"},
+        {k: "fun", t: "🎮 摸鱼娱乐"},
+        {k: "allowance", t: "🏠 向父母要零花钱"},
+        {k: "read", t: "📚 图书角"},
+      ];
+
+      const box = document.getElementById("actionPanel");
+      const doneN = num(S.actCount, 0), allN = num(S.actQuota, 1);
+      const slot = SLOT_MAP[S.slot] || SLOTS[0];
+      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slot.name} · 选择行动${allN > 1 ? `（第 ${doneN + 1}/${allN} 次）` : ""}</div>`;
+      // 两列网格：六个按钮排成 3 行 × 2 列，高度压缩一半
+      const grid = document.createElement("div");
+      grid.className = "actgrid";
+      acts.forEach(a => {
+        const b = document.createElement("button"); b.className = "btn";
+        b.innerHTML = `<b>${a.t}</b>`;
+        b.onclick = () => takeAction(a.k); grid.appendChild(b);
+      });
+      box.appendChild(grid);
+      // 道具不在这里重复列出 —— 用道具请点顶部「🎒 道具」按钮
+      renderHUD();
+    }
+
+    /* 周三社团课的行动选项
+     * 社团活动只在周三下午发生，这里的选项和平时不一样。 */
+    function offerClubActions() {
+      const c = CLUB_MAP[S.club];
+      const box = document.getElementById("actionPanel");
+      const doneN = num(S.actCount, 0), allN = num(S.actQuota, 1);
+      const slot = SLOT_MAP[S.slot] || SLOTS[0];
+      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slot.name}${allN > 1 ? `（第 ${doneN + 1}/${allN} 次）` : ""}</div>`;
+
+      const grid = document.createElement("div");
+      grid.className = "actgrid";
+
+      const mk = (t, sub, fn) => {
+        const b = document.createElement("button");
+        b.className = "btn";
+        b.innerHTML = sub ? `<b>${t}</b><br><small>${sub}</small>` : `<b>${t}</b>`;
+        b.onclick = fn;
+        grid.appendChild(b);
+      };
+
+      mk(`${c ? c.icon : "🎪"} 去社团活动`, c ? c.n : "", () => takeAction("club"));
+      mk("📖 留在教室写作业", "推掉这周社团", () => takeAction("study"));
+      mk("😴 回宿舍休息", "这周不想动", () => takeAction("rest"));
+      mk("👥 找同学玩", "不上社团课", () => takeAction("social"));
+
+      box.appendChild(grid);
+      renderHUD();
+    }
+
+    /* 本周可以选几次行动（按学期取配置） */
+
+    function actionQuota() {
+      const cfg = GAME_CONFIG.actionsPerWeek;
+      const v = cfg[Math.min(cfg.length - 1, Math.max(0, clampNum(S.term, 0, 5)))];
+      return Math.max(1, Math.round(num(v, 1)));
+    }
+
+    /* 推进到下一个时段（周中 → 周末），返回是否还有时段 */
+    function advanceSlot() {
+      if (!Array.isArray(S.slotPlan) || !S.slotPlan.length) {
+        S.slotPlan = buildWeekSlots(); S.slotIdx = 0; S.slot = S.slotPlan[0];
+        S.actQuota = S.slotPlan.length;
+        return true;
+      }
+      S.slotIdx = clampNum(S.slotIdx + 1, 0, S.slotPlan.length - 1);
+      if (S.slotIdx >= S.slotPlan.length - 1) S.slotIdx = S.slotPlan.length - 1;
+      S.slot = S.slotPlan[S.slotIdx];
+      return S.slotIdx < S.slotPlan.length - 1 || S.actCount < S.actQuota;
+    }
+
+    /* 当前时段是否已走完（用于判断是否进入下一个时段） */
+    function slotDone() {
+      if (!Array.isArray(S.slotPlan) || !S.slotPlan.length) return true;
+      return (S.slotIdx + 1) > (S.actCount || 0);
+    }
+
+    /* 一次「本周行动」：结算 → 1 个事件弹窗 → 可能连锁 1~2 个 → 收尾 */
+
+    function takeAction(k) {
+      document.getElementById("actionPanel").innerHTML = "";
+      if (k === "read") {openBookCorner(() => afterAction(k)); return;}
+      // 「向父母要零花钱」不产生学力，走单独的结算（弹完再走事件链）
+      if (k === "allowance") {allowanceSettle(() => runEventChain(() => afterAction(k))); return;}
+      // 「去社团活动」：走社团专属事件（周三社团课）
+      if (k === "club") {
+        S.actCount = (S.actCount || 0) + 1;
+        S.evCntWeek = {};
+        S.evCountWeek = 0;
+        say(`🎪 周三社团课：${clubName() || "社团"}`, "sys");
+        renderHUD();
+        runClubEvent(() => afterAction(k));
+        return;
+      }
+      studySettle(k);
+      say(`本周行动(${(S.actCount || 0) + 1}/${S.actQuota || 1}):${{study: "努力学习", rest: "好好休息", social: "社交活动", fun: "摸鱼娱乐", allowance: "向父母要零花钱"}[k]} → 学力结算后:${Math.round(num(S.score, 0))}`, "sys");
+      S.actCount = (S.actCount || 0) + 1;
+      S.evCntWeek = {};
+      S.evCountWeek = 0;
+      renderHUD();
+      runEventChain(() => afterAction(k));
+    }
+
+    /* 周三社团课：保证出一个本社团的事件
+     * 优先从本社团的事件里挑；实在没有（比如全都冷却中）就走普通事件链。 */
+    function runClubEvent(done) {
+      const mine = EVENTS.filter(e => e.id && e.id.indexOf("cl_") === 0
+        && CLUB_MAP[S.club] && e.id.indexOf("cl_" + S.club) === 0
+        && (!e.cond || e.cond(S)) && eventAllowed(e) && !S.evCntWeek[e.id]);
+      let ev = null;
+      if (mine.length) {
+        const total = mine.reduce((a, e) => a + Math.max(0.1, eventWeight(e)), 0);
+        let r = Math.random() * total;
+        for (const e of mine) {r -= Math.max(0.1, eventWeight(e)); if (r <= 0) {ev = e; break;} }
+        if (!ev) ev = mine[0];
+      }
+      if (!ev) {runEventChain(done); return;}
+      S.evCntWeek[ev.id] = true;
+      S.evCnt[ev.id] = (S.evCnt[ev.id] || 0) + 1;
+      if (!S.evLastWeek) S.evLastWeek = {};
+      S.evLastWeek[ev.id] = num(S.week, 0);
+      S.evWeekTotal = (S.evWeekTotal || 0) + 1;
+      S.evCountWeek = (S.evCountWeek || 0) + 1;
+      renderHUD();
+      showPopup(defOf(ev, "🎪 社团活动"), () => showEventResult(done));
+    }
+
+    /* 行动结束：先结算「破茧」进度，再决定是继续选行动还是结束本周 */
+
+    function afterAction(k) {
+      const cont = () => {
+        if (S.over) return;
+        if ((S.actCount || 0) < (S.actQuota || 1)) {
+          advanceSlot();               // 周中做完 → 进入周末
+          offerActions();
+        } else afterWeek();
+      };
+      flushCure(cont);
+    }
+
+    /* 事件链：一次只弹一个；保底 1 个，之后按概率连锁，最多 maxChainEvents 个 */
+
+    let resultBase = 0;
+
+    function runEventChain(done) {
+      let fired = 0;
+      const step = () => {
+        if (S.over) return done();
+        if ((S.evWeekTotal || 0) >= GAME_CONFIG.maxEventsPerWeek) return done();
+        const maxHere = Math.max(1, GAME_CONFIG.eventsPerAction) + Math.max(0, GAME_CONFIG.maxChainEvents);
+        if (fired >= maxHere) return done();
+        // 保底事件放完后，按概率决定是否连锁
+        if (fired >= Math.max(1, GAME_CONFIG.eventsPerAction)) {
+          const idx = fired - Math.max(1, GAME_CONFIG.eventsPerAction);
+          const p = num(GAME_CONFIG.chainChance[idx], 0);
+          if (Math.random() >= p) return done();
+        }
+        const def = buildEventDef();          // 现场挑选（能感知上一条事件带来的变化）
+        if (!def) return done();              // 没有可用事件，直接收尾
+        fired++;
+        S.evCountWeek = (S.evCountWeek || 0) + 1;
+        S.evWeekTotal = (S.evWeekTotal || 0) + 1;
+        renderHUD();
+        showPopup(def, () => showEventResult(step));
+      };
+      step();
+    }
+
+    /* 挑一个随机事件，包装成统一的弹窗定义 */
+
+    /* ==================================================================
+     * 单个事件的概率控制
+     * ------------------------------------------------------------------
+     * 写在事件定义里的可选字段（不写就用全局默认）：
+     *   w: 5          基础权重，数字越大越常见
+     *   once: true    一生只出现一次
+     *   maxTimes: 3   最多出现 3 次，之后永不再出现
+     *   decay: 0.5    每出现一次，权重乘以 0.5（0.5 = 减半）
+     *   decayFloor: 0.1  衰减到原权重的 10% 就不再降了
+     *   minTerm: 4    最早第几学期才出现（0=初一上，4=初三上）
+     *   maxTerm: 5    最晚第几学期还会出现
+     *
+     * 例：
+     *   {id: "x", w: 6, once: true,   ...}   // 很常见，但只出现一次
+     *   {id: "y", w: 4, decay: 0.3,   ...}   // 出现一次后概率降到三成
+     *   {id: "z", w: 5, maxTimes: 2,  ...}   // 最多出现两次
+     * ================================================================== */
+
+    /* 全局默认衰减（事件自己没写 decay 时用这个） */
+
+    const EVENT_DECAY_STEP = 0.2;    // 每出现一次衰减 20%
+    const EVENT_DECAY_MAX = 3;       // 最多衰减 3 次
+    const EVENT_DECAY_FLOOR = 0.4;   // 最低不低于原权重的 40%
+
+    /* 该事件此刻是否还能出现
+     * ------------------------------------------------------------------
+     * 依次检查：是否进池 → 次数/年级 → 时段 → 季节/月份 → 最小间隔
+     * ================================================================== */
+
+    function eventAllowed(e) {
+      if (num(e.w, 1) <= 0) return false;              // w:0 = 不走随机池（由固定日程调用）
+      const n = S.evCnt[e.id] || 0;
+      if (e.once && n >= 1) return false;
+      if (e.maxTimes != null && n >= e.maxTimes) return false;
+      if (e.minTerm != null && clampNum(S.term, 0, 9) < e.minTerm) return false;
+      if (e.maxTerm != null && clampNum(S.term, 0, 9) > e.maxTerm) return false;
+
+      // 时段：周中住校的事不会跑到周末去，反之亦然
+      // slot 可以写成单个 "weekday"，也可以写成数组 ["weekday","clubday"]
+      const slot = e.slot || "any";
+      if (slot !== "any" && S.slot) {
+        const arr = Array.isArray(slot) ? slot : [slot];
+        if (arr.indexOf(S.slot) < 0) return false;
+      }
+
+      // 季节 / 月份
+      if (e.season || e.months) {
+        const w = weekInfo(S.week, S.term);
+        if (e.season) {
+          const arr = Array.isArray(e.season) ? e.season : [e.season];
+          if (arr.indexOf(w.season) < 0) return false;
+        }
+        if (e.months) {
+          const arr = Array.isArray(e.months) ? e.months : [e.months];
+          if (arr.indexOf(w.month) < 0) return false;
+        }
+      }
+
+      // 最小间隔（让事件均匀地铺开，而不是扎堆）
+      const gap = num(e.minGap, num(GAME_CONFIG.eventDist && GAME_CONFIG.eventDist.minGap, 0));
+      if (gap > 0 && n > 0) {
+        const last = (S.evLastWeek && S.evLastWeek[e.id] != null) ? num(S.evLastWeek[e.id], 0) : null;
+        if (last != null && (num(S.week, 0) - last) < gap) return false;
+      }
+      return true;
+    }
+
+    /* 该事件此刻的有效权重
+     * ------------------------------------------------------------------
+     * dist 决定它「怎么分布在整个游戏里」：
+     *   uniform 均匀 —— 距上次出现越久，权重越高（适合社团这类常驻事件）
+     *   decay   衰减 —— 每出现一次权重 ×decay（适合一次性强的事件）
+     *   front   前期多 —— 游戏前期概率高
+     *   back    后期多 —— 游戏后期概率高
+     * 另外：被「挂起」的事件（raiseEvent）权重会临时放大
+     * ================================================================== */
+
+    function eventWeight(e) {
+      const n = S.evCnt[e.id] || 0;
+      const w0 = num(e.w, 1);
+      const cfg = GAME_CONFIG.eventDist || {};
+      const mode = e.dist || cfg.mode || "decay";
+      let w = w0;
+
+      if (mode === "uniform") {
+        const last = (S.evLastWeek && S.evLastWeek[e.id] != null) ? num(S.evLastWeek[e.id], 0) : null;
+        if (last == null) w = w0 * 1.6;                       // 从没出现过 → 优先
+        else {
+          const gap = Math.max(0, num(S.week, 0) - last);
+          const target = Math.max(2, num(e.minGap, 4));
+          w = w0 * clampNum(gap / target, 0.15, 1.8);
+        }
+      } else if (mode === "decay") {
+        const d = (e.decay != null) ? e.decay : num(cfg.decay, 0.5);
+        const fl = (e.decayFloor != null) ? e.decayFloor : num(cfg.decayFloor, 0.15);
+        w = w0 * Math.max(fl, Math.pow(clampNum(d, 0, 1, 0.5), n));
+      } else if (mode === "front") {
+        const prog = clampNum(S.week, 0, 150) / 150;
+        w = w0 * clampNum(1.4 - prog * 1.2, 0.15, 1.4);
+      } else if (mode === "back") {
+        const prog = clampNum(S.week, 0, 150) / 150;
+        w = w0 * clampNum(0.3 + prog * 1.3, 0.3, 1.6);
+      }
+
+      w *= pendingMult(e.id);      // 被挂起的后续事件，概率临时放大
+      return Math.max(0, w);
+    }
+
+    /* 执行一个选项：基础效果 + 条件分支 + 后续安排 */
+
+    function execOption(o) {
+      resultBase = S.logs.length;
+      runEffectSpec(o.run, S);
+
+      // 条件分支：按顺序判断，命中第一个就执行并停止
+      if (Array.isArray(o.branch) && o.branch.length) {
+        for (const b of o.branch) {
+          const ok = (typeof b.cond === "function") ? !!b.cond(S) : true;
+          if (!ok) continue;
+          runEffectSpec(b.run, S);
+          if (b.say) say(b.say, b.cls || "");
+          break;
+        }
+      }
+
+      // 后续安排
+      if (o.flag) setFlag(o.flag, true);
+      if (Array.isArray(o.flags)) o.flags.forEach(f => setFlag(f, true));
+      if (o.unflag) setFlag(o.unflag, false);
+      if (o.raise) {
+        const list = Array.isArray(o.raise) ? o.raise : [o.raise];
+        list.forEach(r => {
+          if (!r || !r.id) return;
+          raiseEvent(r.id, r.weeks, r.mult, r.slot);
+        });
+      }
+      if (o.next) {
+        if (!Array.isArray(S.chainQueue)) S.chainQueue = [];
+        S.chainQueue.push(o.next);       // 排在后面，等本条结束再弹
+      }
+      checkAch();
+    }
+
+    /* 标记（flag）：让"有没有带手机"这类状态能被后续事件读到 */
+
+    function setFlag(k, v) {
+      if (!S.flags) S.flags = {};
+      S.flags[k] = !!v;
+    }
+
+    function hasFlag(k) {
+      return !!(S.flags && S.flags[k]);
+    }
+
+    function buildEventDef() {
+      if ((S.evWeekTotal || 0) >= GAME_CONFIG.maxEventsPerWeek) return null;
+
+      // 优先弹「排队等着的后续事件」
+      if (Array.isArray(S.chainQueue) && S.chainQueue.length) {
+        const id = S.chainQueue.shift();
+        const q = EVENTS.find(e => e.id === id);
+        if (q && (!q.cond || q.cond(S)) && q.opts && q.opts.length) {
+          S.evCntWeek[id] = true;
+          S.evCnt[id] = (S.evCnt[id] || 0) + 1;
+          if (!S.evLastWeek) S.evLastWeek = {};
+          S.evLastWeek[id] = num(S.week, 0);
+          return defOf(q, "⚡ 事件 · 后续");
+        }
+      }
+
+      let pool = EVENTS.filter(e => !e.cond || e.cond(S));
+      pool = pool.filter(e => eventAllowed(e));               // 时段/季节/次数/间隔
+      pool = pool.filter(e => !S.evCntWeek[e.id]);            // 同一事件每周最多 1 次
+      const fresh = pool.filter(e => (S.evCnt[e.id] || 0) < 2);
+      if (fresh.length > 0) pool = fresh;                      // 优先没见过的
+      if (!pool.length) return null;
+      const effW = e => Math.max(0.1, eventWeight(e));
+      const total = pool.reduce((s, e) => s + effW(e), 0);
+      let r = Math.random() * total, ev = pool[0];
+      for (const e of pool) {r -= effW(e); if (r <= 0) {ev = e; break;} }
+      S.evCntWeek[ev.id] = true;
+      S.evCountWeek++;
+      S.evCnt[ev.id] = (S.evCnt[ev.id] || 0) + 1;
+      if (!S.evLastWeek) S.evLastWeek = {};
+      S.evLastWeek[ev.id] = num(S.week, 0);
+      return defOf(ev, "");
+    }
+
+    /* 把一个事件定义包装成弹窗定义 */
+
+    function defOf(ev, badge) {
+      const slot = SLOT_MAP[S.slot] || SLOTS[0];
+      return {
+        kind: "event",
+        title: ev.t,
+        body: ev.c,
+        img: ev.img,
+        badge: badge || "",
+        slotNote: slot.icon + slot.name,
+        options: ev.opts.filter(o => true).map(o => ({
+          t: o.t, sub: o.sub || "",
+          disabled: !!(o.cond && !o.cond(S)),
+          fn: () => {execOption(o);}
+        }))
+      };
+    }
+
+    /* 事件结果：同一个弹窗原地变成结果，玩家点「继续」才进下一个 */
+
+    function showEventResult(next) {
+      const logs = S.logs.slice(resultBase);
+      if (GAME_CONFIG.eventResultMode === "log" || !logs.length) {next(); return;}
+      const html = logs.map(l => `<div class="${l.cls || ""}" style="margin:2px 0">${l.txt}</div>`).join("");
+      showPopup({
+        kind: "event",
+        badge: `⚡ 事件 ${clampNum(S.evWeekTotal, 0, 99)}/${GAME_CONFIG.maxEventsPerWeek} · 结果`,
+        title: "事件结局",
+        body: `<div style="line-height:2.2">${html}</div>`,
+        options: [{t: "继续"}]
+      }, next);
+    }
+
+    function afterWeek() {
+      if (S.prop.健康 <= 0) {S.dead = "健康"; return gameOver();}
+      if (S.prop.心态 <= 0) {S.dead = "心态"; return gameOver();}
+      const brokeNeed = GAME_CONFIG.difficulty === "hard" ? 5 : (GAME_CONFIG.difficulty === "story" ? 12 : 8);
+      if (S.prop.经济 <= 0 && S.term >= 2) {count("brokeWeek"); if (S.cnt.brokeWeek >= brokeNeed) {S.dead = "经济"; return gameOver();} }
+
+      weeklySettle();
+      if (S.prop.压力 >= 100) {modProp("心态", GAME_CONFIG.difficulty === "story" ? -7 : -15); say(`压力爆表!心态 -${GAME_CONFIG.difficulty === "story" ? 7 : 15}`, "bad");}
+      if (S.prop.健康 < 30) say("⚠️ 身体在报警，下周该休息了。", "bad");
+      if (S.prop.心态 < 30) say("⚠️ 你最近情绪很低落，注意调节。", "bad");
+      if (S.prop.压力 >= 80 && !Talent.have("不吃压力")) {modProp("效率", -3);}
+      checkAch();
+
+      if (S.prop.健康 <= 0) {S.dead = "健康"; return gameOver();}
+      if (S.prop.心态 <= 0) {S.dead = "心态"; return gameOver();}
+
+      renderHUD();
+      if (!S.over) {nextWeek();}
+    }
+
+    function checkAch() {
+      for (const [id, a] of Object.entries(ACHIEVEMENTS)) {
+        if (S.ach.includes(id)) continue;
+        if (a.c(S)) {
+          S.ach.push(id);
+          say(`🏆 达成成就【${a.n}】——${a.d}`, "ach");
+          toast(`🏆 成就:${a.n}`, true);
+          if (a.unlock) gainTalent(a.unlock, "成就奖励·免费");
+        }
+      }
+    }
+
+    function zhongkao() {
+      count("zhongkao");
+      const p = S.prop, subs = subjectsOf(S.term) || [];
+      for (const k in PROP_RANGE) p[k] = fixProp(k, p[k]);
+      ensureSubj();
+      const diff = difficultyCurve(S.week, S.term);
+      const W = examWeights();
+      let total = 0;
+      for (const sub of subs) {
+        let v = examScoreOf(sub, p, diff, W);
+        if (Talent.have("学神降世")) v += 8;
+        if (Talent.have("学霸光环")) v += 5;
+        if (Talent.have("考场黑马")) v += 3;
+        if (Talent.have("考试焦虑")) v -= 8;
+        total += clampNum(v, 0, 100, 0);
+      }
+      S.zhongkao = subs.length ? Math.round(clampNum(total / subs.length, 0, 100, 0)) : 0;
+      S.lastExamScore = S.zhongkao;
+      say(`🎓 中考放榜!你的均分:${S.zhongkao}/100`, "exam");
+      checkAch();
+      gameOver();
+    }
+
+    function gameOver() {
+      S.over = true;
+      const end = ENDINGS.find(e => e.c(S)) || ENDINGS[ENDINGS.length - 1];
+      const sc = GAME_CONFIG.school;
+      setBackground("end");            // 结局画面切到「立行号」列车背景
+      renderHUD();
+      const talentList = Talent.owned.length ? Talent.owned.map(t => `${t}(Lv.${TALENTS[t].lv})`).join("、") : "无";
+      const achList = S.ach.length ? S.ach.map(id => ACHIEVEMENTS[id].n).join("、") : "无";
+      let reasonLine = "";
+      if (S.zhongkao < 0) {
+        if (S.dead === "健康") reasonLine = "你因健康问题提前离场。";
+        else if (S.dead === "心态") reasonLine = "你因心理压力过重提前离场。";
+        else if (S.dead === "经济") reasonLine = "你因家庭经济困难提前离场。";
+      }
+      showModal("初中落幕",
+        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${end.n}</h2><p style="margin-top:12px;line-height:2">${end.t}</p>
+     ${reasonLine ? `<p style="margin-top:8px;color:var(--red);font-weight:bold">${reasonLine}</p>` : ""}
+     <p style="margin-top:14px;color:var(--dim);font-size:.9rem">「${sc.motto}」<br>
+      <span style="font-size:.82rem">${sc.train} 到站了。这三年走过的每一步，都算数。</span></p>
+     <p style="margin-top:16px;color:var(--dim)">历时 ${S.week} 周 · 中考 ${S.zhongkao < 0 ? "—" : S.zhongkao} 分 · 天赋 ${Talent.owned.length} 个 · 成就 ${S.ach.length}/${Object.keys(ACHIEVEMENTS).length}</p>
+     <div style="margin-top:14px;font-size:.85rem;color:var(--dim);text-align:left;line-height:1.9">
+       <b style="color:var(--purple)">天赋:</b>${talentList}<br>
+       <b style="color:#ffb86b">成就:</b>${achList}
+     </div></div>`,
+        [{
+          t: "回到主菜单", fn: () => {setBackground("main"); toStart();}
+        }, {t: "重新开始", fn: () => {setBackground("main"); newGameAt(slotCur);}}], null, true, false, {kind: "ending"});
+    }

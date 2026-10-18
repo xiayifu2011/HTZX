@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中考人生模拟器 · 玉溪市红塔中学</title>
+
+  <!-- ============================================================
+       样式：按层拆分，改外观只动这里
+       ============================================================ -->
+  <link rel="stylesheet" href="css/01-base.css">
+  <link rel="stylesheet" href="css/02-components.css">
+  <link rel="stylesheet" href="css/03-modal.css">
+  <link rel="stylesheet" href="css/04-theme.css">
+</head>
+
+<body>
+<!-- ============================================================
+     页面骨架：这里只有 div 的"位置"，不含任何玩法逻辑。
+     想改布局就改这里；想改内容请去 js/ 下的 data-*.js。
+     ============================================================ -->
+  <div id="startScreen" class="screen">
+    <div class="school-brand" id="schoolBrand"></div>
+    <h1>中考人生模拟器</h1>
+    <p class="sub" id="subMotto">人生在立，行达天下 —— 登上立行号，每一步都算数</p>
+    <div class="card premium-bg" style="position:relative;overflow:hidden">
+      <div class="ink-decoration"></div>
+      <div class="tag-title">存档槽位</div>
+      <div class="slots" id="slotList"></div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="tag-title" style="margin-bottom:8px">了解更多</div>
+      <div class="docbtns">
+        <button class="btn" onclick="openDoc('guide')">📘 新手介绍</button>
+        <button class="btn" onclick="openDoc('changelog')">🆕 更新日志</button>
+        <button class="btn" onclick="openDoc('credits')">🙏 鸣谢列表</button>
+      </div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="tag-title" style="margin-bottom:8px">游戏说明</div>
+      <p style="color:var(--dim);font-size:.9rem;line-height:2">
+        你将经历初一至初三共 <b style="color:var(--gold)">150 周</b>,直至中考。<br>
+        <b style="color:var(--purple)">天赋不会在一开始赠送</b> —— 它们藏在一次次选择里。<br>
+        每周可做 <b style="color:var(--gold)">1~2 次本周行动</b>,每次行动后都会跟一个 <b style="color:var(--gold)">⚡ 事件弹窗</b>,偶尔还会连锁出后续事件。<br>
+        <b style="color:var(--green)">🎒 小卖铺 / 读书角 / 天赋图鉴 / 成就</b> 属于自由操作,<b>不占用行动次数</b>。<br>
+        一些负面天赋是可以<b style="color:var(--green)">「破茧」消除</b>的 —— 坚持学习、坚持休息,阴影总会散去。<br>
+        <span style="color:var(--dim);font-size:.85rem">「人生在立，行达天下」—— 登上立行号，这三年走的每一步，都算数。</span>
+      </p>
+    </div>
+  </div>
+
+  <div id="gameScreen" class="screen hidden">
+    <header class="topline">
+      <div class="weekpill"><b id="hudGrade">初一</b> · 第 <b id="hudWeek">0</b> 周 · <span id="hudTerm"></span></div>
+      <div class="evpill" id="actPill">🎯 本周行动 <b id="actNow">0</b>/<b id="actMax">0</b></div>
+      <div class="evpill" id="evPill">⚡ 事件
+        <span class="dots" id="evDots"></span>
+      </div>
+      <div class="timepill" id="timePill">📅 <span id="hudTime">—</span></div>
+      <div class="clubpill hidden" id="clubPill">🎪 <span id="hudClub">—</span></div>
+      <div>
+        <button class="btn" id="btnShop" onclick="openShop()">🏪 小卖铺</button>
+        <button class="btn" id="btnTalentBook" onclick="openTalentBook()">📖 天赋图鉴</button>
+        <button class="btn" id="btnAch" onclick="openAch()">🏆 成就</button>
+        <button class="btn" onclick="saveGame(true)">💾 保存</button>
+        <button class="btn" onclick="toStart()">🏠 主菜单</button>
+      </div>
+    </header>
+    <div id="hud">
+      <!-- 左栏：状态。天赋与道具、各科与成绩各自合并进一张卡，少滚一半屏幕 -->
+      <div class="sidecol">
+        <div class="card" id="statPanel"></div>
+        <div class="card">
+          <div class="tag-title">天赋(<span id="talentCount">0</span>) <span
+              style="color:var(--dim);font-size:.7rem">点击看详情</span></div>
+          <div id="talentPanel" style="margin-top:4px;line-height:1.7"></div>
+          <div class="tag-title" style="margin-top:6px">道具(<span id="itemCount">0</span>)</div>
+          <div id="itemPanel" style="margin-top:4px;line-height:1.7"></div>
+        </div>
+        <div class="card">
+          <div class="tag-title">各科(本年级)</div>
+          <div id="subjPanel" style="margin-top:4px"></div>
+          <div class="tag-title" style="margin-top:6px">成绩</div>
+          <div style="margin-top:4px;line-height:1.7;font-size:.85rem">
+            综合学力:<b id="scoreNow" style="color:var(--gold)">0</b><br>
+            最近考试:<b id="lastExam" style="color:var(--blue)">—</b><br>
+            年级排名(估):<b id="rankNow" style="color:var(--green)">—</b>
+          </div>
+        </div>
+      </div>
+      <!-- 右栏：日志 + 本周行动 -->
+      <div class="maincol">
+        <div class="log" id="log"></div>
+        <div class="opts" id="actionPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalMask" class="modal-mask hidden">
+    <div class="modal" id="modalBox">
+      <span class="close-x" id="modalCloseX" onclick="closeModal()" style="display:none">×</span>
+      <h2><span id="modalTitle"></span><span class="pop-badge" id="modalBadge" style="display:none"></span></h2>
+      <div class="popup-media" id="modalMedia" style="display:none"></div>
+      <div class="body" id="modalBody"></div>
+      <div id="modalOpts" style="margin-top:10px;text-align:center"></div>
+    </div>
+  </div>
+  <div id="toastBox"></div>
+
+  <!-- ============================================================
+       脚本：按数字顺序加载，不要调换顺序。
+       01-12 是"内容层"（可以改），13-19 是"引擎层"（一般不动）。
+       ============================================================ -->
+  <!-- 工具层：数值、属性、日志 -->
+  <script src="js/00-docs.js"></script>
+  <script src="js/01-utils.js"></script>
+  <!-- 配置层：学校特色与玩法参数 -->
+  <script src="js/02-config.js"></script>
+  <script src="js/02b-time.js"></script>
+  <!-- 天赋表 -->
+  <script src="js/03-data-talents.js"></script>
+  <!-- 科目表 -->
+  <script src="js/04-data-subjects.js"></script>
+  <!-- 小卖铺道具 -->
+  <script src="js/05-data-shop.js"></script>
+  <!-- 读书角书目 -->
+  <script src="js/06-data-books.js"></script>
+  <!-- 随机事件表 -->
+  <script src="js/07-data-events.js"></script>
+  <!-- 学校专属事件 -->
+  <script src="js/08-data-events-school.js"></script>
+  <script src="js/05b-data-clubs.js"></script>
+  <!-- 固定事件与假期副本 -->
+  <script src="js/09-data-fixed.js"></script>
+  <!-- 成就表 -->
+  <script src="js/10-data-achievements.js"></script>
+  <!-- 结局表 -->
+  <script src="js/11-data-endings.js"></script>
+  <!-- 破茧 · 负面天赋消除表 -->
+  <script src="js/12-data-cures.js"></script>
+  <!-- 中文指令解释器（让不会编程也能写内容） -->
+  <script src="js/13-engine-effects.js"></script>
+  <!-- 天赋管理引擎 -->
+  <script src="js/14-engine-talent.js"></script>
+  <!-- 数值结算引擎 -->
+  <script src="js/15-engine-study.js"></script>
+  <!-- 主循环引擎 -->
+  <script src="js/16-flow.js"></script>
+  <!-- 界面与弹窗 -->
+  <script src="js/17-ui.js"></script>
+  <!-- 本地存档 -->
+  <script src="js/18-save.js"></script>
+  <!-- 启动入口 -->
+  <script src="js/19-boot.js"></script>
+</body>
+
+</html>

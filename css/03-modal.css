@@ -1,0 +1,500 @@
+/* ============================================================
+ * 弹窗层：模态框、天赋详情、飘字、提示条、成就格
+ * ------------------------------------------------------------
+ * 这一层只负责"长什么样"，不涉及任何玩法逻辑。
+ * 想换配色、字号、动画，改这里即可。
+ * ============================================================ */
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 3, 15, .8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      animation: maskIn .25s ease
+    }
+
+    @keyframes maskIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    /* 弹窗本身不滚动，只有内部 .body 滚动。
+     * 这样右上角的 × 永远固定在弹窗顶部，滚到哪都能点到。 */
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--purple);
+      border-radius: 14px;
+      max-width: 480px;
+      width: 92%;
+      padding: 14px 16px;
+      box-shadow: 0 0 60px rgba(156, 77, 204, .25);
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: pop .3s ease;
+      position: relative
+    }
+
+    .modal.talent-modal {
+      max-width: 430px;
+      padding: 12px 14px
+    }
+
+    .modal.talent-modal .body {
+      font-size: .85rem;
+      line-height: 1.6
+    }
+
+    .talent-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--line)
+    }
+
+    .talent-header .talent-name {
+      font-size: 1.05rem;
+      font-weight: bold;
+      letter-spacing: .5px
+    }
+
+    .talent-header .talent-lv {
+      font-size: .72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid currentColor
+    }
+
+    .talent-poem {
+      font-style: italic;
+      color: var(--dim);
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: .78rem;
+      line-height: 1.5
+    }
+
+    .talent-section {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 5px 9px;
+      margin-bottom: 5px
+    }
+
+    .talent-section .label {
+      font-size: .68rem;
+      color: var(--dim);
+      margin-bottom: 1px;
+      letter-spacing: .5px
+    }
+
+    .talent-section .value {
+      font-size: .78rem;
+      color: var(--txt);
+      line-height: 1.4
+    }
+
+    .talent-section.inc .value {
+      color: var(--red);
+      font-size: .72rem
+    }
+
+    .talent-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 5px
+    }
+
+    .talent-row .talent-section {
+      margin-bottom: 0
+    }
+
+    /* 关闭按钮：用 sticky 而不是 absolute —— 内容再长，
+     * 滚动到哪它都跟着，不会被顶上去看不见。 */
+    .modal .close-x {
+      position: absolute;
+      top: 7px;
+      right: 10px;
+      padding: 1px 7px;
+      z-index: 5;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: var(--dim);
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      transition: all .2s ease;
+      line-height: 1.2;
+      user-select: none
+    }
+
+    .modal .close-x:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    /* 弹窗内容区限制最大高度，内部滚动，页面不会被撑得很长 */
+    .modal .body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 62vh;
+      overflow-y: auto;
+      overscroll-behavior: contain
+    }
+
+    /* 内容没看完时底部渐隐，暗示"下面还有"（滚动条被隐藏了，需要这个提示） */
+    body.scroll-hint .modal .body.fade {
+      -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent 100%);
+      mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent 100%)
+    }
+
+    /* 已经到底部（或内容根本没超）就不加渐隐 */
+    body.scroll-hint .modal .body.at-end {
+      -webkit-mask-image: none;
+      mask-image: none
+    }
+
+    @keyframes pop {
+      from {
+        transform: scale(.85);
+        opacity: 0
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    .modal h2 {
+      color: var(--purple);
+      margin-bottom: 6px;
+      font-size: 1.05rem;
+      padding-right: 28px;
+      line-height: 1.35
+    }
+
+    .modal .body {
+      line-height: 1.55;
+      color: var(--txt);
+      white-space: pre-wrap;
+      font-size: .88rem
+    }
+
+    /* 弹窗正文里手写的 line-height:2 一律压到 1.55，避免大段空白 */
+    .modal .body [style*="line-height:2"],
+    .modal .body [style*="line-height: 2"],
+    .modal .body [style*="line-height:2.2"],
+    .modal .body [style*="line-height:2.4"] {
+      line-height: 1.55 !important
+    }
+
+    .tag-title {
+      font-size: .82rem;
+      color: var(--dim)
+    }
+
+    .endcard {
+      text-align: center;
+      padding: 8px 4px
+    }
+
+    .endcard .big {
+      font-size: 2rem;
+      margin: 8px 0;
+      animation: bigPop .6s cubic-bezier(.34, 1.56, .64, 1)
+    }
+
+    @keyframes bigPop {
+      from {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0
+      }
+
+      to {
+        transform: scale(1) rotate(0);
+        opacity: 1
+      }
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--brand-lite), var(--brand));
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      z-index: 99;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+      animation: toastIn .4s cubic-bezier(.34, 1.56, .64, 1)
+    }
+
+    @keyframes toastIn {
+      from {
+        transform: translateX(-50%) scale(.6);
+        opacity: 0
+      }
+
+      to {
+        transform: translateX(-50%) scale(1);
+        opacity: 1
+      }
+    }
+
+    .achlist {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 7px
+    }
+
+    .achitem {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 7px 9px;
+      font-size: .8rem;
+      line-height: 1.5;
+      transition: all .2s ease
+    }
+
+    .achitem:hover {
+      border-color: var(--purple)
+    }
+
+    .achitem.lock {
+      opacity: .35;
+      filter: grayscale(1)
+    }
+
+    header.topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px
+    }
+
+    .weekpill {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: .84rem
+    }
+
+    .weekpill b {
+      color: var(--gold)
+    }
+
+    .optbtn {
+      color: #ffffff !important
+    }
+
+    .optbtn b {
+      color: #ffffff;
+      font-weight: 600
+    }
+
+    .optbtn small {
+      color: #c8d0f0 !important;
+      font-size: .8rem
+    }
+
+    .optbtn:disabled {
+      opacity: .45
+    }
+
+    .optbtn:disabled b {
+      color: #9aa3c7
+    }
+
+    .floatgain {
+      position: fixed;
+      left: 50%;
+      top: 55%;
+      transform: translateX(-50%);
+      font-weight: bold;
+      font-size: 1.05rem;
+      pointer-events: none;
+      z-index: 120;
+      animation: floatup 1.6s ease-out forwards;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, .6)
+    }
+
+    @keyframes floatup {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 10px) scale(.7)
+      }
+
+      15% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1.15)
+      }
+
+      30% {
+        transform: translate(-50%, -6px) scale(1)
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -90px)
+      }
+    }
+
+    .subjrow {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+      margin: 3px 0
+    }
+
+    .subjrow .bar {
+      flex: 1;
+      height: 6px;
+      background: #11152e;
+      border-radius: 3px;
+      margin: 5px 8px 0;
+      overflow: hidden
+    }
+
+    .subjrow .bar i {
+      display: block;
+      height: 100%;
+      background: var(--blue);
+      transition: width .5s
+    }
+
+    .namegrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 8px;
+      margin-top: 8px
+    }
+
+    .namebtn {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      color: var(--txt);
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all .2s ease;
+      font-size: .9rem
+    }
+
+    .namebtn:hover {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 2px rgba(156, 77, 204, .35)
+    }
+
+    .namebtn.sel {
+      background: linear-gradient(135deg, var(--brand-lite), var(--brand-deep));
+      border-color: var(--purple)
+    }
+
+    .talentgrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      margin-top: 8px
+    }
+
+    .talentitem {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      font-size: .75rem;
+      transition: all .25s ease
+    }
+
+    .talentitem:hover {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 2px rgba(156, 77, 204, .3), 0 4px 14px rgba(156, 77, 204, .2)
+    }
+
+    .talentitem.lock {
+      opacity: .35;
+      filter: grayscale(1)
+    }
+
+    .talentitem b {
+      color: var(--gold)
+    }
+
+    /* ============================================================
+     * 学科栏折叠 + 天赋图鉴紧凑卡片
+     * ============================================================ */
+
+    .subjtoggle {
+      font-size: .78rem;
+      color: var(--purple);
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none
+    }
+
+    .subjtoggle:hover {
+      color: var(--gold)
+    }
+
+    .subjbody {
+      margin-top: 4px
+    }
+
+    .subjrow {
+      font-size: .76rem
+    }
+
+    .subjrow .bar {
+      height: 6px
+    }
+
+    /* 天赋卡片：一行式，比原来的三行矮一半以上 */
+    .talentgrid {
+      grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+      gap: 6px
+    }
+
+    .talentitem {
+      padding: 6px 7px;
+      font-size: .72rem;
+      cursor: pointer;
+      position: relative
+    }
+
+    .talentitem .tlv {
+      float: right;
+      color: var(--dim);
+      font-size: .66rem
+    }
+
+    .talentitem .tdesc {
+      color: var(--dim);
+      margin-top: 2px;
+      font-size: .68rem;
+      line-height: 1.4;
+      /* 最多两行，超出省略，保证每张卡片一样高 */
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden
+    }

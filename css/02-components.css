@@ -1,0 +1,591 @@
+/* ============================================================
+ * 组件层：按钮、卡片、属性条、徽章、日志、行动面板
+ * ------------------------------------------------------------
+ * 这一层只负责"长什么样"，不涉及任何玩法逻辑。
+ * 想换配色、字号、动画，改这里即可。
+ * ============================================================ */
+
+    .btn {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--brand-lite), var(--brand-deep));
+      border: 1px solid var(--line);
+      color: var(--txt);
+      padding: 8px 16px;
+      border-radius: 9px;
+      font-size: .92rem;
+      cursor: pointer;
+      transition: box-shadow .2s ease, border-color .2s ease, filter .2s ease, background .2s ease;
+      margin: 4px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(192, 138, 232, .2), transparent);
+      transition: left .4s ease
+    }
+
+    .btn:not(:disabled):hover::before {
+      left: 100%
+    }
+
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      box-shadow: 0 0 0 0 rgba(156, 77, 204, 0);
+      transition: box-shadow .22s ease
+    }
+
+    .btn:not(:disabled):hover::after {
+      box-shadow: 0 0 0 2px rgba(156, 77, 204, .5), 0 8px 22px rgba(156, 77, 204, .32)
+    }
+
+    .btn:not(:disabled):hover {
+      filter: brightness(1.14);
+      border-color: var(--purple)
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--brand-lite), var(--brand));
+      border: none;
+      font-weight: bold
+    }
+
+    .btn.green {
+      background: linear-gradient(135deg, #7ee0c0, #3aa88a);
+      border: none
+    }
+
+    .btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      filter: none
+    }
+
+    .btn:disabled::after {
+      display: none
+    }
+
+    .btn:disabled:hover {
+      filter: none;
+      border-color: var(--line);
+      box-shadow: none
+    }
+
+    .btn:disabled.green {
+      filter: grayscale(.7)
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 13px;
+      margin: 0;
+      animation: fadeInUp .4s ease both
+    }
+
+    /* 开始界面（主菜单）是单列长页面，卡片之间需要留白 */
+    #startScreen .card {
+      margin: 10px 0
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .slots {
+      display: grid;
+      gap: 14px
+    }
+
+    .slot {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      transition: all .2s ease
+    }
+
+    .slot:hover {
+      border-color: var(--purple);
+      box-shadow: 0 4px 16px rgba(156, 77, 204, .2)
+    }
+
+    .slot .info {
+      font-size: .9rem;
+      color: var(--dim);
+      line-height: 1.7
+    }
+
+    .slot .info b {
+      color: var(--txt);
+      font-size: 1.05rem
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    #hud {
+      display: grid;
+      grid-template-columns: 232px 1fr;
+      gap: 10px;
+      align-items: start
+    }
+
+    /* 左栏：状态卡片竖排，间距统一收紧 */
+    .sidecol {
+      display: grid;
+      gap: 8px
+    }
+
+    /* 右栏：日志 + 行动面板 */
+    .maincol {
+      display: grid;
+      gap: 8px
+    }
+
+    @media(max-width:760px) {
+      #hud {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .stat {
+      margin: 6px 0;
+      font-size: .9rem
+    }
+
+    .stat .bar {
+      height: 8px;
+      background: #11152e;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 3px
+    }
+
+    .stat .bar i {
+      display: block;
+      height: 100%;
+      border-radius: 4px;
+      transition: width .6s cubic-bezier(.4, 0, .2, 1)
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: .78rem;
+      margin: 2px;
+      border: 1px solid var(--line);
+      transition: all .2s ease;
+      cursor: pointer
+    }
+
+    .badge:hover {
+      box-shadow: 0 0 12px rgba(156, 77, 204, .5);
+      border-color: var(--purple);
+      filter: brightness(1.2)
+    }
+
+    .c1 {
+      color: #a99fd4
+    }
+
+    .c2 {
+      color: #7ee0c0
+    }
+
+    .c3 {
+      color: var(--purple)
+    }
+
+    .c4 {
+      color: #c9a7ff
+    }
+
+    .c5 {
+      color: #ffb4d1
+    }
+
+    .c6 {
+      color: var(--gold-soft);
+      text-shadow: 0 0 8px rgba(192, 138, 232, .6)
+    }
+
+    .c7 {
+      color: #ffb86b;
+      text-shadow: 0 0 10px rgba(255, 184, 107, .7)
+    }
+
+    /* 日志区限高：内部滚动，页面整体不会被日志撑长 */
+    .log {
+      height: 172px;
+      overflow-y: auto;
+      background: #0b0818;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: .86rem;
+      line-height: 1.6
+    }
+
+    .log .week-head {
+      color: var(--gold);
+      font-weight: bold;
+      border-top: 1px dashed var(--line);
+      padding-top: 4px;
+      margin-top: 4px;
+      animation: fadeInUp .5s ease both
+    }
+
+    .log .good {
+      color: var(--green)
+    }
+
+    .log .bad {
+      color: var(--red)
+    }
+
+    .log .sys {
+      color: var(--blue)
+    }
+
+    .log .talent {
+      color: var(--purple)
+    }
+
+    .log .exam {
+      color: var(--gold)
+    }
+
+    .log .ach {
+      color: #ffb86b;
+      font-weight: bold
+    }
+
+    .log>div {
+      animation: fadeInUp .3s ease both
+    }
+
+    .opts {
+      display: grid;
+      gap: 6px;
+      margin-top: 6px
+    }
+
+    .opts .btn {
+      text-align: left
+    }
+
+    /* ============================================================
+     * 界面瘦身（紧凑布局）
+     * ------------------------------------------------------------
+     * 这几段是专门为"少滚滚轮"加的：
+     *   .statgrid  属性栏两列，进度条变细
+     *   .actgrid   行动按钮单列（六选一竖排，不再显得空泛）
+     *   .subjtoggle 学科栏默认折叠
+     * 想恢复原来的宽松版式，把这几段整块删掉即可。
+     * ============================================================ */
+
+    .statgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px 10px
+    }
+
+    .stat.compact {
+      margin: 1px 0;
+      font-size: .76rem
+    }
+
+    .stat.compact .bar {
+      height: 4px;
+      margin-top: 1px
+    }
+
+    /* 亲情：占整行但只有半宽，视觉上更弱，因为它不是主属性 */
+    .stat.famrow {
+      grid-column: 1 / -1;
+      opacity: .75;
+      font-size: .7rem
+    }
+
+    /* 行动按钮：单列竖排。每一行只占一行高，六行也不会把屏幕顶下去 */
+    .actgrid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+      margin-top: 5px
+    }
+
+    .actgrid .btn {
+      margin: 0;
+      padding: 7px 12px;
+      font-size: .9rem;
+      text-align: left;
+      line-height: 1.35
+    }
+
+    .actgrid .btn small {
+      display: block;
+      color: #c8d0f0;
+      font-size: .74rem;
+      margin-top: 1px
+    }
+
+    @media(max-width:420px) {
+      .statgrid {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media(max-width:760px) {
+      .log {
+        height: 150px
+      }
+    }
+
+    /* ============================================================
+     * 顶栏时间胶囊 / 社团胶囊
+     * ============================================================ */
+
+    .timepill,
+    .clubpill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: .78rem;
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      color: var(--dim);
+      white-space: nowrap
+    }
+
+    .timepill b,
+    .clubpill b {
+      color: var(--gold)
+    }
+
+    .clubpill {
+      background: linear-gradient(135deg, rgba(102, 8, 116, .5), var(--panel2));
+      border-color: var(--purple);
+      color: var(--txt)
+    }
+
+    .clubpill b {
+      color: var(--gold-soft)
+    }
+
+    /* 主菜单三个文档按钮 */
+    .docbtns {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap
+    }
+
+    .docbtns .btn {
+      flex: 1 1 30%;
+      min-width: 120px;
+      margin: 0;
+      padding: 9px 6px;
+      font-size: .85rem
+    }
+
+    /* ============================================================
+     * Markdown 文档弹窗
+     * ============================================================ */
+
+    .markdown {
+      line-height: 1.5;
+      font-size: .85rem
+    }
+
+    .markdown h2 {
+      font-size: .98rem;
+      color: var(--gold-soft);
+      margin: 4px 0 6px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .markdown h2:first-child {
+      margin-top: 0
+    }
+
+    .markdown h3 {
+      font-size: .9rem;
+      color: var(--purple);
+      margin: 10px 0 3px
+    }
+
+    .markdown h4 {
+      font-size: .85rem;
+      color: var(--txt);
+      margin: 8px 0 2px
+    }
+
+    .markdown p {
+      margin: 4px 0;
+      color: var(--txt)
+    }
+
+    .markdown ul {
+      margin: 3px 0 3px 18px
+    }
+
+    .markdown li {
+      margin: 1px 0
+    }
+
+    .markdown blockquote {
+      margin: 6px 0;
+      padding: 6px 10px;
+      line-height: 1.5;
+      border-left: 3px solid var(--gold);
+      background: rgba(215, 180, 90, .07);
+      color: var(--gold-soft);
+      border-radius: 0 8px 8px 0
+    }
+
+    .markdown code {
+      background: var(--panel2);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: .8rem;
+      color: var(--green)
+    }
+
+    .markdown hr.mdhr {
+      border: 0;
+      border-top: 1px dashed var(--line);
+      margin: 9px 0
+    }
+
+    .markdown table.mdtable {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0;
+      font-size: .8rem
+    }
+
+    .markdown .mdtable th {
+      background: var(--panel2);
+      color: var(--gold-soft);
+      padding: 4px 6px;
+      text-align: left;
+      border: 1px solid var(--line)
+    }
+
+    .markdown .mdtable td {
+      padding: 4px 6px;
+      border: 1px solid var(--line);
+      color: var(--txt)
+    }
+
+    .markdown .mdtable tr:nth-child(even) td {
+      background: rgba(255, 255, 255, .02)
+    }
+
+    /* ============================================================
+     * 隐藏滚动条（视觉干净，但仍能正常滚动）
+     * ------------------------------------------------------------
+     * 开关在 js/02-config.js 的 ui.hideScrollbar（默认开）。
+     * 想恢复滚动条，把那一项改成 false 即可，不用动这里。
+     * ============================================================ */
+
+    /* Chrome / Edge / Safari */
+    body.no-scrollbar ::-webkit-scrollbar,
+    body.no-scrollbar *::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      background: transparent
+    }
+
+    body.no-scrollbar ::-webkit-scrollbar-thumb,
+    body.no-scrollbar *::-webkit-scrollbar-thumb {
+      background: transparent;
+      border: 0
+    }
+
+    body.no-scrollbar ::-webkit-scrollbar-track,
+    body.no-scrollbar *::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    /* Firefox / 旧 Edge */
+    body.no-scrollbar,
+    html.no-scrollbar,
+    body.no-scrollbar *,
+    html.no-scrollbar * {
+      scrollbar-width: none;
+      -ms-overflow-style: none
+    }
+
+    /* 页面级滚动条（归 html 管） */
+    html.no-scrollbar::-webkit-scrollbar,
+    body.no-scrollbar::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      background: transparent
+    }
+
+    /* ============================================================
+     * 滚动提示：内容没看完时，底部一道渐隐
+     * ------------------------------------------------------------
+     * 隐藏滚动条后玩家可能不知道下面还有内容，
+     * 用一道很淡的渐变暗示。开关：ui.scrollHint
+     * ============================================================ */
+
+    .scrollfade {
+      position: relative
+    }
+
+    body.scroll-hint .scrollfade::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 26px;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(11, 8, 24, 0), rgba(11, 8, 24, .92));
+      border-radius: 0 0 12px 12px;
+      z-index: 2
+    }
+
+    body.scroll-hint .modal .scrollfade::after {
+      background: linear-gradient(to bottom, rgba(20, 14, 38, 0), rgba(20, 14, 38, .95))
+    }
+
+    /* 已经滚到底就把渐隐去掉（由 JS 打上 .at-end） */
+    body.scroll-hint .scrollfade.at-end::after {
+      opacity: 0;
+      transition: opacity .2s ease
+    }

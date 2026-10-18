@@ -1,0 +1,226 @@
+/* ============================================================
+ * 主题层：流光特效、学校皮肤、弹窗徽章、事件进度条
+ * ------------------------------------------------------------
+ * 这一层只负责"长什么样"，不涉及任何玩法逻辑。
+ * 想换配色、字号、动画，改这里即可。
+ * ============================================================ */
+
+    .premium-bg {
+      background:
+        radial-gradient(circle at 15% 20%, rgba(156, 77, 204, .12), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(192, 138, 232, .1), transparent 40%),
+        var(--panel)
+    }
+
+    .ink-decoration {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle at 100% 0%, rgba(156, 77, 204, .15), transparent 70%);
+      pointer-events: none;
+      border-radius: 0 16px 0 100%
+    }
+
+    .badge.c6 {
+      animation: goldPulse 2s ease-in-out infinite
+    }
+
+    .badge.c7 {
+      background: linear-gradient(90deg, #ffd166, #ff9f1c, #ffd166);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbowFlow 3s linear infinite, goldPulse 2s ease-in-out infinite
+    }
+
+    @keyframes goldPulse {
+
+      0%,
+      100% {
+        text-shadow: 0 0 6px rgba(192, 138, 232, .5)
+      }
+
+      50% {
+        text-shadow: 0 0 16px rgba(192, 138, 232, .9), 0 0 24px rgba(255, 209, 102, .5)
+      }
+    }
+
+    @keyframes rainbowFlow {
+      0% {
+        background-position: 0% 50%
+      }
+
+      100% {
+        background-position: 200% 50%
+      }
+    }
+
+    .talentitem.c6 {
+      border-color: var(--gold);
+      box-shadow: 0 0 12px rgba(192, 138, 232, .3)
+    }
+
+    .talentitem.c7 {
+      border-color: var(--gold);
+      box-shadow: 0 0 18px rgba(255, 209, 102, .5), inset 0 0 12px rgba(192, 138, 232, .1)
+    }
+
+    .toast.ach-toast {
+      background: linear-gradient(135deg, #ffd166, #ff9f1c, #ffd166);
+      background-size: 200% 100%;
+      animation: toastIn .4s cubic-bezier(.34, 1.56, .64, 1), rainbowFlow 2s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 209, 102, .6)
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image: var(--bg-image, none);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: var(--bg-opacity, 0);
+      transition: opacity .6s ease
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(1200px 800px at 50% 0%, transparent, var(--bg-overlay, rgba(18, 10, 24, .82)) 70%)
+    }
+
+    /* 学校品牌条：校名 + 校训（不使用校徽） */
+    .school-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 6px;
+      flex-wrap: wrap
+    }
+
+    .school-brand .school-name {
+      font-size: .95rem;
+      color: var(--gold-soft);
+      letter-spacing: 3px;
+      font-weight: bold
+    }
+
+    .school-brand .school-motto {
+      font-size: .8rem;
+      color: var(--dim);
+      letter-spacing: 2px;
+      padding-left: 12px;
+      border-left: 1px solid var(--line)
+    }
+
+    /* 结局画面：切到「立行号」列车背景并稍微提亮 */
+    .modal.k-ending {
+      border-color: var(--gold)
+    }
+
+    .pop-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: .68rem;
+      font-weight: normal;
+      vertical-align: middle;
+      border: 1px solid var(--line);
+      color: var(--dim);
+      background: var(--panel2)
+    }
+
+    .pop-badge.k-event {
+      color: var(--gold);
+      border-color: var(--gold)
+    }
+
+    .pop-badge.k-fixed {
+      color: var(--blue);
+      border-color: var(--blue)
+    }
+
+    .pop-badge.k-free {
+      color: var(--green);
+      border-color: var(--green)
+    }
+
+    .pop-badge.k-ending {
+      color: #ffb86b;
+      border-color: #ffb86b
+    }
+
+    .popup-media {
+      margin: -4px 0 12px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      line-height: 0
+    }
+
+    .popup-media img {
+      width: 100%;
+      max-height: 180px;
+      object-fit: cover;
+      display: block
+    }
+
+    .modal.k-event {
+      border-color: var(--gold)
+    }
+
+    .modal.k-fixed {
+      border-color: var(--blue)
+    }
+
+    .modal.k-ending {
+      border-color: #ffb86b
+    }
+
+    .evpill {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: .85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .evpill b {
+      color: var(--gold)
+    }
+
+    .evpill .dots {
+      display: inline-flex;
+      gap: 4px
+    }
+
+    .evpill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #2a2148;
+      border: 1px solid var(--line)
+    }
+
+    .evpill .dot.on {
+      background: var(--gold);
+      box-shadow: 0 0 6px rgba(192, 138, 232, .8)
+    }
+
+    .btn.busy-lock {
+      opacity: .35;
+      cursor: not-allowed
+    }

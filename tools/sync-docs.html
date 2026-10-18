@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>文档同步工具 · 不需要 Node.js</title>
+<style>
+  :root{--brand:#660874;--purple:#b06fd0;--gold:#f0c96a;}
+  *{box-sizing:border-box;}
+  body{margin:0;padding:28px 20px 40px;font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+    background:radial-gradient(1200px 700px at 50% -10%,#2a1040 0%,#12071c 55%,#0b0410 100%);
+    color:#e8e0f0;min-height:100vh;}
+  .box{max-width:660px;margin:0 auto;background:rgba(24,10,36,.82);
+    border:1px solid rgba(176,111,208,.35);border-radius:14px;padding:22px 24px 26px;
+    box-shadow:0 10px 40px rgba(0,0,0,.5);}
+  h1{margin:0 0 6px;font-size:21px;color:#fff;}
+  h1 small{display:block;font-size:12px;font-weight:400;color:var(--purple);margin-top:6px;letter-spacing:.5px;}
+  .step{margin:18px 0 0;padding:14px 16px;background:rgba(102,8,116,.18);
+    border-left:3px solid var(--brand);border-radius:6px;}
+  .step b{color:var(--gold);}
+  p,li{line-height:1.75;font-size:14px;}
+  ol{margin:8px 0 0;padding-left:22px;}
+  .pick{margin:10px 0 0;}
+  .pick label{display:block;font-size:13px;color:var(--purple);margin:10px 0 4px;}
+  input[type=file]{display:block;width:100%;padding:8px;font-size:12px;color:#cfc4dd;
+    background:rgba(0,0,0,.3);border:1px dashed rgba(176,111,208,.45);border-radius:6px;cursor:pointer;}
+  .row{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;}
+  button{padding:11px 20px;font-size:14px;border:none;border-radius:8px;cursor:pointer;
+    background:var(--brand);color:#fff;font-weight:bold;transition:.15s;}
+  button:hover{background:#830f95;}
+  button.ghost{background:transparent;border:1px solid rgba(176,111,208,.5);color:var(--purple);font-weight:normal;}
+  #msg{margin-top:14px;padding:12px 14px;border-radius:6px;font-size:13px;line-height:1.7;
+    background:rgba(0,0,0,.28);border:1px solid rgba(176,111,208,.22);color:#b9aecd;min-height:44px;}
+  #msg.ok{border-color:rgba(120,220,150,.5);color:#a8e6b8;}
+  #msg.err{border-color:rgba(230,100,100,.5);color:#f0a8a8;}
+  .warn{margin-top:16px;padding:11px 14px;border-radius:6px;font-size:12.5px;line-height:1.7;
+    background:rgba(240,201,106,.1);border:1px solid rgba(240,201,106,.3);color:#e3cf9a;}
+  code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:4px;font-size:12px;color:var(--gold);}
+  .fin{margin-top:20px;padding-top:16px;border-top:1px solid rgba(176,111,208,.2);}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>文档同步工具
+    <small>改完 docs 里的 .md，用这个页面生成 00-docs.js —— 不需要安装任何东西</small>
+  </h1>
+
+  <div class="step">
+    <b>第 1 步：</b>选择三个 Markdown 文件（可以一次全选）
+    <div class="pick">
+      <label>新手介绍 —— docs/guide.md</label>
+      <input type="file" id="f_guide" accept=".md,.txt">
+      <label>更新日志 —— docs/changelog.md</label>
+      <input type="file" id="f_changelog" accept=".md,.txt">
+      <label>鸣谢列表 —— docs/credits.md</label>
+      <input type="file" id="f_credits" accept=".md,.txt">
+    </div>
+    <p style="font-size:12.5px;color:#9a8caa;margin:10px 0 0;">
+      只改了其中一个也行，另外两个留空会自动沿用原来的内容。
+    </p>
+  </div>
+
+  <div class="row">
+    <button onclick="go()">生成 00-docs.js</button>
+    <button class="ghost" onclick="pickAll()">一次选多个文件</button>
+  </div>
+
+  <div id="msg">等待选择文件……</div>
+
+  <div class="fin">
+    <div class="step" style="background:rgba(0,0,0,.2);border-left-color:var(--gold);">
+      <b>第 2 步：</b>把下载到的 <code>00-docs.js</code> 放进 <code>js/</code> 文件夹覆盖旧文件<br>
+      <b>第 3 步：</b>关掉游戏网页重新打开（还是旧的就按 Ctrl + F5）
+      <div class="warn">
+        如果你玩的是 <b>game.html</b>（单文件版），改这个文件没用 ——
+        它是打包快照。请让会用 Node.js 的同学重跑一次
+        <code>node tools/make-single.js</code>，或者把改好的 .md 直接发给 AI 帮你重新打包。
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="multi" multiple accept=".md,.txt" style="display:none">
+
+<script>
+/* 与 tools/sync-docs.js 里完全相同的转换逻辑 */
+function md2html(src) {
+  const lines = src.replace(/\r\n/g, "\n").split("\n");
+  const out = [];
+  let inList = false;
+  let inTable = false;
+  let inOl = false;
+
+  const inline = t => t
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>");
+
+  const closeList = () => {if (inList) {out.push("</ul>"); inList = false;}};
+  const closeTable = () => {if (inTable) {out.push("</table>"); inTable = false;}};
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const line = raw.trimEnd();
+
+    // 表格
+    if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+      if (!inTable) {out.push('<table class="mdtable">'); inTable = true;}
+      const cells = line.split("|").slice(1, -1).map(c => c.trim());
+      out.push("<tr>" + cells.map(c => `<th>${inline(c)}</th>`).join("") + "</tr>");
+      i++; // 跳过分隔行
+      while (i + 1 < lines.length && /^\s*\|.*\|\s*$/.test(lines[i + 1])) {
+        i++;
+        const cs = lines[i].split("|").slice(1, -1).map(c => c.trim());
+        out.push("<tr>" + cs.map(c => `<td>${inline(c)}</td>`).join("") + "</tr>");
+      }
+      continue;
+    }
+    closeTable();
+
+    if (!line.trim()) {closeList(); out.push(""); continue;}
+
+    // 标题
+    const h = line.match(/^(#{1,4})\s+(.*)$/);
+    if (h) {
+      closeList();
+      if (inOl) {out.push("</ol>"); inOl = false;}
+      const lv = Math.min(4, h[1].length + 1);
+      out.push(`<h${lv}>${inline(h[2])}</h${lv}>`);
+      continue;
+    }
+
+    // 分隔线
+    if (/^-{3,}$/.test(line.trim())) {closeList(); out.push('<hr class="mdhr">'); continue;}
+
+    // 引用
+    if (/^>\s?/.test(line)) {
+      closeList();
+      out.push(`<blockquote>${inline(line.replace(/^>\s?/, ""))}</blockquote>`);
+      continue;
+    }
+
+    // 无序列表
+    const li = line.match(/^\s*[-*]\s+(.*)$/);
+    if (li) {
+      if (!inList) {out.push("<ul>"); inList = true;}
+      out.push(`<li>${inline(li[1])}</li>`);
+      continue;
+    }
+
+    // 有序列表（1. / 1) ）
+    const oli = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    if (oli) {
+      if (!inOl) {closeList(); out.push("<ol>"); inOl = true;}
+      out.push(`<li>${inline(oli[1])}</li>`);
+      continue;
+    }
+    if (inOl) {out.push("</ol>"); inOl = false;}
+    closeList();
+
+    out.push(`<p>${inline(line)}</p>`);
+  }
+  closeList();
+  if (inOl) {out.push("</ol>"); inOl = false;}
+  closeTable();
+  return out.join("\n");
+}
+
+var DOCS = [
+  {key:"guide", file:"guide.md", title:"新手介绍"},
+  {key:"changelog", file:"changelog.md", title:"更新日志"},
+  {key:"credits", file:"credits.md", title:"鸣谢列表"}
+];
+
+/* 页面上没选文件时，用这些兜底内容，避免把某一项清空 */
+var FALLBACK = {
+  guide: "<p>（本次未选择 guide.md，保留原内容）</p>",
+  changelog: "<p>（本次未选择 changelog.md，保留原内容）</p>",
+  credits: "<p>（本次未选择 credits.md，保留原内容）</p>"
+};
+
+var picked = {};
+function say(t, cls){
+  var m = document.getElementById("msg");
+  m.className = cls || "";
+  m.innerHTML = t;
+}
+
+function bind(id, key){
+  var el = document.getElementById(id);
+  el.addEventListener("change", function(){
+    if (!el.files || !el.files[0]) {delete picked[key]; return;}
+    read(el.files[0], key);
+  });
+}
+function read(f, key){
+  var r = new FileReader();
+  r.onload = function(){
+    picked[key] = String(r.result || "");
+    say("已读取 <b>" + f.name + "</b>（" + picked[key].length + " 字符）", "ok");
+  };
+  r.onerror = function(){say("读取失败：" + f.name, "err");};
+  r.readAsText(f, "utf-8");
+}
+["guide","changelog","credits"].forEach(function(k){bind("f_" + k, k);});
+
+function pickAll(){document.getElementById("multi").click();}
+document.getElementById("multi").addEventListener("change", function(){
+  var fs = this.files || [];
+  for (var i = 0; i < fs.length; i++){
+    var n = (fs[i].name || "").toLowerCase();
+    var hit = null;
+    DOCS.forEach(function(d){if (n.indexOf(d.file.replace(".md","")) === 0) hit = d.key;});
+    if (hit) read(fs[i], hit);
+  }
+  if (fs.length) say("已读取 " + fs.length + " 个文件，可点上面的按钮生成。", "ok");
+});
+
+function build(){
+  var parts = [];
+  DOCS.forEach(function(d){
+    var html = picked.hasOwnProperty(d.key) ? md2html(picked[d.key]) : FALLBACK[d.key];
+    parts.push("  " + d.key + ": {title: " + JSON.stringify(d.title) +
+               ", html: " + JSON.stringify(html) + "}");
+  });
+  return "/* 自动生成 · 请勿手工编辑\n" +
+    " * 由 tools/sync-docs.html 从 docs/*.md 生成\n" +
+    " * ============================================ */\n\n" +
+    "const GAME_DOCS = {\n" + parts.join(",\n") + "\n};\n\n" +
+    "function openDoc(key) {\n" +
+    "  const d = (typeof GAME_DOCS !== \"undefined\") && GAME_DOCS[key];\n" +
+    "  if (!d) {if (typeof toast === \"function\") toast(\"文档还没生成\"); return;}\n" +
+    "  showModal(d.title, '<div class=\\\"markdown\\\">' + d.html + '</div>',\n" +
+    "    [{t: \"关闭\", fn: function () {}}], null, false, true, {kind: \"doc\"});\n" +
+    "}\n";
+}
+
+function go(){
+  var keys = Object.keys(picked);
+  if (!keys.length){say("还没选文件。至少选一个 .md 文件。", "err"); return;}
+  var js = build();
+  var blob = new Blob([js], {type:"text/javascript;charset=utf-8"});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "00-docs.js";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href); a.remove();}, 800);
+  var names = keys.map(function(k){
+    var d = DOCS.filter(function(x){return x.key === k;})[0];
+    return d.title;
+  }).join("、");
+  say("<b>已生成 00-docs.js（" + (js.length/1024).toFixed(1) + " KB）</b><br>" +
+      "本次更新了：" + names + "<br>" +
+      "浏览器应该已经自动下载。把它拖进 <b>js/</b> 文件夹覆盖同名文件即可。", "ok");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+/* ============================================================
+ * 基础层：配色变量、全局重置、背景、标题
+ * ------------------------------------------------------------
+ * 这一层只负责"长什么样"，不涉及任何玩法逻辑。
+ * 想换配色、字号、动画，改这里即可。
+ * ============================================================ */
+
+    /* 主题色：清华紫 #660874
+     * ------------------------------------------------------------
+     * 品牌色本身很深，直接当文字色会看不清，所以拆成两支：
+     *   --brand  清华紫本体，用于按钮底、渐变、卡片背景
+     *   --purple 提亮后的紫，用于标题/边框/图标等需要看清的地方
+     * 想换配色只改这一段，全局生效。
+     */
+    :root {
+      --brand: #660874;       /* 清华紫（品牌主色） */
+      --brand-deep: #3d0647;
+      --brand-lite: #8a2b9c;
+
+      --purple: #c08ae8;      /* 提亮紫 · 标题/边框/强调文字 */
+      --purple2: #9c4dcc;
+      --gold: #d7b45a;        /* 点缀金（徽章/进度条） */
+      --gold-soft: #f0d488;   /* 亮金（标题发光） */
+
+      --bg: #120a18;
+      --panel: #1e1029;
+      --panel2: #2a1638;
+      --line: #4a2760;
+      --txt: #f2ecf7;
+      --dim: #bda9cd;
+      --green: #7ee0c0;
+      --red: #ff7aa2;
+      --blue: #a86ddb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: radial-gradient(1200px 800px at 20% 0%, #2a1040, #120a18 60%);
+      color: var(--txt);
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      padding: 12px
+    }
+
+    .screen {
+      max-width: 960px;
+      margin: 0 auto
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 4px;
+      text-align: center;
+      color: var(--gold-soft);
+      text-shadow: 0 0 24px rgba(215, 180, 90, .45);
+      animation: titleGlow 3s ease-in-out infinite alternate
+    }
+
+    @keyframes titleGlow {
+      from {
+        text-shadow: 0 0 24px rgba(215, 180, 90, .45)
+      }
+
+      to {
+        text-shadow: 0 0 40px rgba(240, 212, 136, .85)
+      }
+    }
+
+    .sub {
+      text-align: center;
+      color: var(--dim);
+      margin: 6px 0 14px
+    }
