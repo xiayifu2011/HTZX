@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>王权 Reigns V1.1.18</title>
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+body{
+    font-family:"SimSun","Microsoft Yahei",serif;
+    background:#0c0718;
+    background-image:
+        radial-gradient(ellipse at top, #2b1b42 0%, transparent 60%),
+        radial-gradient(ellipse at bottom, #140d24 0%, #0c0718 100%);
+    color:#e9e2f5;
+    padding:24px 16px;
+    max-width:960px;
+    margin:0 auto;
+    line-height:1.7;
+    min-height:100vh;
+}
+.crown-title{
+    text-align:center;
+    font-size:32px;
+    background: linear-gradient(135deg,#ffd770,#ff89d8,#b27bff);
+    -webkit-background-clip:text;
+    color:transparent;
+    font-weight:bold;
+    margin:12px 0 6px;
+    text-shadow: 0 0 24px #9b59ff44;
+}
+.version-text{
+    text-align:center;
+    color:#b8a2d8;
+    margin-bottom:24px;
+    letter-spacing:2px;
+}
+.royal-card{
+    border:2px solid #7a48b8;
+    box-shadow: 0 0 18px #7a48b840, inset 0 0 30px #341c5840;
+    padding:20px 24px;
+    margin:16px 0;
+    border-radius:12px;
+    background: rgba(26,16,34,0.75);
+    backdrop-filter: blur(6px);
+}
+.cyan{color:#66ffff;}
+.green{color:#66ff77;}
+.red{color:#ff6666;}
+.yellow{color:#ffdd66;}
+.pink{color:#ff99dd;}
+.purple{color:#bb88ff;}
+.attr-row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    margin:10px 0;
+}
+.attr-label{
+    width:96px;
+    font-weight:500;
+}
+.attr-bar{
+    flex:1;
+    height:26px;
+    background:#1b1230;
+    border:1px solid #603b91;
+    border-radius:8px;
+    overflow:hidden;
+}
+.attr-fill{
+    height:100%;
+    transition:0.4s ease‑out;
+}
+.btn{
+    padding:11px 20px;
+    margin:6px 8px 6px 0;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:0.25s;
+    font-family:inherit;
+}
+.btn:hover{
+    transform: translateY(-2px);
+    box-shadow:0 6px 14px #00000070;
+}
+.btn:active{
+    transform: translateY(1px);
+}
+.btnY{
+    background:linear-gradient(135deg,#277038,#1b4d28);
+    color:#e8ffe8;
+    border:1px solid #40aa58;
+}
+.btnN{
+    background:linear-gradient(135deg,#702727,#4d1b1b);
+    color:#ffe8e8;
+    border:1px solid #aa4040;
+}
+.btnS{
+    background:linear-gradient(135deg,#273c70,#1b284d);
+    color:#e8eeff;
+    border:1px solid #4068aa;
+}
+.btn-back{
+    background:linear-gradient(135deg,#443c58,#2b2438);
+    color:#e2d8f0;
+    border:1px solid #776099;
+}
+.modal{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(4, 1,12,0.88);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+    padding:12px;
+}
+.modal-content{
+    max-width:720px;
+    width:100%;
+    background:#1a1028;
+    border:2px solid #9254d8;
+    box-shadow: 0 0 32px #8040dd60;
+    padding:26px;
+    border-radius:14px;
+    max-height:88vh;
+    overflow:auto;
+}
+.hidden{display:none !important;}
+.mail-item{
+    border:1px solid #5c4280;
+    padding:12px 14px;
+    margin:8px 0;
+    border-radius:8px;
+    cursor:pointer;
+    transition:0.2s;
+}
+.mail-item:hover{
+    background:#271a3b;
+}
+.mail-unread{
+    border-color:#dd5566;
+    background:#2c173077;
+}
+.event-block{
+    padding:14px;
+    background:#140c22;
+    border-radius:10px;
+    margin:12px 0;
+    border-left:4px solid #b068ff;
+}
+.opt-block{
+    margin:10px 0;
+    padding:10px;
+    background:#1c1130;
+    border-radius:8px;
+}
+input{
+    background:#140c24;
+    color:#eee;
+    border:1px solid #7048aa;
+    padding:9px 12px;
+    border-radius:6px;
+    font-size:16px;
+    margin:8px 0;
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="menuScreen">
+    <div class="crown-title">👑 The Game: Reigns (王权) 👑</div>
+    <div class="version-text">Version：V1.1.18 | 作者：紫陰花</div>
+    <div class="royal-card">
+      <div><button class="btn btnY" onclick="chooseGame()">1.开始游戏</button></div>
+      <div><button class="btn" onclick="openMail()">2.邮件</button> <span id="unreadBadge" class="red"></span></div>
+      <div><button class="btn" onclick="openStat()">3.统计</button></div>
+      <div><button class="btn" onclick="openJournal()">4.更新日志</button></div>
+      <div><button class="btn" onclick="openSetting()">5.游戏设置</button></div>
+      <div><button class="btn" onclick="openSaveLoad()">6.存读档</button></div>
+      <div><button class="btn" onclick="openAchievement()">7.成就</button></div>
+      <div><button class="btn" onclick="openSkillInfo()">8.游戏机制资料</button></div>
+      <div><button class="btn btn-back" onclick="doExit()">X.退出游戏</button></div>
+      <div style="margin-top:14px;font-size:13px;color:#9987b3;">彩蛋：主菜单按反斜杠 \ 触发隐藏地域成就</div>
+    </div>
+  </div>
+  <div id="gameScreen" class="hidden">
+    <div class="royal-card">
+      <div>君王:<span class="yellow" id="gName"></span></div>
+      <div id="aiExtra"></div>
+      <div>统治期 第 <span class="red" id="gYear"></span> 年</div>
+      <br>
+      <div id="attrWrap"></div>
+      <div>技能: <span class="cyan" id="gSkill"></span></div>
+      <div id="invText" class="red"></div>
+      <div id="aiInvText" class="red"></div>
+    </div>
+    <div class="royal-card">
+      <div class="yellow">📜 事件：</div>
+      <div class="event-block" id="eventText"></div>
+      <div class="opt-block" id="optY"></div>
+      <div class="opt-block" id="optN"></div>
+      <div class="opt-block" id="optS"></div>
+      <br>
+      <div>
+        <button class="btn btnY" onclick="playerChoose('Y')">✅ Y 接受</button>
+        <button class="btn btnN" onclick="playerChoose('N')">❌ N 拒绝</button>
+        <button id="btnSkill" class="btn btnS hidden" onclick="playerChoose('S')">✨ S 使用技能</button>
+      </div>
+    </div>
+  </div>
+  <div id="modalWrap" class="modal hidden">
+    <div class="modal-content" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const EVENTS = [
+  null,
+  {a:"大臣：国王，敌国的军队来攻打我们了。(Y:出军;N:没有动静)",a1:0,a2:-5,a3:-10,a4:-10,b1:0,b2:-15,b3:0,b4:0,b:"",c:""},
+  {a:"传信人：我们的内部出现了内奸，散布虚假消息。(Y:解决;N:没有动静)",a1:10,a2:0,a3:-5,a4:0,b1:-20,b2:-10,b3:0,b4:0,b:"",c:""},
+  {a:"大臣：在山下发现金矿。(Y:挖掘;N:没听见)",a1:10,a2:-10,a3:-10,a4:20,b1:0,b2:-10,b3:0,b4:0,b:"",c:""},
+  {a:"大臣：我们可以下发民众调查，加善百姓生活。(Y:接受;N:不接受)",a1:5,a2:10,a3:0,a4:-10,b1:0,b2:-10,b3:-5,b4:5,b:"",c:""},
+  {a:"军师：敌人可能要来进攻我们了，我们需要操练军队。(Y:接受;N:不接受)",a1:5,a2:-5,a3:20,a4:-10,b1:0,b2:0,b3:0,b4:0,b:"",c:""},
+  {a:"传信人：民间出现了很多盗贼。我们最好解决？(Y:解决;N:没有动静)",a1:0,a2:20,a3:-5,a4:-10,b1:0,b2:-5,b3:0,b4:-5,b:"",c:""},
+  {a:"大臣：建议造学校，普及知识。(Y:建造;N:没有动静)",a1:10,a2:10,a3:0,a4:-10,b1:-5,b2:0,b3:-5,b4:10,b:"",c:""},
+  {a:"马戏团老板：我们能到您的城市演出吗？(Y:能;N:拒绝)",a1:0,a2:10,a3:0,a4:-20,b1:0,b2:-10,b3:5,b4:10,b:"",c:""},
+  {a:"大臣：城市污染严重，可栽树否？(Y:栽树;N:没有动静)",a1:-5,a2:10,a3:10,a4:-10,b1:0,b2:-10,b3:0,b4:5,b:"",c:""},
+  {a:"巫师：大人，我这儿有灵丹妙药。(Y:售卖;N:拒绝)",a1:-5,a2:10,a3:0,a4:-10,b1:0,b2:-5,b3:-10,b4:0,b:"",c:""},
+  {a:"魔法师：国王，我能赐予您一种能力。(Y:接受;N:拒绝)",a1:0,a2:0,a3:-15,a4:0,b1:0,b2:0,b3:0,b4:0,b:"逃避",c:""},
+  {a:"魔法师：我希望人间平安。(Y:接受;N:拒绝)",a1:0,a2:0,a3:0,a4:-25,b1:0,b2:0,b3:0,b4:0,b:"平安",c:""},
+  {a:"魔法师：相反的魔法总是令人喜爱。(Y:认同;N:不认同)",a1:-15,a2:0,a3:0,a4:0,b1:0,b2:0,b3:0,b4:0,b:"倒置",c:""},
+  {a:"大臣：我认为我们可以加进人才。(Y:同意;N:拒绝)",a1:0,a2:20,a3:0,a4:-10,b1:0,b2:-10,b3:0,b4:0,b:"",c:""},
+  {a:"传信人：民间的传染病越加严重。(Y:解决;N:没有动静)",a1:10,a2:10,a3:-10,a4:-20,b1:0,b2:-20,b3:-10,b4:0,b:"",c:""},
+  {a:"天文学家：我预测这几日天气状况不佳。(Y:认同;N:不认同)",a1:0,a2:10,a3:-10,a4:0,b1:0,b2:0,b3:0,b4:0,b:"",c:""},
+  {a:"传信人：鼠疫导致民间人心惶惶。(Y:解决;N:没有动静)",a1:0,a2:20,a3:0,a4:-10,b1:0,b2:-15,b3:-5,b4:0,b:"",c:""},
+];
+const SKILLS = {
+  "逃避":"躲过本次事件，不做Y/N判定，消耗本技能，年份前进，切换下一个事件",
+  "平安":"使任一属性回到50 (可选择)",
+  "倒置":"使做出选择后获得的增益倒置 (不包括获得、使用技能)，直到下一次使用倒置为止"
+};
+const ACHIEVE_INFO = {
+  "初登王位":"第一次开始普通模式",
+  "多重加害":"同时因为多项属性而结束游戏",
+  "百寿":"一个人物活到100岁",
+  "竞争者":"第一次开始A.I.对战",
+  "两败俱伤":"因为双方同时死亡而结束游戏",
+  "常年争执":"一个人物与A.I.连续对战30年",
+  "殊途同归":"在若干回合后双方的数据重回一样",
+  "保持同步":"连续5回合与A.I.选择一样",
+  "名字问题":"......你真的以为我会让你使用它？",
+  "隐藏地域":"你是怎么发现这儿的？"
+};
+const ACH_GROUP = {
+  "普通模式":["初登王位","多重加害","百寿"],
+  "A.I.对战":["竞争者","两败俱伤","常年争执","殊途同归","保持同步"],
+  "隐藏成就":["名字问题","隐藏地域"]
+};
+const MAIL_TEXT = {
+  "游戏介绍-普通模式":{from:"紫陰花",content:`在这个游戏中，你需要控制一名君王来应对每一年所发生的事件，作出相应的对答。
+每一次相应的对答可以选择Y或N，你的国家拥有四种属性，不同的对答会造成每个属性的相应加减。
+四种属性分别是：宗教,民众,军队,财富。
+每个属性的初始状态都为50点。通过选择会加减属性，当一个属性<=0或>=100时，游戏结束，愤怒的臣民会杀掉你。
+你还拥有一项技能，这需要你在游戏中获得。技能是一次性的，得到新的技能会覆盖原技能。有技能时可以点击S按钮触发效果。
+你的游戏目标是，活得尽量久。`},
+  "游戏介绍-A.I.对战":{from:"紫陰花",content:`在普通模式的基础上，你需要与一个A.I.对战，你与其面对相同的问题而做出选择，最后活下的人胜利。`},
+  "欢迎来到王权":{from:"紫陰花",content:`感谢您游玩王权！
+游戏制作者：紫陰花
+游戏团队：洛谷团队23723`},
+  "hide1":{from:"???",content:"你为什么会到这儿？"},
+  "hide2":{from:"???",content:"你不应该来到这儿。离开。"},
+  "Hide1":{from:"",content:"The author thinks that you are too YOUNG too SIMPLE."}
+};
+
+let G = {
+  version:"V1.1.18",
+  textspeed:3,
+  auto_read:0,
+  auto_file:0,
+  emails:["欢迎来到王权","游戏介绍-普通模式","游戏介绍-A.I.对战"],
+  email_judge:{},
+  ach_judge:{},
+  gq:[],
+  gq2:[],
+  screen:"menu",
+  gameMode:"normal",
+  playerName:"",
+  q:50,w:50,e:50,r:50,
+  q2:50,w2:50,e2:50,r2:50,
+  skill:"无", skill2:"无",
+  inver:0, inver2:0,
+  year:1, yearStart:1, j:1,
+  ra:[],
+  sttg:false, bctb:0,
+};
+
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function shuffle(arr){
+  let a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    let j=randInt(0,i);
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function rs(){
+  const SIZe=17;
+  let ra=[];
+  for(let i=1;i<=SIZe;i++) ra.push(i);
+  for(let i=1;i<=SIZe;i++) ra.push(randInt(1,SIZe));
+  return shuffle(ra);
+}
+function inversion(judge,num){ return judge ? -num : num; }
+function getAttrColor(v){
+  if(v<=0 || v>=100) return "#ff5555";
+  if(v<25 || v>75) return "#dddd55";
+  return "#55dd66";
+}
+
+function saveGame(){
+  let obj = {
+    version:G.version,
+    textspeed:G.textspeed, auto_read:G.auto_read, auto_file:G.auto_file,
+    emails:G.emails, email_judge:G.email_judge, ach_judge:G.ach_judge,
+    gq:G.gq, gq2:G.gq2
+  };
+  localStorage.setItem("reigns_save",JSON.stringify(obj));
+  alert("✅存档成功");
+}
+function loadGame(){
+  let s = localStorage.getItem("reigns_save");
+  if(!s){alert("⚠️没有存档");return;}
+  let obj = JSON.parse(s);
+  if(obj.version!==G.version){alert("⚠️存档版本不兼容");return;}
+  G.textspeed=obj.textspeed; G.auto_read=obj.auto_read; G.auto_file=obj.auto_file;
+  G.emails=obj.emails||[]; G.email_judge=obj.email_judge||{};
+  G.ach_judge=obj.ach_judge||{};
+  G.gq=obj.gq||[]; G.gq2=obj.gq2||[];
+  alert("✅读档成功");
+  refreshMenu();
+}
+
+function achieve(name){
+  if(G.ach_judge[name]) return;
+  G.ach_judge[name]=true;
+  showModal(`
+    <div class="pink" style="font-size:18px;text-align:center;">
++${"-".repeat(24)}+<br>
+|🏆获得成就：${name}${" ".repeat(Math.max(0,16-name.length))}|<br>
+|${ACHIEVE_INFO[name]}${" ".repeat(Math.max(0,20-ACHIEVE_INFO[name].length))}|<br>
++${"-".repeat(24)}+
+    </div>
+    <br><div style="text-align:center"><button class="btn btn-back" id="btnAchOk">确定</button></div>
+  `);
+  document.getElementById("btnAchOk").addEventListener("click",closeModal);
+}
+
+function showModal(html){
+  document.getElementById("modalBody").innerHTML=html;
+  document.getElementById("modalWrap").classList.remove("hidden");
+}
+function closeModal(){
+  document.getElementById("modalWrap").classList.add("hidden");
+}
+
+function refreshMenu(){
+  let unread = G.emails.filter(t=>!G.email_judge[t]).length;
+  document.getElementById("unreadBadge").innerText = unread>0 ? `(${unread})`:"";
+}
+
+function chooseGame(){
+  showModal(`
+    <div>
+      <div class="green" style="font-size:18px;margin:8px 0;">1.普通模式</div>
+      <div class="purple" style="font-size:18px;margin:8px 0;">2.A.I.对战</div>
+      <div class="yellow" style="font-size:16px;margin:8px 0;">3.返回</div>
+      <br>
+      <button class="btn btnY" id="btnNormal">普通模式</button>
+      <button class="btn btnS" id="btnAi">AI对战</button>
+      <button class="btn btn-back" id="btnCancel">返回</button>
+    </div>
+  `);
+  document.getElementById("btnNormal").addEventListener("click",()=>{startGame('normal');});
+  document.getElementById("btnAi").addEventListener("click",()=>{startGame('ai');});
+  document.getElementById("btnCancel").addEventListener("click",closeModal);
+}
+
+function doExit(){
+  showModal("<div>浏览器版本关闭窗口即可退出。<br><button class='btn btn-back' id='btnExitOk'>确定</button></div>");
+  document.getElementById("btnExitOk").addEventListener("click",closeModal);
+}
+
+function openMail(){
+  let html="";
+  [...G.emails].reverse().forEach((title,idx)=>{
+    const realIdx = G.emails.length-1-idx;
+    const m = MAIL_TEXT[title];
+    const isRead = !!G.email_judge[title];
+    html += `
+    <div class="mail-item ${isRead?"":"mail-unread"}" data-idx="${realIdx}">
+      <div>发送者: ${m.from||"???"}</div>
+      <div>标题: ${title}</div>
+      <div>${isRead?"✅已读":"<span class='red'>🔴未读</span>"}</div>
+    </div>
+    `;
+  });
+  html += `<br><button class="btn btn-back" id="btnMailClose">关闭</button>`;
+  showModal(html);
+  document.querySelectorAll(".mail-item").forEach(el=>{
+    el.addEventListener("click",()=>{readMail(Number(el.dataset.idx));});
+  });
+  document.getElementById("btnMailClose").addEventListener("click",closeModal);
+}
+
+function readMail(i){
+  const title = G.emails[i];
+  G.email_judge[title]=true;
+  const m = MAIL_TEXT[title];
+  showModal(`
+    <h3 class="yellow">${title}</h3>
+    <div class="cyan">发送者：${m.from}</div>
+    <pre style="white-space:pre-wrap;margin:14px 0;">${m.content}</pre>
+    <br><button class="btn btn-back" id="btnMailBack">返回邮件列表</button>
+  `);
+  document.getElementById("btnMailBack").addEventListener("click",openMail);
+}
+
+function openSetting(){
+  showModal(`
+  <div>
+    <div class="cyan">1.文本速度(当前${G.textspeed}ms)</div>
+    <div class="cyan">2.自动读档：${G.auto_read?"<span class='green'>开启</span>":"<span class='red'>关闭</span>"}</div>
+    <div class="cyan">3.自动存档：${G.auto_file?"<span class='green'>开启</span>":"<span class='red'>关闭</span>"}</div>
+    <br>
+    <div>文本速度:<input id="inp_ts" value="${G.textspeed}"> <button class="btn" id="btnSetTs">设置</button></div>
+    <div><button class="btn" id="btnToggleAr">切换自动读档</button></div>
+    <div><button class="btn" id="btnToggleAf">切换自动存档</button></div>
+    <br><button class="btn btn-back" id="btnSetBack">返回</button>
+  </div>`);
+  document.getElementById("btnSetTs").addEventListener("click",()=>{G.textspeed=Number(document.getElementById('inp_ts').value);openSetting();});
+  document.getElementById("btnToggleAr").addEventListener("click",()=>{G.auto_read=1-G.auto_read;openSetting();});
+  document.getElementById("btnToggleAf").addEventListener("click",()=>{G.auto_file=1-G.auto_file;openSetting();});
+  document.getElementById("btnSetBack").addEventListener("click",closeModal);
+}
+
+function openStat(){
+  let html="<div class='yellow' style='font-size:18px'>👑普通模式君王记录：</div>";
+  if(G.gq.length===0) html+="<div class='cyan'>尚未有人坐上王座</div>";
+  else{
+    let maxLen=-1,maxObj=null;
+    G.gq.forEach(g=>{
+      const len = g.end - g.start +1;
+      html+=`<div>${g.start}年 ~ ${g.end}年 君王 <span class="yellow">${g.name}</span> 统治${len}年</div>`;
+      if(len>maxLen){maxLen=len;maxObj=g;}
+    });
+    html+=`<div class="cyan">最长统治者：<span class="yellow">${maxObj.name}</span> ${maxLen}年</div>`;
+  }
+  html+="<br><div class='purple' style='font-size:18px'>⚔️AI对战记录：</div>";
+  if(G.gq2.length===0) html+="<div class='cyan'>尚未争夺</div>";
+  else{
+    let maxLen=-1,maxObj=null;
+    G.gq2.forEach(g=>{
+      const len = g.end - g.start +1;
+      let resTxt = g.w===0?"<span class='red'>失败</span>":g.w===1?"<span class='green'>胜利</span>":"<span class='yellow'>平局</span>";
+      html+=`<div>${g.start}~${g.end} 君王${g.name} 结果:${resTxt} 时长${len}年</div>`;
+      if(len>maxLen){maxLen=len;maxObj=g;}
+    });
+    html+=`<div class="cyan">最长争夺：<span class="yellow">${maxObj.name}</span> ${maxLen}年</div>`;
+  }
+  html+="<br><button class='btn btn-back' id='btnStatClose'>关闭</button>";
+  showModal(html);
+  document.getElementById("btnStatClose").addEventListener("click",closeModal);
+}
+
+function openJournal(){
+  const log = `
+V1.0.0:基础游戏设施 (2019.11.29)
+V1.0.1:增加更新日志 设置 存档 读档 (2019.11.30)
+V1.0.2:增加2条新的事件 (2019.12.2)
+V1.0.3:增加自动读档 游戏公告 (2019.12.4)
+V1.0.4:增加自动存档 修正部分文本 (2019.12.5)
+V1.0.5:增加彩色字体 修复自动存档 (2019.12.7)
+V1.0.6:修改统计 (2019.12.7)
+V1.0.7:增加1条新的事件 (2019.12.9)
+V1.1.0:增加技能 成就(未完工) (2019.12.11)
+V1.1.1:修改技能 平安 增加技能 倒置 修复成就 (2019.12.14)
+V1.1.2:增加2条成就 (2019.12.14)
+V1.1.15:开启 A.I.对战 (2020.5.9)
+V1.1.18:最终版本(2020.6.2)
+`;
+  showModal(`<pre class="yellow" style="white-space:pre-wrap;">${log}</pre><br><button class="btn btn-back" id="btnLogClose">关闭</button>`);
+  document.getElementById("btnLogClose").addEventListener("click",closeModal);
+}
+
+function openAchievement(){
+  let html="";
+  for(let group in ACH_GROUP){
+    html+=`<div class="yellow" style="font-size:17px;margin-top:10px;">${group}:</div>`;
+    ACH_GROUP[group].forEach(an=>{
+      const done = !!G.ach_judge[an];
+      const nameDisp = done ? `<span class="green">${an}</span>` : `<span class="red">${an.replace(/./g,"?")}</span>`;
+      html+=`<div class="ach-item">> ${nameDisp}: ${ACHIEVE_INFO[an]}</div>`;
+    });
+  }
+  html+="<br><button class='btn btn-back' id='btnAchClose'>关闭</button>";
+  showModal(html);
+  document.getElementById("btnAchClose").addEventListener("click",closeModal);
+}
+
+function openSkillInfo(){
+  let html="<div class='cyan' style='font-size:18px'>✨技能列表：</div><br>";
+  for(let k in SKILLS){
+    html+=`<div class="pink">${k}：${SKILLS[k]}</div><br>`;
+  }
+  html+="<button class='btn btn-back' id='btnSkillInfoClose'>关闭</button>";
+  showModal(html);
+  document.getElementById("btnSkillInfoClose").addEventListener("click",closeModal);
+}
+
+function openSaveLoad(){
+  showModal(`
+  <div>
+    <button class="btn btnY" id="btnDoSave">存档</button>
+    <button class="btn btnN" id="btnDoLoad">读档</button>
+    <button class="btn btn-back" id="btnSlBack">返回</button>
+  </div>`);
+  document.getElementById("btnDoSave").addEventListener("click",()=>{saveGame();closeModal();});
+  document.getElementById("btnDoLoad").addEventListener("click",()=>{loadGame();closeModal();});
+  document.getElementById("btnSlBack").addEventListener("click",closeModal);
+}
+
+// ----【修复命名弹窗，完全不用内联onclick】----
+function startGame(mode){
+  closeModal();
+  G.gameMode = mode;
+  showModal(`<div>输入你的君王姓名（不含空格）:<br><input id="inpName"><br>
+  <button class="btn btnY" id="btnConfirmStart">确认开始</button>
+  <button class="btn btn-back" id="btnCancelStart">取消</button>
+  </div>`);
+  const confirmBtn = document.getElementById("btnConfirmStart");
+  const cancelBtn = document.getElementById("btnCancelStart");
+  confirmBtn.addEventListener("click",function(){
+    let name = document.getElementById("inpName").value.trim();
+    if(!name) return;
+    if(name==="紫陰花"){
+      G.ach_judge["名字问题"]=true;
+      achieve("名字问题");
+      return;
+    }
+    closeModal();
+    G.playerName = name;
+    G.q=50;G.w=50;G.e=50;G.r=50;
+    G.q2=50;G.w2=50;G.e2=50;G.r2=50;
+    G.skill="无";G.skill2="无";
+    G.inver=0;G.inver2=0;
+    G.year=1;G.yearStart=1;G.j=1;
+    G.ra = rs();
+    G.sttg=false;G.bctb=0;
+    if(G.gameMode==="normal") achieve("初登王位");
+    else achieve("竞争者");
+    document.getElementById("menuScreen").classList.add("hidden");
+    document.getElementById("gameScreen").classList.remove("hidden");
+    G.screen="game";
+    renderGame();
+  });
+  cancelBtn.addEventListener("click",closeModal);
+}
+
+function renderGame(){
+  const maxRa = G.ra.length-1;
+  if(G.j<1) G.j=1;
+  if(G.j>maxRa) G.j=1;
+  const evIdx = G.ra[G.j];
+  const ev = EVENTS[evIdx];
+  document.getElementById("gName").innerText = G.playerName;
+  document.getElementById("gYear").innerText = G.year;
+  document.getElementById("gSkill").innerText = G.skill;
+  document.getElementById("invText").innerText = G.inver?"⚠️处于倒置状态":"";
+  if(G.gameMode==="ai"){
+    document.getElementById("aiExtra").innerHTML = `敌方君王:<span class="red">A.I.</span>`;
+    document.getElementById("aiInvText").innerText = G.inver2?"⚠️敌方处于倒置状态":"";
+  }else{
+    document.getElementById("aiExtra").innerHTML="";
+    document.getElementById("aiInvText").innerText="";
+  }
+  function drawAttr(label,val){
+    const c = getAttrColor(val);
+    const pct = Math.max(0,Math.min(100,val));
+    return `
+    <div class="attr-row">
+      <div class="attr-label">${label}：${val}</div>
+      <div class="attr-bar"><div class="attr-fill" style="width:${pct}%;background:${c}"></div></div>
+    </div>`;
+  }
+  let attrHtml = drawAttr("宗教",G.q);
+  attrHtml += drawAttr("民众",G.w);
+  attrHtml += drawAttr("军队",G.e);
+  attrHtml += drawAttr("财富",G.r);
+  if(G.gameMode==="ai"){
+    attrHtml += `<div class="red" style="margin-top:10px;">——敌方A.I.属性——</div>`;
+    attrHtml += drawAttr("宗教",G.q2);
+    attrHtml += drawAttr("民众",G.w2);
+    attrHtml += drawAttr("军队",G.e2);
+    attrHtml += drawAttr("财富",G.r2);
+  }
+  document.getElementById("attrWrap").innerHTML = attrHtml;
+  document.getElementById("eventText").innerText = ev.a;
+  function showDelta(base,inv){
+    const d = inversion(inv,base);
+    return d>0 ? `<span class="green">增加${d}</span>` : d<0 ? `<span class="red">减少${-d}</span>` : "无";
+  }
+  let yText = `✅Y选择： 宗教:${showDelta(ev.a1,G.inver)}｜民众:${showDelta(ev.a2,G.inver)}｜军队:${showDelta(ev.a3,G.inver)}｜财富:${showDelta(ev.a4,G.inver)}`;
+  if(ev.b) yText += ` <br>🎁可得技能：<span class="cyan">${ev.b}</span>`;
+  document.getElementById("optY").innerHTML = yText;
+  let nText = `❌N选择： 宗教:${showDelta(ev.b1,G.inver)}｜民众:${showDelta(ev.b2,G.inver)}｜军队:${showDelta(ev.b3,G.inver)}｜财富:${showDelta(ev.b4,G.inver)}`;
+  if(ev.c) nText += ` <br>🎁可得技能：<span class="cyan">${ev.c}</span>`;
+  document.getElementById("optN").innerHTML = nText;
+  const btnSkill = document.getElementById("btnSkill");
+  if(G.skill!=="无"){
+    btnSkill.classList.remove("hidden");
+    document.getElementById("optS").innerHTML = `✨技能效果：<span class="cyan">${SKILLS[G.skill]}</span>`;
+  }else{
+    btnSkill.classList.add("hidden");
+    document.getElementById("optS").innerHTML = "";
+  }
+  const die1 = (G.q<=0||G.q>=100||G.w<=0||G.w>=100||G.e<=0||G.e>=100||G.r<=0||G.r>=100);
+  let die2=false;
+  if(G.gameMode==="ai") die2 = (G.q2<=0||G.q2>=100||G.w2<=0||G.w2>=100||G.e2<=0||G.e2>=100||G.r2<=0||G.r2>=100);
+  if(G.gameMode==="normal" && die1){gameOverNormal();return;}
+  if(G.gameMode==="ai"){
+    if(die1 && die2){ gameOverAi(2); return; }
+    if(die1){ gameOverAi(0); return; }
+    if(die2){ gameOverAi(1); return; }
+  }
+  if(G.gameMode==="normal" && (G.year - G.yearStart +1)===100) achieve("百寿");
+  if(G.gameMode==="ai" && (G.year - G.yearStart+1)===30) achieve("常年争执");
+}
+
+function playerChoose(ch){
+  const evIdx = G.ra[G.j];
+  const ev = EVENTS[evIdx];
+  if(ch==="Y"){
+    G.q += inversion(G.inver, ev.a1);
+    G.w += inversion(G.inver, ev.a2);
+    G.e += inversion(G.inver, ev.a3);
+    G.r += inversion(G.inver, ev.a4);
+    if(ev.b) G.skill = ev.b;
+    doAiTurn(1);
+    nextTurn();
+  }else if(ch==="N"){
+    G.q += inversion(G.inver, ev.b1);
+    G.w += inversion(G.inver, ev.b2);
+    G.e += inversion(G.inver, ev.b3);
+    G.r += inversion(G.inver, ev.b4);
+    if(ev.c) G.skill = ev.c;
+    doAiTurn(2);
+    nextTurn();
+  }else if(ch==="S"){
+    if(G.skill==="平安"){
+      showModal(`<div style="text-align:center">请点击选择重置哪一项属性：
+      <div><button class="btn btnY" id="sel1">1｜宗教</button></div>
+      <div><button class="btn btnY" id="sel2">2｜民众</button></div>
+      <div><button class="btn btnY" id="sel3">3｜军队</button></div>
+      <div><button class="btn btnY" id="sel4">4｜财富</button></div>
+      </div>`);
+      document.getElementById("sel1").addEventListener("click",()=>{useSkill平安(1);});
+      document.getElementById("sel2").addEventListener("click",()=>{useSkill平安(2);});
+      document.getElementById("sel3").addEventListener("click",()=>{useSkill平安(3);});
+      document.getElementById("sel4").addEventListener("click",()=>{useSkill平安(4);});
+      return;
+    }
+    if(G.skill==="倒置"){
+      G.inver = 1 - G.inver;
+      G.skill="无";
+      renderGame();
+      return;
+    }
+    // =========【修复逃避：复刻原版C++逻辑】=========
+    if(G.skill === "逃避"){
+      G.skill = "无";
+      //原版逻辑 year-- j--，再执行nextTurn()做year++ j++ → 净效果year+1,j+1，切换下一个事件
+      G.year--;
+      G.j--;
+      //AI对战：玩家逃避，AI本回合不执行行动
+      nextTurn();
+      return;
+    }
+  }
+}
+
+function useSkill平安(sel){
+  closeModal();
+  if(sel===1)G.q=50;
+  if(sel===2)G.w=50;
+  if(sel===3)G.e=50;
+  if(sel===4)G.r=50;
+  G.skill="无";
+  renderGame();
+}
+
+function doAiTurn(playerSel){
+  if(G.gameMode!=="ai") return;
+  const evIdx = G.ra[G.j];
+  const ev = EVENTS[evIdx];
+  if(!G.sttg && !(G.q===G.q2&&G.w===G.w2&&G.e===G.e2&&G.r===G.r2)) G.sttg=true;
+  else if(G.sttg && G.q===G.q2&&G.w===G.w2&&G.e===G.e2&&G.r===G.r2){
+    achieve("殊途同归"); G.sttg=false;
+  }
+  function calcAiY(){
+    return {q: G.q2 + inversion(G.inver2, ev.a1),w: G.w2 + inversion(G.inver2, ev.a2),e: G.e2 + inversion(G.inver2, ev.a3),r: G.r2 + inversion(G.inver2, ev.a4)};
+  }
+  function calcAiN(){
+    return {q: G.q2 + inversion(G.inver2, ev.b1),w: G.w2 + inversion(G.inver2, ev.b2),e: G.e2 + inversion(G.inver2, ev.b3),r: G.r2 + inversion(G.inver2, ev.b4)};
+  }
+  const ay = calcAiY(); const an = calcAiN();
+  function isSafe(o){ return !(o.q<=0||o.q>=100||o.w<=0||o.w>=100||o.e<=0||o.e>=100||o.r<=0||o.r>=100); }
+  function maxAbsDev(o){ return Math.max(Math.abs(o.q-50),Math.abs(o.w-50),Math.abs(o.e-50),Math.abs(o.r-50)); }
+  const s1 = isSafe(ay); const s2 = isSafe(an);
+  let aiChoose;
+  if(s1 && s2){
+    if(ev.b){ aiChoose = randInt(1,2); }
+    else{
+      const m1 = maxAbsDev(ay); const m2 = maxAbsDev(an);
+      if(m1>m2) aiChoose=2;
+      else if(m1<m2) aiChoose=1;
+      else aiChoose = randInt(1,2);
+    }
+  }else if(s1 && !s2){ aiChoose=1; }
+  else if(!s1 && s2){ aiChoose=2; }
+  else{ aiChoose=randInt(1,2); }
+  if(aiChoose===1){
+    G.q2 += inversion(G.inver2, ev.a1);G.w2 += inversion(G.inver2, ev.a2);
+    G.e2 += inversion(G.inver2, ev.a3);G.r2 += inversion(G.inver2, ev.a4);
+    if(ev.b) G.skill2 = ev.b;
+  }else{
+    G.q2 += inversion(G.inver2, ev.b1);G.w2 += inversion(G.inver2, ev.b2);
+    G.e2 += inversion(G.inver2, ev.b3);G.r2 += inversion(G.inver2, ev.b4);
+    if(ev.c) G.skill2 = ev.c;
+  }
+  if(playerSel===aiChoose) G.bctb++; else G.bctb=0;
+  if(G.bctb>=5) achieve("保持同步");
+}
+
+function nextTurn(){
+  G.year++; G.j++;
+  const SIZe=17;
+  if(G.j >= SIZe*2+1){
+    G.ra = rs();
+    G.j=1;
+  }
+  renderGame();
+}
+
+function gameOverNormal(){
+  G.gq.push({start:G.yearStart, end:G.year, name:G.playerName});
+  let cnt=0;
+  if(G.q<=0||G.q>=100)cnt++;
+  if(G.w<=0||G.w>=100)cnt++;
+  if(G.e<=0||G.e>=100)cnt++;
+  if(G.r<=0||G.r>=100)cnt++;
+  if(cnt>=2) achieve("多重加害");
+  showModal(`
+    <div class="red" style="font-size:18px;text-align:center;">对你感到不满的臣民们一拥而上，杀死了你</div>
+    <div style="text-align:center;margin:10px 0;">你统治了 ${G.year-G.yearStart+1} 年</div>
+    <br>
+    <div style="text-align:center"><button class="btn btn-back" id="btnOverBack">返回主菜单</button></div>
+  `);
+  document.getElementById("btnOverBack").addEventListener("click",backToMenu);
+  if(G.auto_file) saveGame();
+}
+
+function gameOverAi(res){
+  G.gq2.push({start:G.yearStart, end:G.year, name:G.playerName, w:res});
+  let msg="";
+  if(res===0){
+    msg=`<div class="red" style="text-align:center;font-size:18px">对你感到不满的臣民们一拥而上，杀死了你<br>您先死亡，游戏失败</div>`;
+  }else if(res===1){
+    msg=`<div style="text-align:center;font-size:18px"><div class="red">敌方的统治失败，君王被杀</div><div class="green">敌方死亡，游戏胜利</div></div>`;
+  }else{
+    achieve("两败俱伤");
+    msg=`<div class="yellow" style="text-align:center;font-size:18px">双方君王同时被杀<br>同时死亡，游戏平局</div>`;
+  }
+  showModal(`${msg}<br><div style="text-align:center"><button class="btn btn-back" id="btnAiOverBack">返回主菜单</button></div>`);
+  document.getElementById("btnAiOverBack").addEventListener("click",backToMenu);
+  if(G.auto_file) saveGame();
+}
+
+function backToMenu(){
+  closeModal();
+  document.getElementById("gameScreen").classList.add("hidden");
+  document.getElementById("menuScreen").classList.remove("hidden");
+  G.screen="menu";
+  refreshMenu();
+}
+
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="\\" && G.screen==="menu"){
+    G.ach_judge["隐藏地域"]=true;
+    achieve("隐藏地域");
+  }
+});
+
+refreshMenu();
+</script>
+</body>
+</html>

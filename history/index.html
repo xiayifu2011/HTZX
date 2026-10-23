@@ -1,0 +1,2576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中考人生模拟器 · 天行健</title>
+  <style>
+    :root {
+      --bg: #0d0a1a;
+      --panel: #1a1330;
+      --panel2: #241a45;
+      --line: #3d2f6b;
+      --txt: #ece8ff;
+      --dim: #a99fd4;
+      --gold: #d9b3ff;
+      --green: #7ee0c0;
+      --red: #ff7aa2;
+      --blue: #b388ff;
+      --purple: #c9a7ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: radial-gradient(1200px 800px at 20% 0%, #221748, #0d0a1a 60%);
+      color: var(--txt);
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      padding: 16px
+    }
+
+    .screen {
+      max-width: 960px;
+      margin: 0 auto
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 4px;
+      text-align: center;
+      color: var(--gold);
+      text-shadow: 0 0 24px rgba(217, 179, 255, .45);
+      animation: titleGlow 3s ease-in-out infinite alternate
+    }
+
+    @keyframes titleGlow {
+      from {
+        text-shadow: 0 0 24px rgba(217, 179, 255, .45)
+      }
+
+      to {
+        text-shadow: 0 0 40px rgba(217, 179, 255, .8)
+      }
+    }
+
+    .sub {
+      text-align: center;
+      color: var(--dim);
+      margin: 8px 0 24px
+    }
+
+    .btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #4a3a8a, #2a1f55);
+      border: 1px solid var(--line);
+      color: var(--txt);
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: box-shadow .2s ease, border-color .2s ease, filter .2s ease, background .2s ease;
+      margin: 6px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(217, 179, 255, .2), transparent);
+      transition: left .4s ease
+    }
+
+    .btn:not(:disabled):hover::before {
+      left: 100%
+    }
+
+    /* 悬停“放大”改由 ::after 伪元素承担，父元素几何尺寸不变，
+       鼠标停在按钮边缘时不会再出现反复进出 hover 的抽搐 */
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      box-shadow: 0 0 0 0 rgba(179, 136, 255, 0);
+      transition: box-shadow .22s ease
+    }
+
+    .btn:not(:disabled):hover::after {
+      box-shadow: 0 0 0 2px rgba(179, 136, 255, .5), 0 8px 22px rgba(179, 136, 255, .32)
+    }
+
+    .btn:not(:disabled):hover {
+      filter: brightness(1.14);
+      border-color: var(--purple)
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #b388ff, #7c4dff);
+      border: none;
+      font-weight: bold
+    }
+
+    .btn.green {
+      background: linear-gradient(135deg, #7ee0c0, #3aa88a);
+      border: none
+    }
+
+    .btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      filter: none
+    }
+
+    /* 未解锁 / 买不起的选项：不发光、不流光、不放大 */
+    .btn:disabled::before,
+    .btn:disabled::after {
+      display: none
+    }
+
+    .btn:disabled:hover {
+      filter: none;
+      border-color: var(--line);
+      box-shadow: none
+    }
+
+    .btn:disabled.primary,
+    .btn:disabled.green {
+      filter: grayscale(.7)
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 12px 0;
+      animation: fadeInUp .4s ease both
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .slots {
+      display: grid;
+      gap: 14px
+    }
+
+    .slot {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      transition: all .2s ease
+    }
+
+    .slot:hover {
+      border-color: var(--purple);
+      box-shadow: 0 4px 16px rgba(179, 136, 255, .2)
+    }
+
+    .slot .info {
+      font-size: .9rem;
+      color: var(--dim);
+      line-height: 1.7
+    }
+
+    .slot .info b {
+      color: var(--txt);
+      font-size: 1.05rem
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    #hud {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 14px
+    }
+
+    @media(max-width:760px) {
+      #hud {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .stat {
+      margin: 6px 0;
+      font-size: .9rem
+    }
+
+    .stat .bar {
+      height: 8px;
+      background: #11152e;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 3px
+    }
+
+    .stat .bar i {
+      display: block;
+      height: 100%;
+      border-radius: 4px;
+      transition: width .6s cubic-bezier(.4, 0, .2, 1)
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: .78rem;
+      margin: 2px;
+      border: 1px solid var(--line);
+      transition: all .2s ease;
+      cursor: pointer
+    }
+
+    .badge:hover {
+      box-shadow: 0 0 12px rgba(179, 136, 255, .5);
+      border-color: var(--purple);
+      filter: brightness(1.2)
+    }
+
+    .c1 {
+      color: #a99fd4
+    }
+
+    .c2 {
+      color: #7ee0c0
+    }
+
+    .c3 {
+      color: #b388ff
+    }
+
+    .c4 {
+      color: #c9a7ff
+    }
+
+    .c5 {
+      color: #ffb4d1
+    }
+
+    .c6 {
+      color: #d9b3ff;
+      text-shadow: 0 0 8px rgba(217, 179, 255, .6)
+    }
+
+    .c7 {
+      color: #ffb86b;
+      text-shadow: 0 0 10px rgba(255, 184, 107, .7)
+    }
+
+    .log {
+      height: 300px;
+      overflow-y: auto;
+      background: #0b0818;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: .92rem;
+      line-height: 1.9
+    }
+
+    .log .week-head {
+      color: var(--gold);
+      font-weight: bold;
+      border-top: 1px dashed var(--line);
+      padding-top: 6px;
+      margin-top: 6px;
+      animation: fadeInUp .5s ease both
+    }
+
+    .log .good {
+      color: var(--green)
+    }
+
+    .log .bad {
+      color: var(--red)
+    }
+
+    .log .sys {
+      color: var(--blue)
+    }
+
+    .log .talent {
+      color: var(--purple)
+    }
+
+    .log .exam {
+      color: var(--gold)
+    }
+
+    .log .ach {
+      color: #ffb86b;
+      font-weight: bold
+    }
+
+    .log>div {
+      animation: fadeInUp .3s ease both
+    }
+
+    .opts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px
+    }
+
+    .opts .btn {
+      text-align: left
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 3, 15, .8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      animation: maskIn .25s ease
+    }
+
+    @keyframes maskIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--purple);
+      border-radius: 16px;
+      max-width: 520px;
+      width: 92%;
+      padding: 24px;
+      box-shadow: 0 0 60px rgba(179, 136, 255, .25);
+      max-height: 86vh;
+      overflow-y: auto;
+      animation: pop .3s ease;
+      position: relative
+    }
+
+    .modal.talent-modal {
+      max-width: 460px;
+      padding: 18px 20px
+    }
+
+    .modal.talent-modal .body {
+      font-size: .85rem;
+      line-height: 1.6
+    }
+
+    .talent-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--line)
+    }
+
+    .talent-header .talent-name {
+      font-size: 1.05rem;
+      font-weight: bold;
+      letter-spacing: .5px
+    }
+
+    .talent-header .talent-lv {
+      font-size: .72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid currentColor
+    }
+
+    .talent-poem {
+      font-style: italic;
+      color: var(--dim);
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: .78rem;
+      line-height: 1.5
+    }
+
+    .talent-section {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 5px 9px;
+      margin-bottom: 5px
+    }
+
+    .talent-section .label {
+      font-size: .68rem;
+      color: var(--dim);
+      margin-bottom: 1px;
+      letter-spacing: .5px
+    }
+
+    .talent-section .value {
+      font-size: .78rem;
+      color: var(--txt);
+      line-height: 1.4
+    }
+
+    .talent-section.inc .value {
+      color: var(--red);
+      font-size: .72rem
+    }
+
+    .talent-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 5px
+    }
+
+    .talent-row .talent-section {
+      margin-bottom: 0
+    }
+
+    .modal .close-x {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--dim);
+      transition: all .2s ease;
+      line-height: 1;
+      user-select: none
+    }
+
+    .modal .close-x:hover {
+      color: var(--red);
+      transform: scale(1.2)
+    }
+
+    @keyframes pop {
+      from {
+        transform: scale(.85);
+        opacity: 0
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1
+      }
+    }
+
+    .modal h2 {
+      color: var(--purple);
+      margin-bottom: 10px;
+      font-size: 1.15rem;
+      padding-right: 30px
+    }
+
+    .modal .body {
+      line-height: 1.8;
+      color: var(--txt);
+      white-space: pre-wrap;
+      font-size: .92rem
+    }
+
+    .tag-title {
+      font-size: .85rem;
+      color: var(--dim)
+    }
+
+    .endcard {
+      text-align: center;
+      padding: 20px
+    }
+
+    .endcard .big {
+      font-size: 2.2rem;
+      margin: 14px 0;
+      animation: bigPop .6s cubic-bezier(.34, 1.56, .64, 1)
+    }
+
+    @keyframes bigPop {
+      from {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0
+      }
+
+      to {
+        transform: scale(1) rotate(0);
+        opacity: 1
+      }
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #b388ff, #7c4dff);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      z-index: 99;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+      animation: toastIn .4s cubic-bezier(.34, 1.56, .64, 1)
+    }
+
+    @keyframes toastIn {
+      from {
+        transform: translateX(-50%) scale(.6);
+        opacity: 0
+      }
+
+      to {
+        transform: translateX(-50%) scale(1);
+        opacity: 1
+      }
+    }
+
+    .achlist {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px
+    }
+
+    .achitem {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: .85rem;
+      transition: all .2s ease
+    }
+
+    .achitem:hover {
+      border-color: var(--purple)
+    }
+
+    .achitem.lock {
+      opacity: .35;
+      filter: grayscale(1)
+    }
+
+    header.topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px
+    }
+
+    .weekpill {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: .9rem
+    }
+
+    .weekpill b {
+      color: var(--gold)
+    }
+
+    .optbtn {
+      color: #ffffff !important
+    }
+
+    .optbtn b {
+      color: #ffffff;
+      font-weight: 600
+    }
+
+    .optbtn small {
+      color: #c8d0f0 !important;
+      font-size: .8rem
+    }
+
+    .optbtn:disabled {
+      opacity: .45
+    }
+
+    .optbtn:disabled b {
+      color: #9aa3c7
+    }
+
+    .floatgain {
+      position: fixed;
+      left: 50%;
+      top: 55%;
+      transform: translateX(-50%);
+      font-weight: bold;
+      font-size: 1.05rem;
+      pointer-events: none;
+      z-index: 120;
+      animation: floatup 1.6s ease-out forwards;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, .6)
+    }
+
+    @keyframes floatup {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 10px) scale(.7)
+      }
+
+      15% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1.15)
+      }
+
+      30% {
+        transform: translate(-50%, -6px) scale(1)
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -90px)
+      }
+    }
+
+    .subjrow {
+      display: flex;
+      justify-content: space-between;
+      font-size: .85rem;
+      margin: 3px 0
+    }
+
+    .subjrow .bar {
+      flex: 1;
+      height: 6px;
+      background: #11152e;
+      border-radius: 3px;
+      margin: 5px 8px 0;
+      overflow: hidden
+    }
+
+    .subjrow .bar i {
+      display: block;
+      height: 100%;
+      background: var(--blue);
+      transition: width .5s
+    }
+
+    .namegrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 8px;
+      margin-top: 8px
+    }
+
+    .namebtn {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      color: var(--txt);
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all .2s ease;
+      font-size: .9rem
+    }
+
+    .namebtn:hover {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 2px rgba(179, 136, 255, .35)
+    }
+
+    .namebtn.sel {
+      background: linear-gradient(135deg, #4a3a8a, #2a1f55);
+      border-color: var(--purple)
+    }
+
+    .talentgrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      margin-top: 8px
+    }
+
+    .talentitem {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      font-size: .75rem;
+      transition: all .25s ease
+    }
+
+    .talentitem:hover {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 2px rgba(179, 136, 255, .3), 0 4px 14px rgba(179, 136, 255, .2)
+    }
+
+    .talentitem.lock {
+      opacity: .35;
+      filter: grayscale(1)
+    }
+
+    .talentitem b {
+      color: var(--gold)
+    }
+
+    .premium-bg {
+      background:
+        radial-gradient(circle at 15% 20%, rgba(179, 136, 255, .12), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(217, 179, 255, .1), transparent 40%),
+        var(--panel)
+    }
+
+    .ink-decoration {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle at 100% 0%, rgba(179, 136, 255, .15), transparent 70%);
+      pointer-events: none;
+      border-radius: 0 16px 0 100%
+    }
+
+    .badge.c6 {
+      animation: goldPulse 2s ease-in-out infinite
+    }
+
+    .badge.c7 {
+      background: linear-gradient(90deg, #ffd166, #ff9f1c, #ffd166);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbowFlow 3s linear infinite, goldPulse 2s ease-in-out infinite
+    }
+
+    @keyframes goldPulse {
+
+      0%,
+      100% {
+        text-shadow: 0 0 6px rgba(217, 179, 255, .5)
+      }
+
+      50% {
+        text-shadow: 0 0 16px rgba(217, 179, 255, .9), 0 0 24px rgba(255, 209, 102, .5)
+      }
+    }
+
+    @keyframes rainbowFlow {
+      0% {
+        background-position: 0% 50%
+      }
+
+      100% {
+        background-position: 200% 50%
+      }
+    }
+
+    .talentitem.c6 {
+      border-color: var(--gold);
+      box-shadow: 0 0 12px rgba(217, 179, 255, .3)
+    }
+
+    .talentitem.c7 {
+      border-color: var(--gold);
+      box-shadow: 0 0 18px rgba(255, 209, 102, .5), inset 0 0 12px rgba(217, 179, 255, .1)
+    }
+
+    .toast.ach-toast {
+      background: linear-gradient(135deg, #ffd166, #ff9f1c, #ffd166);
+      background-size: 200% 100%;
+      animation: toastIn .4s cubic-bezier(.34, 1.56, .64, 1), rainbowFlow 2s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 209, 102, .6)
+    }
+
+    /* ============================================================
+     * 主题皮肤层（学校特色 / 背景图 / 校徽）
+     * 只改 GAME_CONFIG.theme 即可换皮，无需改这里的样式
+     * ============================================================ */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image: var(--bg-image, none);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: var(--bg-opacity, 0);
+      transition: opacity .6s ease
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(1200px 800px at 50% 0%, transparent, var(--bg-overlay, rgba(13, 10, 26, .78)) 70%)
+    }
+
+    .school-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 6px
+    }
+
+    .school-brand img {
+      height: 38px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(179, 136, 255, .5))
+    }
+
+    .school-brand .school-motto {
+      font-size: .8rem;
+      color: var(--dim);
+      letter-spacing: 2px
+    }
+
+    /* 弹窗统一徽章：让玩家一眼知道这是哪种弹窗 */
+    .pop-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: .68rem;
+      font-weight: normal;
+      vertical-align: middle;
+      border: 1px solid var(--line);
+      color: var(--dim);
+      background: var(--panel2)
+    }
+
+    .pop-badge.k-event {
+      color: var(--gold);
+      border-color: var(--gold)
+    }
+
+    .pop-badge.k-fixed {
+      color: var(--blue);
+      border-color: var(--blue)
+    }
+
+    .pop-badge.k-free {
+      color: var(--green);
+      border-color: var(--green)
+    }
+
+    .pop-badge.k-ending {
+      color: #ffb86b;
+      border-color: #ffb86b
+    }
+
+    /* 弹窗配图（事件 / 书目 / 结局都可挂图） */
+    .popup-media {
+      margin: -4px 0 12px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      line-height: 0
+    }
+
+    .popup-media img {
+      width: 100%;
+      max-height: 180px;
+      object-fit: cover;
+      display: block
+    }
+
+    .modal.k-event {
+      border-color: var(--gold)
+    }
+
+    .modal.k-fixed {
+      border-color: var(--blue)
+    }
+
+    .modal.k-ending {
+      border-color: #ffb86b
+    }
+
+    /* 本周事件进度条 */
+    .evpill {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: .85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .evpill b {
+      color: var(--gold)
+    }
+
+    .evpill .dots {
+      display: inline-flex;
+      gap: 4px
+    }
+
+    .evpill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #2a2148;
+      border: 1px solid var(--line)
+    }
+
+    .evpill .dot.on {
+      background: var(--gold);
+      box-shadow: 0 0 6px rgba(217, 179, 255, .8)
+    }
+
+    .btn.busy-lock {
+      opacity: .35;
+      cursor: not-allowed
+    }
+  </style>
+</head>
+
+<body>
+  <div id="startScreen" class="screen">
+    <div class="school-brand" id="schoolBrand"></div>
+    <h1>中考人生模拟器</h1>
+    <p class="sub" id="subMotto">天行健,君子以自强不息 —— 初中三年,你的每个选择都在塑造你</p>
+    <div class="card premium-bg" style="position:relative;overflow:hidden">
+      <div class="ink-decoration"></div>
+      <div class="tag-title">存档槽位</div>
+      <div class="slots" id="slotList"></div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="tag-title" style="margin-bottom:8px">游戏说明</div>
+      <p style="color:var(--dim);font-size:.9rem;line-height:2">
+        你将经历初一至初三共 <b style="color:var(--gold)">144 周</b>,直至中考。<br>
+        <b style="color:var(--purple)">天赋不会在一开始赠送</b> —— 它们藏在一次次选择里。<br>
+        每周先选一项行动,随后可能出现若干 <b style="color:var(--gold)">⚡ 事件弹窗</b>(一次只弹一个,处理完才弹下一个)。<br>
+        <b style="color:var(--green)">🎒 小卖铺 / 读书角 / 天赋图鉴 / 成就</b> 属于自由操作,<b>不消耗本周行动额度</b>。<br>
+        达成条件可解锁成就。中考之后,迎来你的结局。
+      </p>
+    </div>
+  </div>
+
+  <div id="gameScreen" class="screen hidden">
+    <header class="topline">
+      <div class="weekpill"><b id="hudGrade">初一</b> · 第 <b id="hudWeek">0</b> 周 · <span id="hudTerm"></span></div>
+      <div class="evpill" id="evPill">⚡ 本周事件
+        <span class="dots" id="evDots"></span>
+        <span style="color:var(--dim);font-size:.78rem">(消耗行动额度)</span>
+      </div>
+      <div>
+        <button class="btn" id="btnShop" onclick="openShop()">🏪 小卖铺</button>
+        <button class="btn" id="btnTalentBook" onclick="openTalentBook()">📖 天赋图鉴</button>
+        <button class="btn" id="btnAch" onclick="openAch()">🏆 成就</button>
+        <button class="btn" onclick="saveGame(true)">💾 保存</button>
+        <button class="btn" onclick="toStart()">🏠 主菜单</button>
+      </div>
+    </header>
+    <div id="hud">
+      <div>
+        <div class="card" id="statPanel"></div>
+        <div class="card">
+          <div class="tag-title">天赋(<span id="talentCount">0</span>) <span
+              style="color:var(--dim);font-size:.75rem">点击查看详情</span></div>
+          <div id="talentPanel" style="margin-top:8px;line-height:2"></div>
+        </div>
+        <div class="card">
+          <div class="tag-title">道具(<span id="itemCount">0</span>)</div>
+          <div id="itemPanel" style="margin-top:8px;line-height:2"></div>
+        </div>
+        <div class="card">
+          <div class="tag-title">各科(本年级)</div>
+          <div id="subjPanel" style="margin-top:6px"></div>
+        </div>
+        <div class="card">
+          <div class="tag-title">成绩</div>
+          <div style="margin-top:6px;line-height:2;font-size:.9rem">
+            综合学力:<b id="scoreNow" style="color:var(--gold)">0</b><br>
+            最近考试:<b id="lastExam" style="color:var(--blue)">—</b><br>
+            年级排名(估):<b id="rankNow" style="color:var(--green)">—</b>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="log" id="log"></div>
+        <div class="opts" id="actionPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalMask" class="modal-mask hidden">
+    <div class="modal" id="modalBox">
+      <span class="close-x" id="modalCloseX" onclick="closeModal()" style="display:none">×</span>
+      <h2><span id="modalTitle"></span><span class="pop-badge" id="modalBadge" style="display:none"></span></h2>
+      <div class="popup-media" id="modalMedia" style="display:none"></div>
+      <div class="body" id="modalBody"></div>
+      <div id="modalOpts" style="margin-top:14px;text-align:center"></div>
+    </div>
+  </div>
+  <div id="toastBox"></div>
+
+  <script>
+    /* ==================================================================
+     * 全局配置 —— 学校特色与玩法参数都在这里，改这里不用碰逻辑代码
+     * ================================================================== */
+    const GAME_CONFIG = {
+      school: {name: "XX 中学", motto: "天行健，君子以自强不息"},
+
+      // 每周触发多少个随机事件，按学期 0~5 排列（初一上→初三下）
+      // 数字越大越热闹，但一局时长也越长
+      eventQuotaByTerm: [3, 3, 2, 2, 1, 1],
+      maxEventPerWeek: 3,
+
+      // 事件结果的展示方式
+      //   "popup" = 弹窗完整展示（推荐，看得清）
+      //   "log"   = 直接写进右侧日志，不弹窗（一局能快一倍）
+      eventResultMode: "popup",
+
+      // 难度：
+      //   "story"  展示/剧情模式 —— 健康与心态有保底，几乎不会中途暴毙（全校展示推荐）
+      //   "normal" 标准模式 —— 原版判定，玩脱了真的会「积劳成疾」「心理崩溃」
+      //   "hard"   硬核模式 —— 更容易被压力和经济拖垮
+      difficulty: "story",
+      storyFloor: 15,   // story 模式下 健康 / 心态 的最低保底线
+
+      // 主题皮肤：把图片放进 assets/ 文件夹后，在这里填路径即可
+      theme: {
+        bgImage: "",      // 背景图，例如 "assets/bg.jpg"
+        bgOpacity: 0.30,  // 背景图不透明度 0~1
+        logo: "",         // 校徽，例如 "assets/logo.png"
+        accent: ""        // 主题色，例如 "#b388ff"
+      }
+    };
+
+    function applyTheme() {
+      const t = GAME_CONFIG.theme || {}, root = document.documentElement;
+      if (t.bgImage) {
+        root.style.setProperty("--bg-image", `url("${t.bgImage}")`);
+        root.style.setProperty("--bg-opacity", String(t.bgOpacity == null ? .3 : t.bgOpacity));
+      }
+      if (t.accent) {root.style.setProperty("--purple", t.accent); root.style.setProperty("--gold", t.accent);}
+      const brand = document.getElementById("schoolBrand");
+      if (brand) brand.innerHTML =
+        (t.logo ? `<img src="${t.logo}" alt="校徽" onerror="this.style.display='none'">` : "") +
+        `<span class="school-motto">${GAME_CONFIG.school.name}</span>`;
+      const sub = document.getElementById("subMotto");
+      if (sub) sub.textContent = `${GAME_CONFIG.school.motto} —— 初中三年，你的每个选择都在塑造你`;
+    }
+
+    /* ==================================================================
+     * 天赋表
+     * ================================================================== */
+    const TALENTS = {
+      "道心如铁": {lv: 5, inc: ["豪", "玻璃心", "内耗者", "多动症"], desc: "心态锁定 130 以上,心如止水", hint: "在一次次坚持与忍耐中炼成", poem: "千磨万击还坚劲，任尔东西南北风。"},
+      "天行健": {lv: 6, inc: ["玻璃心", "内耗者", "多动症", "体弱多病", "学习特困生", "迟钝"], desc: "健康/效率锁定 130 以上,全面加强", hint: "传说中集大成者的境界", poem: "天行健，君子以自强不息。"},
+      "高冷": {lv: 2, inc: ["社交牛逼症", "热情", "豪"], desc: "社交事件概率下降,心态微升", hint: "习惯独处的人会懂", poem: "独坐幽篁里，弹琴复长啸。"},
+      "社交牛逼症": {lv: 4, inc: ["高冷", "社恐"], desc: "社交锁定 130 以上", hint: "在人群中如鱼得水的证明", poem: "谈笑有鸿儒，往来无白丁。"},
+      "不吃压力": {lv: 3, inc: ["玻璃心", "暴躁"], desc: "压力稳定在 50 附近", hint: "学会和压力共处", poem: "竹杖芒鞋轻胜马，谁怕？"},
+      "玻璃心": {lv: 2, inc: ["道心如铁", "不吃压力", "心态大师"], desc: "压力容易暴涨", hint: "敏感也是一种天赋?", poem: "感时花溅泪，恨别鸟惊心。"},
+      "内耗者": {lv: 2, inc: ["天行健", "道心如铁", "心态大师"], desc: "心态每周额外下降", hint: "想太多的人", poem: "抽刀断水水更流，举杯消愁愁更愁。"},
+      "大胃袋": {lv: 3, inc: ["偏食"], desc: "健康上升,经济消耗变大", hint: "干饭人的尊严", poem: "日啖荔枝三百颗，不辞长作岭南人。"},
+      "体弱多病": {lv: 3, inc: ["天行健", "钢筋铁骨"], desc: "健康容易下降", hint: "病弱的身体", poem: "万里悲秋常作客，百年多病独登台。"},
+      "家财万贯": {lv: 5, inc: ["家徒四壁", "小康之家", "书香门第"], desc: "每周经济 +150，开局经济充裕", hint: "含着金汤匙", poem: "五花马，千金裘，呼儿将出换美酒。"},
+      "家徒四壁": {lv: 3, inc: ["家财万贯", "小康之家", "书香门第"], desc: "经济每周额外下降，但心态更坚韧", hint: "贫寒的家境", poem: "环堵萧然，不蔽风日。"},
+      "小康之家": {lv: 2, inc: ["家财万贯", "家徒四壁"], desc: "每周经济 +40，心态稳定", hint: "不富不穷，刚刚好", poem: "采菊东篱下，悠然见南山。"},
+      "书香门第": {lv: 4, inc: ["家徒四壁", "商人家庭", "艺术世家"], desc: "悟性每周 +2，语文/历史学习 +15%", hint: "家里三面墙都是书", poem: "腹有诗书气自华。"},
+      "官宦世家": {lv: 5, inc: ["家徒四壁", "商人家庭"], desc: "社交 +10/周，贵人相助概率提升", hint: "父辈人脉广阔", poem: "谈笑间，樯橹灰飞烟灭。"},
+      "单亲家庭": {lv: 2, inc: ["家财万贯", "小康之家"], desc: "心态每周 -3，但独立性增强（效率 +5）", hint: "早早学会了照顾自己", poem: "慈母手中线，游子身上衣。"},
+      "留守少年": {lv: 2, inc: ["家财万贯", "小康之家"], desc: "社交 -5/周，但自律 +5", hint: "父母在外，自己长大", poem: "独在异乡为异客，每逢佳节倍思亲。"},
+      "教师子女": {lv: 4, inc: ["家徒四壁", "书香门第"], desc: "学习结算 +10%，考试 +5%", hint: "家里最不缺的就是辅导", poem: "师者，所以传道受业解惑也。"},
+      "商人家庭": {lv: 3, inc: ["书香门第", "官宦世家"], desc: "经济收益 +30%，社交 +5/周", hint: "耳濡目染的生意经", poem: "天下熙熙，皆为利来。"},
+      "艺术世家": {lv: 3, inc: ["书香门第"], desc: "语文/英语 +10%，心态 +3/周", hint: "琴棋书画，样样沾边", poem: "此曲只应天上有，人间能得几回闻。"},
+      "热情": {lv: 2, inc: ["高冷", "社恐"], desc: "社交能力提升", hint: "对世界的善意", poem: "四海之内皆兄弟也。"},
+      "豪": {lv: 2, inc: ["高冷", "道心如铁", "社恐"], desc: "社交类事件概率上升", hint: "自豪也是一种力量", poem: "仰天大笑出门去，我辈岂是蓬蒿人。"},
+      "七窍玲珑": {lv: 5, inc: ["学习特困生", "迟钝", "厌学"], desc: "悟性快速增长", hint: "一点就透的聪明", poem: "心有灵犀一点通。"},
+      "学习特困生": {lv: 3, inc: ["七窍玲珑", "天行健", "厌学"], desc: "学习收益大幅降低", hint: "一学习就困", poem: "书到用时方恨少。"},
+      "迟钝": {lv: 3, inc: ["七窍玲珑", "天行健"], desc: "悟性增长停滞", hint: "反应慢半拍", poem: "大器晚成，大音希声。"},
+      "钢筋铁骨": {lv: 4, inc: ["体弱多病"], desc: "健康锁定 130 以上", hint: "千锤百炼的身体", poem: "千锤万凿出深山，烈火焚烧若等闲。"},
+      "多动症": {lv: 2, inc: ["道心如铁", "天行健", "自律机器"], desc: "效率大幅下降", hint: "坐不住", poem: "心猿意马，难以安定。"},
+      "过目不忘": {lv: 5, inc: ["迟钝", "学习特困生", "厌学"], desc: "学习结算 +20%", hint: "照相机般的记忆", poem: "读书破万卷，下笔如有神。"},
+      "挑灯夜读": {lv: 3, inc: ["晨型人"], desc: "学习行动效果 +15%,健康略降", hint: "深夜的台灯", poem: "三更灯火五更鸡，正是男儿读书时。"},
+      "运动健将": {lv: 4, inc: ["体弱多病"], desc: "健康每周 +8", hint: "赛场上的明星", poem: "会当凌绝顶，一览众山小。"},
+      "锦鲤附体": {lv: 5, inc: ["乌鸦嘴"], desc: "随机事件中好运概率大增", hint: "天选的好运", poem: "时来天地皆同力。"},
+      "乌鸦嘴": {lv: 2, inc: ["锦鲤附体"], desc: "随机事件中坏运概率上升", hint: "说什么来什么(坏的)", poem: "祸从口出，福从心求。"},
+      "学霸光环": {lv: 5, inc: ["学习特困生", "厌学"], desc: "考试成绩 +5%", hint: "考场上自带光环", poem: "腹有诗书气自华。"},
+      "考场黑马": {lv: 4, inc: ["考试焦虑"], desc: "考试噪声偏正向", hint: "大考型选手", poem: "一鸣惊人，天下皆知。"},
+      "偏科怪才": {lv: 3, inc: [], desc: "悟性 +20,效率波动变大", hint: "一门精通,其他随缘", poem: "术业有专攻。"},
+      "自律机器": {lv: 4, inc: ["多动症", "内耗者", "拖延症", "注意力涣散"], desc: "每周效率 +5,压力 +5", hint: "精确如钟表", poem: "苟有恒，何必三更眠五更起。"},
+      "佛系少年": {lv: 2, inc: ["自律机器", "暴躁"], desc: "压力每周 -8,悟性增长变慢", hint: "都行,可以,没关系", poem: "菩提本无树，明镜亦非台。"},
+      "游戏宅": {lv: 2, inc: ["网瘾"], desc: "娱乐行动效果翻倍,学习 -15%", hint: "峡谷里的王者", poem: "偷得浮生半日闲。"},
+      "恋爱脑": {lv: 2, inc: ["高冷"], desc: "社交事件更频繁,心态大起大落", hint: "心里住了一个人", poem: "衣带渐宽终不悔，为伊消得人憔悴。"},
+      "理财达人": {lv: 4, inc: ["家徒四壁"], desc: "经济收益 +50%", hint: "小钱生大钱", poem: "积少成多，聚沙成塔。"},
+      "熬夜冠军": {lv: 3, inc: ["体弱多病", "晨型人"], desc: "效率 +5 健康 -5,夜间事件", hint: "凌晨四点的朋友圈", poem: "夜阑卧听风吹雨。"},
+      "吃货": {lv: 2, inc: ["偏食"], desc: "健康 +3,经济 -5", hint: "唯有美食不可辜负", poem: "民以食为天。"},
+      "晨型人": {lv: 3, inc: ["熬夜冠军", "夜猫子"], desc: "效率每周 +6", hint: "清晨五点的操场", poem: "一日之计在于晨。"},
+      "灵感迸发": {lv: 4, inc: ["迟钝"], desc: "每周 15% 概率悟性暴涨", hint: "电光石火的瞬间", poem: "文章本天成，妙手偶得之。"},
+      "卷王": {lv: 5, inc: ["佛系少年", "游戏宅", "拖延症"], desc: "学习效果 +25%,压力 +10/周", hint: "卷到极致", poem: "会当凌绝顶，一览众山小。"},
+      "心态大师": {lv: 4, inc: ["玻璃心", "内耗者", "暴躁"], desc: "负面事件心态影响减半", hint: "情绪的主人", poem: "不以物喜，不以己悲。"},
+      "贵人相助": {lv: 4, inc: [], desc: "15% 概率化解危机事件", hint: "总有贵人扶一把", poem: "千里马常有，而伯乐不常有。"},
+      "文曲星": {lv: 6, inc: ["迟钝", "学习特困生", "厌学"], desc: "悟性每周 +3,考试成绩 +5%", hint: "考场悟道·文思泉涌", poem: "文章千古事，得失寸心知。"},
+      "心如明镜": {lv: 6, inc: ["玻璃心", "内耗者", "考试焦虑"], desc: "考试不受负面噪声影响,心态每周 +5", hint: "考场悟道·返观内照", poem: "身是菩提树，心如明镜台。"},
+      "学神降世": {lv: 7, inc: ["学习特困生", "迟钝", "厌学"], desc: "考试成绩 +10%,学习结算 +15%", hint: "考场悟道·以笔为剑", poem: "笔落惊风雨，诗成泣鬼神。"},
+      "大彻大悟": {lv: 7, inc: ["内耗者", "玻璃心", "迟钝"], desc: "每周悟性 +2、心态 +5、压力 -5", hint: "深夜观星,顿悟天地", poem: "众里寻他千百度，蓦然回首，那人却在灯火阑珊处。"},
+      "知行合一": {lv: 6, inc: ["多动症", "拖延症"], desc: "效率不再受健康拖累,学习结算 +8%", hint: "实践中悟出的道理", poem: "纸上得来终觉浅，绝知此事要躬行。"},
+      "数学脑": {lv: 4, inc: ["迟钝", "厌学"], desc: "数学考试 +15%,数学学习 +25%", hint: "在数字与逻辑中如鱼得水", poem: "数学是科学的女王。"},
+      "语感天成": {lv: 4, inc: ["厌学"], desc: "语文考试 +15%,语文学习 +25%", hint: "文字是你的朋友", poem: "读书破万卷，下笔如有神。"},
+      "单词机器": {lv: 3, inc: ["学习特困生", "厌学"], desc: "英语考试 +15%,英语学习 +25%", hint: "词汇量惊人", poem: "A word is a world."},
+      "实验狂人": {lv: 4, inc: [], desc: "物理/化学考试 +15%,理科学习 +15%", hint: "实验室是你的乐园", poem: "格物致知，穷理尽性。"},
+      "史海钩沉": {lv: 3, inc: [], desc: "历史/生物考试 +15%,文科学习 +15%", hint: "博古通今", poem: "以史为鉴，可以知兴替。"},
+      "融会贯通": {lv: 6, inc: ["学习特困生", "迟钝", "厌学"], desc: "所有科目学习 +10%，考试噪声减小", hint: "考场悟道·万法归一", poem: "一法通，万法通。"},
+      "笔耕不辍": {lv: 6, inc: ["拖延症"], desc: "每周学习行动额外 +8% 收益，压力 +3", hint: "日复一日的坚持", poem: "锲而不舍，金石可镂。"},
+      "静水流深": {lv: 6, inc: ["玻璃心", "内耗者", "暴躁"], desc: "心态每周 +3，压力每周 -3", hint: "静下来，才能听见自己的声音", poem: "静水流深，沧笙踏歌。"},
+      "破茧成蝶": {lv: 6, inc: [], desc: "每次大考后，若均分低于上次，则下次学习 +20%", hint: "低谷之后必有反弹", poem: "山重水复疑无路，柳暗花明又一村。"},
+      "过目成诵": {lv: 6, inc: ["迟钝", "厌学"], desc: "语文/英语学习 +20%，考试 +5%", hint: "读书百遍，其义自见", poem: "熟读唐诗三百首，不会作诗也会吟。"},
+      "格物致知": {lv: 6, inc: [], desc: "物理/化学/生物学习 +20%，考试 +5%", hint: "格物方能致知", poem: "格物致知，诚意正心。"},
+      "运筹帷幄": {lv: 6, inc: [], desc: "数学学习 +20%，考试 +8%", hint: "胸中有丘壑", poem: "运筹帷幄之中，决胜千里之外。"},
+      "博古通今": {lv: 6, inc: [], desc: "历史/政治/地理学习 +20%，考试 +5%", hint: "以史为鉴，可知兴替", poem: "博古通今，学贯中西。"},
+      "心如止水": {lv: 7, inc: ["玻璃心", "内耗者", "多动症", "考试焦虑"], desc: "心态锁定 140，压力锁定 40", hint: "考场悟道·万念俱寂", poem: "心如止水，波澜不惊。"},
+      "天人合一": {lv: 7, inc: ["学习特困生", "迟钝", "体弱多病"], desc: "健康/效率/悟性每周 +5", hint: "观星悟道·天地共鸣", poem: "天地与我并生，万物与我为一。"},
+      "厌学": {lv: 2, inc: ["七窍玲珑", "过目不忘", "文曲星", "学神降世", "融会贯通", "数学脑", "语感天成", "单词机器", "过目成诵"], desc: "学习行动收益 -20%，压力 +3/周", hint: "一翻开书就头疼", poem: "书卷多情似故人，晨昏忧乐每相亲。"},
+      "注意力涣散": {lv: 2, inc: ["自律机器", "卷王"], desc: "效率每周额外 -5，考试噪声增大", hint: "总是走神", poem: "心不在焉，视而不见。"},
+      "社恐": {lv: 2, inc: ["社交牛逼症", "热情", "豪"], desc: "社交行动收益减半，社交事件概率下降", hint: "人多的场合浑身不自在", poem: "独坐幽篁里，弹琴复长啸。"},
+      "网瘾": {lv: 3, inc: ["游戏宅"], desc: "每周效率 -3，但娱乐行动效果 +50%", hint: "手机不离手", poem: "一入峡谷深似海，从此课本是路人。"},
+      "拖延症": {lv: 2, inc: ["自律机器", "卷王", "知行合一", "笔耕不辍"], desc: "学习行动有 30% 概率收益减半", hint: "明天再说吧", poem: "明日复明日，明日何其多。"},
+      "考试焦虑": {lv: 3, inc: ["心态大师", "心如明镜", "考场黑马", "心如止水"], desc: "考试时心态 -10，噪声偏负向", hint: "一到大考就手抖", poem: "近乡情更怯，不敢问来人。"},
+      "偏食": {lv: 2, inc: ["大胃袋", "吃货"], desc: "健康每周 -3，经济 +10/周", hint: "只吃自己爱吃的", poem: "食不厌精，脍不厌细。"},
+      "夜猫子": {lv: 2, inc: ["晨型人"], desc: "白天效率 -5，夜间学习 +15%", hint: "白天困成狗，晚上精神抖", poem: "昼短苦夜长，何不秉烛游。"},
+      "暴躁": {lv: 2, inc: ["心态大师", "静水流深", "佛系少年", "不吃压力"], desc: "压力 +5/周，社交事件容易冲突", hint: "一点就着", poem: "怒发冲冠，凭栏处。"},
+      "重度厌学": {lv: 5, inc: ["厌学", "七窍玲珑", "过目不忘"], desc: "学习行动收益 -40%，每周额外压力 +8", hint: "看见课本就反胃", poem: "书山有路勤为径，我却无力攀行。"},
+      "深度抑郁": {lv: 5, inc: ["玻璃心", "内耗者", "暴躁", "心态大师"], desc: "心态每周 -8，压力每周 +6", hint: "心里的那盏灯熄灭了", poem: "天尽头，何处有香丘。"},
+      "严重网瘾": {lv: 4, inc: ["网瘾", "游戏宅"], desc: "每周效率 -10，但娱乐行动效果翻倍", hint: "一天不玩游戏就浑身难受", poem: "一入网络深似海，从此时间成路人。"},
+      "社交恐惧": {lv: 4, inc: ["社恐", "高冷"], desc: "社交 -15/周，社交事件概率大幅下降", hint: "连和同桌说话都会紧张", poem: "举世皆浊我独清，众人皆醉我独醒。"},
+      "长期失眠": {lv: 4, inc: ["熬夜冠军", "夜猫子"], desc: "健康每周 -8，效率每周 -5", hint: "夜夜辗转反侧", poem: "夜夜除非，好梦留人睡。"},
+    };
+
+    const Talent = {
+      owned: [],
+      have(n) {return this.owned.includes(n)},
+      solve() {
+        const sorted = [...this.owned].sort((a, b) => TALENTS[b].lv - TALENTS[a].lv);
+        const banned = new Set(), kept = [];
+        for (const t of sorted) {
+          if (banned.has(t)) continue;
+          kept.push(t);
+          TALENTS[t].inc.forEach(x => banned.add(x));
+        }
+        this.owned = kept;
+      },
+      countByLevel() {
+        const c = {};
+        this.owned.forEach(t => {const lv = TALENTS[t].lv; c[lv] = (c[lv] || 0) + 1;});
+        return c;
+      },
+      unlock(name) {
+        const me = TALENTS[name];
+        if (this.have(name)) return [false, "已拥有该天赋"];
+        const byLv = this.countByLevel();
+        if ((byLv[me.lv] || 0) >= 3) return [false, `Lv.${me.lv} 天赋已达上限(3个)`];
+        const removed = [];
+        for (const c of me.inc) {
+          if (this.have(c)) {
+            if (TALENTS[c].lv >= me.lv) return [false, `已有更高等级矛盾天赋【${c}】`];
+            removed.push(c);
+            this.owned = this.owned.filter(x => x !== c);
+          }
+        }
+        this.owned.push(name);
+        this.solve();
+        return [true, null, removed];
+      },
+      remove(name) {this.owned = this.owned.filter(x => x !== name); this.solve()}
+    };
+
+    const SUBJECTS_BY_GRADE = {
+      0: ["语文", "数学", "英语", "生物", "地理", "历史", "政治"],
+      1: ["语文", "数学", "英语", "生物", "地理", "历史", "政治", "物理"],
+      2: ["语文", "数学", "英语", "物理", "化学", "历史", "政治"],
+    };
+    const SUBJ_TALENT = {数学: "数学脑", 语文: "语感天成", 英语: "单词机器", 物理: "实验狂人", 化学: "实验狂人", 历史: "史海钩沉", 生物: "史海钩沉"};
+    function subjectsOf(term) {return SUBJECTS_BY_GRADE[Math.min(2, Math.floor(term / 2))]}
+
+    /* ==================================================================
+     * 小卖铺道具 —— 物价整体下调约 35%
+     * ================================================================== */
+    const SHOP_ITEMS = [
+      {id: "coffee", n: "☕ 提神咖啡", price: 50, desc: "使用后本周学习行动 +15%，但健康 -3", eff: S => {S.studyBuff += 0.15; S.buffWeeks = Math.max(S.buffWeeks, 1); modProp("健康", -3);}},
+      {id: "energy", n: "⚡ 能量饮料", price: 80, desc: "使用后本周效率 +10，健康 -2", eff: S => {S.prop.效率 = clamp(S.prop.效率 + 10, 10, 150); modProp("健康", -2);}},
+      {id: "vitamin", n: "💊 维生素片", price: 60, desc: "使用后健康 +12，心情 +3", eff: S => {modProp("健康", 12); modProp("心态", 3);}},
+      {id: "book", n: "📕 教辅宝典", price: 120, desc: "使用后最弱科目 +25，学力提升", eff: S => {const subs = subjectsOf(S.term); const weak = subs.reduce((a, b) => S.subj[a] < S.subj[b] ? a : b); S.subj[weak] += 25; say(`【教辅宝典】让【${weak}】+25！`, "good");}},
+      {id: "ticket", n: "🎫 考试护身符", price: 160, desc: "使用后下一次考试噪声偏正向", eff: S => {S.examCharm = true; modProp("心态", 5);}},
+      {id: "letter", n: "💌 家书一封", price: 40, desc: "使用后压力 -15，心态 +8", eff: S => {modProp("压力", -15); modProp("心态", 8);}},
+      {id: "coin", n: "🪙 幸运硬币", price: 100, desc: "使用后本周随机事件好运概率提升", eff: S => {S.luckyCharm = true;}},
+      {id: "pen", n: "🖊️ 状元笔", price: 200, desc: "使用后下一次考试均分 +5", eff: S => {S.penCharm = true;}},
+      {id: "talisman", n: "🔮 悟道符", price: 260, desc: "使用后立即 +15 悟性", eff: S => {modProp("悟性", 15);}},
+      {id: "pill", n: "🍬 静心丹", price: 200, desc: "使用后压力 -30，心态 +10", eff: S => {modProp("压力", -30); modProp("心态", 10);}},
+    ];
+
+    let floatIdx = 0;
+    function floatGain(txt, good) {
+      const d = document.createElement("div");
+      d.className = "floatgain";
+      d.style.color = good === false ? "var(--red)" : (good === true ? "var(--green)" : "var(--gold)");
+      d.style.left = `calc(50% + ${(floatIdx++ % 5 - 2) * 60}px)`;
+      d.textContent = txt;
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 1600);
+    }
+
+    function gainTalent(name, reason) {
+      if (Talent.have(name)) return;
+      const t = TALENTS[name];
+      if (!t) return;
+      if (t.lv >= 7 && S && S.prop.悟性 < 120 && !(reason || "").includes("悟道")) {
+        say(`【${name}】需要极高的悟性（≥120），你尚未触及。`, "bad");
+        modProp("悟性", 2);
+        return;
+      }
+      if (t.lv >= 6 && S && !(reason || "").includes("悟道")) {
+        const ok = S.prop.悟性 >= 110 || S.prop.心态 >= 110 || S.prop.健康 >= 110 || S.prop.效率 >= 110;
+        if (!ok) {say(`【${name}】的门槛太高，你尚未触及。`, "bad"); modProp("悟性", 2); return;}
+      }
+      const cost = t.lv * 5;
+      if (S && S.prop.悟性 < cost && !(reason || "").includes("免费")) {
+        say(`解锁【${name}】需要 ${cost} 悟性，你悟性不足（当前 ${Math.round(S.prop.悟性)}）。`, "bad");
+        return;
+      }
+      if (S && !(reason || "").includes("免费")) modProp("悟性", -cost);
+      const [ok, msg, removed] = Talent.unlock(name);
+      if (ok) {
+        if (removed && removed.length) {
+          say(`🔄 获得【${name}】后，原有的低等级矛盾天赋【${removed.join("、")}】被取代。`, "sys");
+        }
+        say(`🔓 获得天赋【${name}】(Lv.${t.lv})——${t.desc}${reason ? `(${reason})` : ""}`, "talent");
+        toast(`🔓 天赋:${name}`);
+      } else {
+        say(`未能获得【${name}】:${msg}。但你在尝试中有所感悟。`, "bad");
+        modProp("悟性", 3);
+      }
+    }
+
+    function openTalentInfo(name) {
+      const t = TALENTS[name];
+      if (!t) return;
+      const owned = Talent.have(name);
+      const lvColor = t.lv >= 6 ? "var(--gold)" : (t.lv >= 4 ? "var(--purple)" : "var(--blue)");
+      const incList = t.inc && t.inc.length
+        ? t.inc.map(i => `${i} Lv.${TALENTS[i] ? TALENTS[i].lv : "?"}`).join(" · ")
+        : "无";
+
+      showModal(`天赋详情`,
+        `<div class="talent-header">
+            <span class="talent-name" style="color:${lvColor}">${name}</span>
+            <span class="talent-lv" style="color:${lvColor}">Lv.${t.lv}</span>
+         </div>
+         <div class="talent-poem">「${t.poem || "——"}」</div>
+         <div class="talent-row">
+            <div class="talent-section">
+               <div class="label">效果</div>
+               <div class="value">${t.desc}</div>
+            </div>
+            <div class="talent-section">
+               <div class="label">状态</div>
+               <div class="value">${owned
+          ? "<span style='color:var(--green)'>已拥有</span>"
+          : `未拥有 · ${t.hint || "—"}`}</div>
+            </div>
+         </div>
+         <div class="talent-section inc">
+            <div class="label">矛盾项</div>
+            <div class="value">${incList}</div>
+         </div>`,
+        [{t: "关闭", fn: () => { }}], null, false, true);
+    }
+
+    function openTalentBook() {
+      let h = "<div class='talentgrid'>";
+      for (const [name, t] of Object.entries(TALENTS)) {
+        const got = Talent.have(name);
+        h += `<div class="talentitem ${got ? "c" + t.lv : "lock"}">
+          <b>${got ? "🏆" : "🔒"} ${name}</b>
+          <div style="color:var(--dim);margin-top:3px;font-size:.72rem">Lv.${t.lv} · ${t.desc}</div>
+          <div style="color:var(--purple);margin-top:3px;font-size:.7rem;font-style:italic">「${t.poem || "——"}」</div>
+        </div>`;
+      }
+      h += "</div>";
+      showModal("天赋图鉴", h, [{t: "关闭", fn: () => { }}], null, false, true);
+    }
+
+    function openShop() {
+      const opts = SHOP_ITEMS.map(it => ({
+        t: it.n, sub: `价格 ${it.price}`,
+        disabled: () => S.prop.经济 < it.price,
+        fn: () => {
+          if (S.prop.经济 < it.price) {say("经济不足，买不起。", "bad"); return;}
+          modProp("经济", -it.price);
+          S.items[it.id] = (S.items[it.id] || 0) + 1;
+          say(`🏪 你购买了【${it.n}】。`, "good");
+          toast(`购买：${it.n}`);
+          renderHUD();
+          setTimeout(openShop, 100);
+        }
+      }));
+      opts.push({t: "离开", fn: () => {ensureActionPanel();}});
+      showModal("小卖铺", `<div>你走进校门口的小卖铺，货架上摆满了各种物件。<br><span style="color:var(--dim);font-size:.85rem">当前经济：${Math.round(S.prop.经济)}</span></div>`, opts, null, false, true, {kind: "free"});
+    }
+
+    function useItem(id) {
+      const it = SHOP_ITEMS.find(x => x.id === id);
+      if (!it || !S.items[id] || S.items[id] <= 0) return;
+      S.items[id]--;
+      it.eff(S);
+      say(`🎒 你使用了【${it.n}】——${it.desc}`, "good");
+      renderHUD();
+      showModal("道具使用", `<div style="line-height:2">【${it.n}】的效果已经生效：<br>${it.desc}</div>`, [{t: "好", fn: () => { }}], null, false, false, {kind: "free", img: it.img});
+    }
+  </script>
+
+  <script>
+    /* ==================================================================
+     * 随机事件
+     * ================================================================== */
+    /* 随机事件表
+     * id   唯一标识（同一事件每周最多出现一次）
+     * w    出现权重，数字越大越常见
+     * t    弹窗标题   c 弹窗正文
+     * img  可选：事件配图路径，例如 "assets/event/rain.jpg"（不填就不显示）
+     * cond 可选：出现条件，例如 S => S.term >= 4（只在初三出现）
+     * opts 选项：t 文字 / sub 副标题 / cond 可选门槛 / run 选择后的结算
+     */
+    const EVENTS = [
+      {
+        id: "rain", w: 6, t: "突如其来的暴雨", c: "放学路上突降暴雨,你没带伞,离家还有两公里。", opts: [
+          {t: "冒雨跑回家", run: S => {if (Talent.have("钢筋铁骨") || Talent.have("天行健") || S.prop.健康 > 120) {modProp("心态", 6); count("sport"); say("你健步如飞,雨幕都成了背景!心态 +6", "good"); if (!Talent.have("钢筋铁骨") && S.prop.健康 > 120 && Math.random() < 0.4) gainTalent("钢筋铁骨", "暴雨中狂奔而不倒");} else if (Talent.have("体弱多病")) {modProp("健康", -15); S.studyDebuff += 0.3; S.debuffWeeks = 2; say("本就虚弱的身体彻底垮了,健康 -15,2 周学习 -30%", "bad");} else {modProp("健康", -8); modProp("心态", -5); say("淋成落汤鸡,健康 -8,心态 -5", "bad");} }},
+          {t: "在便利店等雨停", run: S => {modProp("经济", -10); if (Talent.have("吃货") || Math.random() < 0.5) {modProp("心态", 5); say("你买了关东煮边吃边等,意外的惬意。", "good");} else say("干等了一小时。", "sys");}},
+          {t: "打电话让家里来接", cond: S => S.prop.经济 > 60 || Talent.have("家财万贯"), run: S => {modProp("压力", -5); say("爸妈开车来了,车上暖气很足。压力 -5", "good"); if (Talent.have("家徒四壁")) {Talent.remove("家徒四壁"); say("看着爸妈辛劳的样子,你暗下决心。失去了【家徒四壁】的心理阴影", "talent");} }},
+        ]
+      },
+      {
+        id: "bully", w: 5, t: "校园霸凌", c: "几个高年级学生把你堵在楼梯拐角。", opts: [
+          {t: "硬刚到底", cond: S => S.prop.健康 > 100, run: S => {if (Talent.have("钢筋铁骨") || Talent.have("运动健将") || Talent.have("天行健")) {modProp("社交", 10); modProp("心态", 8); say("你三两下震住了他们,从此名声大噪!", "good"); if (Math.random() < 0.35) gainTalent("豪", "打出了自信");} else {modProp("健康", -12); modProp("心态", -6); say("你赢了气势,输了架。", "bad");} }},
+          {t: "冷静周旋", cond: S => S.prop.心态 > 90, run: S => {modProp("心态", 4); modProp("悟性", 3); say("你不慌不忙,几句话把对方绕晕后全身而退。", "good"); if (Math.random() < 0.3) gainTalent("心态大师", "临危不乱");}},
+          {t: "告诉老师", run: S => {if (Talent.have("高冷")) {modProp("社交", -5); say("老师处理了,但同学觉得你告状。", "bad");} else {modProp("心态", 3); say("老师严肃处理了此事。", "good");} }},
+          {t: "忍气吞声", run: S => {let d = Talent.have("道心如铁") ? 0 : (Talent.have("玻璃心") ? -16 : -10); modProp("心态", d); modProp("压力", 10); say(`你把委屈咽了下去。`, "bad"); if (!Talent.have("道心如铁") && Math.random() < 0.3) gainTalent("内耗者", "委屈在深夜发酵");}},
+        ]
+      },
+      {
+        id: "phone", w: 5, t: "手机诱惑", c: "自习课上,同桌递来手机:「新皮肤,来一把?」", opts: [
+          {t: "来!", run: S => {modProp("心态", 10); modProp("效率", -6); count("game"); gainTalent("游戏宅", "一发不可收拾"); if (Math.random() < 0.3) {say("结果被班主任当场抓获!", "bad"); modProp("心态", -8);} else say("赢了一局,神清气爽。", "good");}},
+          {t: "摇头拒绝", run: S => {modProp("压力", 4); S.studyBuff += 0.1; S.buffWeeks = Math.max(S.buffWeeks, 2); count("resist"); say("你抵住了诱惑。", "good"); if ((S.cnt.resist || 0) >= 5) gainTalent("自律机器", "五次拒绝诱惑");}},
+          {t: "举报同桌", cond: S => Talent.have("高冷") || Talent.have("道心如铁"), run: S => {modProp("社交", -8); modProp("心态", 3); say("同桌被没收了手机,你落了个孤僻名声。", "bad");}},
+        ]
+      },
+      {
+        id: "nightstudy", w: 5, t: "深夜台灯", c: "期中临近,舍友都睡了,你还有半本习题没刷完。", opts: [
+          {t: "挑灯夜读", run: S => {S.studyBuff += 0.2; S.buffWeeks = Math.max(S.buffWeeks, 2); count("night"); if (Talent.have("熬夜冠军")) {modProp("效率", 4); say("你早已习惯深夜。", "good");} else if (Talent.have("体弱多病") || S.prop.健康 < 70) {modProp("健康", -10); say("身体吃不消。", "bad");} else {modProp("健康", -4); say("刷完题已是凌晨。", "sys");} gainTalent("挑灯夜读", "深夜的灯光见证了你"); if ((S.cnt.night || 0) >= 6) gainTalent("熬夜冠军", "夜猫子大成");}},
+          {t: "准时睡觉", run: S => {modProp("健康", 5); modProp("压力", -6); say("一夜好眠。", "good"); count("earlySleep");}},
+        ]
+      },
+      {
+        id: "gossip", w: 4, t: "流言蜚语", c: "班里有人传你和同桌的闲话,越传越难听。", opts: [
+          {t: "当面澄清", cond: S => S.prop.社交 > 90, run: S => {modProp("社交", 5); modProp("心态", 3); say("流言不攻自破。", "good");}},
+          {t: "不予理会", run: S => {let d = Talent.have("心态大师") ? -2 : (Talent.have("玻璃心") ? -14 : -8); modProp("心态", d); say(`嘴长在别人身上。`, "");}},
+          {t: "以谣制谣", run: S => {if (Math.random() < 0.5) {modProp("社交", -10); say("玩脱了,两边都得罪了。", "bad");} else {modProp("心态", 5); say("对方被反将一军。", "good");} }},
+        ]
+      },
+      {
+        id: "sports", w: 5, t: "体育课长跑测试", c: "1000 米测试,跑到一半你肺像着了火。", opts: [
+          {t: "咬牙冲刺", run: S => {count("sport"); if (Talent.have("运动健将") || Talent.have("钢筋铁骨") || S.prop.健康 > 110) {modProp("健康", 8); modProp("心态", 8); say("全班第一!", "good"); gainTalent("运动健将", "你天生属于跑道");} else if (S.prop.健康 > 80) {modProp("健康", 3); modProp("心态", 4); say("及格了!", "good");} else {modProp("健康", -6); say("你虚脱地倒在终点。", "bad");} }},
+          {t: "匀速保命跑", run: S => {modProp("压力", -3); say("不快不慢,及格万岁。", "");}},
+          {t: "装病请假", cond: S => S.prop.社交 > 80, run: S => {modProp("心态", 3); say("老师信了,你躲过一劫。", "");}},
+        ]
+      },
+      {
+        id: "library", w: 4, t: "图书馆的午后", c: "你躲进图书馆写作业,阳光透过百叶窗落在书页上。", opts: [
+          {t: "专注刷题", run: S => {S.studyBuff += 0.12; S.buffWeeks = Math.max(S.buffWeeks, 2); modProp("压力", -4); say("安静的环境让你效率倍增。", "good");}},
+          {t: "翻翻闲书", run: S => {modProp("悟性", 4); modProp("心态", 4); say("杂书里也有大千世界。", "good");}},
+          {t: "趴桌上睡一觉", run: S => {modProp("健康", 6); modProp("压力", -6); say("阳光正好,小睡一会。", "good");}},
+        ]
+      },
+      {
+        id: "volunteer", w: 4, t: "社区志愿服务", c: "社区招募周末志愿者,去敬老院陪老人聊天。", opts: [
+          {t: "报名参加", run: S => {modProp("社交", 8); modProp("心态", 8); count("volunteer"); say("老人们拉着你的手讲了许多故事。", "good");}},
+          {t: "在家复习", run: S => {S.studyBuff += 0.1; S.buffWeeks = Math.max(S.buffWeeks, 2); say("你选择把时间留给课本。", "");}},
+        ]
+      },
+      {
+        id: "teacher_praise", w: 4, t: "老师的表扬", c: "班主任在班会上点名表扬了你最近的进步。", opts: [
+          {t: "谦虚低头", run: S => {modProp("心态", 6); modProp("社交", 4); say("你红着脸低下头,心里却美滋滋的。", "good");}},
+          {t: "暗暗发誓要更好", run: S => {S.studyBuff += 0.1; S.buffWeeks = Math.max(S.buffWeeks, 3); modProp("压力", 5); say("表扬成了你的动力。", "");}},
+        ]
+      },
+      {
+        id: "lost_wallet", w: 3, t: "捡到钱包", c: "放学路上,你在公交站台捡到一个鼓鼓的钱包。", opts: [
+          {t: "交给警察", run: S => {modProp("心态", 8); count("honest"); say("警察叔叔夸了你。", "good");}},
+          {t: "原地等失主", run: S => {modProp("心态", 5); modProp("效率", -3); say("等了半小时,失主赶来了。", "good");}},
+          {t: "拿走里面的钱", run: S => {if (Math.random() < 0.5) {modProp("经济", 200); modProp("心态", -10); say("你拿走了钱,心里却不安。", "bad");} else {modProp("心态", -15); modProp("压力", 10); say("失主找上门,你被请了家长。", "bad");} }},
+        ]
+      },
+      {
+        id: "midnight_call", w: 3, t: "深夜来电", c: "半夜手机震动，是一个陌生号码。", opts: [
+          {t: "接听", run: S => {if (Math.random() < 0.4) {modProp("心态", 8); say("是多年未见的小学同学，聊起往事，心里暖暖的。", "good");} else {modProp("心态", -5); modProp("压力", 6); say("是骚扰电话，被吵醒后再也睡不着。", "bad");} }},
+          {t: "挂掉继续睡", run: S => {modProp("健康", 3); say("翻个身继续睡。", "good");}},
+        ]
+      },
+      {
+        id: "lost_diary", w: 3, t: "日记本丢了", c: "你发现日记本不见了，可能落在教室。", opts: [
+          {t: "立刻回去找", run: S => {if (Math.random() < 0.6) {modProp("心态", -3); say("找到了，但被人翻过。", "bad");} else {modProp("心态", -8); modProp("压力", 8); say("没找到，你担心了一整周。", "bad");} }},
+          {t: "算了", run: S => {modProp("压力", -4); say("你选择放下。", "good");}},
+        ]
+      },
+      {
+        id: "class_duty", w: 3, t: "值日安排", c: "轮到你们组值日，但组员都跑了。", opts: [
+          {t: "一个人干完", run: S => {modProp("压力", 6); modProp("社交", 5); modProp("心态", 4); say("你默默打扫到天黑。", "good"); count("volunteer");}},
+          {t: "找老师告状", run: S => {modProp("社交", -4); modProp("心态", 2); say("组员被批评了，但你也得罪了人。", "");}},
+          {t: "也跟着走", run: S => {modProp("心态", -3); say("教室被扣分了。", "bad");}},
+        ]
+      },
+      {
+        id: "broken_phone", w: 4, t: "手机摔碎了", c: "你不小心把手机摔在地上，屏幕裂了一道口子。", opts: [
+          {t: "用零花钱修", run: S => {modProp("经济", -80); modProp("心态", -3); say("修好了，但钱包瘪了。", "bad");}},
+          {t: "忍着不修", run: S => {modProp("心态", -8); S.studyDebuff += 0.05; S.debuffWeeks = 1; say("凑合着用，但心情一直不好。", "bad");}},
+        ]
+      },
+      {
+        id: "pe_conflict", w: 4, t: "同学冲突", c: "体育课上，你和同学因为场地争执起来，双方都不肯退让。", opts: [
+          {t: "先让一步", run: S => {modProp("社交", 6); modProp("心态", 3); say("你主动退让，赢得同学好感。", "good");}},
+          {t: "坚持己见", run: S => {if (Math.random() < 0.5) {modProp("社交", -6); modProp("心态", -4); say("两人不欢而散。", "bad");} else {modProp("社交", 4); say("对方被你说服了。", "good");} }},
+          {t: "直接走开", run: S => {modProp("心态", -2); say("你不想吵，转身离开。", "");}},
+        ]
+      },
+      {
+        id: "exam_result", w: 4, t: "成绩单被看到", c: "同桌偷看了你的成绩单，还大声念了出来。", opts: [
+          {t: "一笑而过", run: S => {modProp("心态", 5); modProp("社交", 3); say("你笑着化解尴尬。", "good");}},
+          {t: "愤怒反驳", run: S => {if (Talent.have("暴躁")) {modProp("社交", -8); modProp("心态", -6); say("你骂了回去，场面失控。", "bad");} else {modProp("社交", -4); say("你生气地反驳，关系变差。", "bad");} }},
+          {t: "沉默不语", run: S => {modProp("压力", 6); modProp("心态", -3); say("你假装没听见，心里却不舒服。", "bad");}},
+        ]
+      },
+      {
+        id: "sick_day", w: 4, t: "生病请假", c: "你早上起来头痛欲裂，可能是感冒了。", opts: [
+          {t: "坚持去学校", run: S => {modProp("健康", -8); S.studyBuff += 0.1; S.buffWeeks = 1; say("你带病上课，学习效率却打了折扣。", "bad");}},
+          {t: "请假在家休息", run: S => {modProp("健康", 12); modProp("效率", -5); say("休息一天，身体好多了。", "good");}},
+        ]
+      },
+      {
+        id: "rain_school", w: 3, t: "雨天值日", c: "下雨天，你被安排去倒垃圾，同学们都躲雨去了。", opts: [
+          {t: "冒雨去倒", run: S => {modProp("健康", -4); modProp("社交", 5); count("volunteer"); say("你淋湿了，但被老师表扬。", "good");}},
+          {t: "找同学帮忙", cond: S => S.prop.社交 > 90, run: S => {modProp("社交", 3); say("同学帮你一起去了。", "good");}},
+        ]
+      },
+      {
+        id: "pop_quiz", w: 3, t: "随堂小测", c: "老师突然宣布随堂小测，你毫无准备。", opts: [
+          {t: "认真答题", run: S => {const v = Math.round(Math.random() * 40 + 50); if (v >= 80) {modProp("心态", 6); say(`你考了 ${v} 分，超出预期！`, "good");} else {modProp("心态", -4); say(`你考了 ${v} 分，有点沮丧。`, "bad");} }},
+          {t: "偷偷看同桌", run: S => {if (Math.random() < 0.5) {modProp("心态", -6); say("被老师发现，批评了一顿。", "bad");} else {modProp("心态", 3); say("侥幸没被发现。", "");} }},
+        ]
+      },
+      {
+        id: "breakup", w: 3, t: "好友绝交", c: "最好的朋友突然不理你了，听说是因为一件小事。", cond: S => (S.cnt.love || 0) > 0 || S.prop.社交 > 100, opts: [
+          {t: "主动和好", run: S => {modProp("社交", 5); modProp("心态", 6); say("你们重归于好。", "good");}},
+          {t: "冷处理", run: S => {modProp("心态", -8); modProp("压力", 8); say("关系越来越远，你心里空落落的。", "bad");}},
+        ]
+      },
+      {
+        id: "lost_pencil", w: 3, t: "丢失的文具", c: "你最喜欢的一支笔不见了，可能是被人拿走了。", opts: [
+          {t: "问周围同学", run: S => {if (Math.random() < 0.5) {modProp("心态", 5); say("原来是被同学误拿了，他还给了你。", "good");} else {modProp("心态", -4); say("没人承认，你只能作罢。", "bad");} }},
+          {t: "算了，再买一支", run: S => {modProp("经济", -5); modProp("心态", 2); say("小钱而已，买支新的。", "");}},
+        ]
+      },
+      {
+        id: "newfriend", w: 3, t: "新朋友", c: "你在食堂认识了一个其他班的同学，聊得很投机。", opts: [
+          {t: "保持联系", run: S => {modProp("社交", 8); modProp("心态", 5); say("你们成了好朋友。", "good");}},
+          {t: "点头之交", run: S => {modProp("社交", 2); say("只是打了个招呼。", "");}},
+        ]
+      },
+    ];
+  </script>
+
+  <script>
+    /* ==================================================================
+     * 固定事件
+     * ================================================================== */
+    const GRADES = ["初一", "初二", "初三"], WEEKS_PER_TERM = 24, TERMS = 6;
+    function fixedEventOf(term, wit) {
+      if (wit === 0) return {id: "newTerm"};
+      if (wit === 5) return {id: "exam", name: "月考(一)"};
+      if (wit === 10) return {id: "exam", name: "期中考试"};
+      if (wit === 15) return {id: "exam", name: "月考(二)"};
+      if (wit === 20) return {id: "exam", name: "期末考试"};
+      if (wit === 17) return term % 2 === 0 ? {id: "sportsMeet"} : {id: "artFest"};
+      if (wit === 24) return {id: "vacation"};
+      return null;
+    }
+
+    const CULTURE_LINES = [
+      "天行健，君子以自强不息。", "路漫漫其修远兮，吾将上下而求索。", "博观而约取，厚积而薄发。",
+      "不积跬步，无以至千里。", "宝剑锋从磨砺出，梅花香自苦寒来。",
+    ];
+    const OPENING_LINES = [
+      "九月的风卷着桂花香，你背着新书包站在校门口，心跳得厉害。",
+      "蝉鸣还没散尽，初中的大门已经向你敞开。你深吸一口气。",
+      "你低头看了看崭新的校牌，上面印着你的名字——从今天起，你是初中生了。",
+      "操场上红旗招展，你混在人群里，忽然觉得三年很长，又很短。",
+      "母亲在校门口叮嘱了最后一句，你点点头，转身走进陌生的人群。",
+    ];
+    const OPENING_TALENTS_HINT = [
+      "天赋不会在此刻选择，它们将在你未来的每一个抉择中自然觉醒。",
+      "你此刻一无所有，但每一次选择都在悄悄塑造你。",
+      "三年之后回望，你会明白：所谓天赋，不过是选择留下的痕迹。",
+    ];
+
+    function runFixed(f) {
+      switch (f.id) {
+        case "newTerm": {
+          if (S.term === 0) {
+            const line = OPENING_LINES[rnd(OPENING_LINES.length)];
+            const hint = OPENING_TALENTS_HINT[rnd(OPENING_TALENTS_HINT.length)];
+            showModal("初一开学",
+              `<div>${line}<br><br><span style='color:var(--gold)'>${S.name}</span>，${gradeName()}${termName()}，正式开始。<br><br><span style='color:var(--dim)'>${hint}</span></div>`,
+              [{t: "走进教室", fn: () => { }}], () => {nextWeek();}, false, false, {kind: "fixed"});
+          } else {
+            say(`🎒 ${gradeName()}${termName()}开学了!`, "sys");
+            say(`「${CULTURE_LINES[rnd(CULTURE_LINES.length)]}」`, "sys");
+            if (S.term === 4) say("初三了。黑板右上角出现了中考倒计时。", "exam");
+            nextWeek();
+          }
+          break;
+        }
+        case "exam": {
+          const v = exam(f.name);
+          if (f.name === "期末考试" && v >= 85) {modProp("经济", 80); say("压岁钱/奖励到手!经济 +80", "good");}
+          break;
+        }
+        case "sportsMeet":
+          showModal("运动会", "一年一度的秋季运动会,体委在统计报名项目。", [
+            {t: "报 1000 米长跑", fn: () => {count("sport"); if (Talent.have("运动健将") || S.prop.健康 > 115) {modProp("社交", 10); modProp("心态", 10); say("🏃 你拿下了长跑冠军!", "good");} else if (S.prop.健康 < 70) {modProp("健康", -8); say("你跑到一半被抬下去了……", "bad");} else {modProp("健康", 5); modProp("心态", 4); say("完赛就是胜利!", "good");} }},
+            {t: "当啦啦队", fn: () => {modProp("社交", 6); modProp("心态", 4); say("嗓子喊哑了,但很开心。", "good");}},
+            {t: "躲在教室刷题", fn: () => {S.studyBuff += 0.1; S.buffWeeks = Math.max(S.buffWeeks, 1); say("喧闹与你无关。", "");}},
+          ], () => {nextWeek();}, false, false, {kind: "fixed"});
+          break;
+        case "artFest":
+          showModal("校园艺术节", "艺术节汇演开始报名了。", [
+            {t: "上台表演", fn: () => {if (S.prop.社交 > 100 || Talent.have("热情")) {modProp("心态", 10); modProp("社交", 8); say("🎨 你的节目惊艳全场!", "good");} else {modProp("心态", -6); say("忘词了,有点尴尬。", "bad");} }},
+            {t: "做幕后布置", fn: () => {modProp("社交", 4); modProp("压力", -4); say("默默付出也很快乐。", "good");}},
+            {t: "当观众", fn: () => {modProp("心态", 4); say("看了场热闹的演出。", "");}},
+          ], () => {nextWeek();}, false, false, {kind: "fixed"});
+          break;
+        case "vacation": vacationDungeon(); break;
+      }
+    }
+
+    function vacationDungeon() {
+      const termNames = ["初一", "初二", "初三"];
+      showModal(`假期副本 · ${termNames[Math.min(2, Math.floor(S.term / 2))]}篇`, "学期结束!假期是一张崭新的地图。选择你的假期副本——", [
+        {t: "📚 补习营副本", fn: () => dungeonTutor(1)},
+        {t: "🧗 社会实践副本", fn: () => dungeonSocial(1)},
+        {t: "🏝 躺平休养副本", fn: () => dungeonRest(1)},
+      ], null, false, false, {kind: "fixed"});
+    }
+    function dungeonEnd() {S.term++; nextWeek();}
+
+    function dungeonTutor(stage) {
+      if (stage === 1) showModal("补习营 · 第一幕", "集训营的第一天,老师发下一张摸底卷。你的策略?", [
+        {t: "全力冲刺", fn: () => {if (S.lastExamScore >= 70 || Talent.have("学霸光环")) {say("你杀进了尖子班!", "good"); S.studyBuff += 0.2; S.buffWeeks = Math.max(S.buffWeeks, 6); dungeonTutor(2);} else {say("差一点，进了普通班。", "bad"); S.studyBuff += 0.1; S.buffWeeks = Math.max(S.buffWeeks, 6); dungeonTutor(2);} }},
+        {t: "稳扎稳打", fn: () => {S.studyBuff += 0.12; S.buffWeeks = Math.max(S.buffWeeks, 6); dungeonTutor(2);}},
+      ], null, false, false, {kind: "fixed"});
+      else showModal("补习营 · 终幕", "集训最后一天,有个全国竞赛的推荐名额,老师问谁想要。", [
+        {t: "举手!", fn: () => {const weak = subjectsOf(S.term).reduce((a, b) => S.subj[a] < S.subj[b] ? a : b); S.subj[weak] += 60; say(`整个假期的积累爆发,最弱科【${weak}】学力 +60!`, "good"); count("dungeon"); checkAch(); dungeonEnd();}},
+        {t: "默默回家", fn: () => {subjectsOf(S.term).forEach(s => S.subj[s] *= 1.12); say("全科巩固完成,各科 +12%!", "good"); modProp("压力", 10); count("dungeon"); checkAch(); dungeonEnd();}},
+      ], null, false, false, {kind: "fixed"});
+    }
+
+    function dungeonSocial(stage) {
+      if (stage === 1) showModal("社会实践 · 第一幕", "社区招募假期志愿者,同时奶茶店也在招兼职。你选——", [
+        {t: "当志愿者", fn: () => {modProp("社交", 12); modProp("心态", 8); say("服务他人,收获满满。", "good"); if (Math.random() < 0.3) gainTalent("贵人相助", "社区主任很欣赏你"); dungeonSocial(2);}},
+        {t: "奶茶店兼职", fn: () => {let g = Talent.have("理财达人") ? 300 : 200; modProp("经济", g); say(`一个假期的工资:${g}!`, "good"); count("partjob"); dungeonSocial(2);}},
+      ], null, false, false, {kind: "fixed"});
+      else showModal("社会实践 · 终幕", "假期最后,社区/店里要评选「假期之星」。", [
+        {t: "争取一下", fn: () => {if (S.prop.社交 > 100 || Talent.have("热情")) {modProp("心态", 12); modProp("社交", 8); say("🏅 你当选假期之星!", "good");} else {modProp("心态", 3); say("没评上,但过程本身就是收获。", "");} count("dungeon"); checkAch(); dungeonEnd();}},
+        {t: "事了拂衣去", fn: () => {modProp("压力", -10); say("深藏功与名。", "good"); count("dungeon"); checkAch(); dungeonEnd();}},
+      ], null, false, false, {kind: "fixed"});
+    }
+
+    function dungeonRest(stage) {
+      if (stage === 1) showModal("躺平休养 · 第一幕", "难得的假期,你打算怎么躺?", [
+        {t: "规律作息", fn: () => {modProp("健康", 25); modProp("压力", -25); say("🏝 身心彻底修复!", "good"); dungeonRest(2);}},
+        {t: "昼夜颠倒", fn: () => {modProp("心态", 15); modProp("健康", -10); say("快乐是快乐,就是有点虚。", ""); dungeonRest(2);}},
+      ], null, false, false, {kind: "fixed"});
+      else showModal("躺平休养 · 终幕", "假期最后一天,你忽然有点心慌:作业还没动。", [
+        {t: "通宵补作业", fn: () => {S.studyBuff += 0.05; S.buffWeeks = Math.max(S.buffWeeks, 2); modProp("健康", -8); say("一支笔,一个晚上,一个奇迹。", "bad"); count("dungeon"); checkAch(); dungeonEnd();}},
+        {t: "摆烂到底", fn: () => {modProp("心态", 5); modProp("压力", 10); say("开学等着挨批吧。", ""); count("dungeon"); checkAch(); dungeonEnd();}},
+      ], null, false, false, {kind: "fixed"});
+    }
+
+    /* ==================================================================
+     * 读书角
+     * ================================================================== */
+    const BOOKS = [
+      {n: "《平凡的世界》", cost: 30, eff: S => {modProp("心态", 12); modProp("悟性", 4); modProp("压力", -5);}, d: "苦难中看见光。", lore: "合上书，你仿佛看见黄土高原上的风。"},
+      {n: "《时间简史》", cost: 40, eff: S => {modProp("悟性", 10); modProp("效率", 3); modProp("压力", 6);}, d: "宇宙的尺度。", lore: "宇宙的尽头是什么？你合上书，发现自己的烦恼渺小得可笑。"},
+      {n: "《活着》", cost: 25, eff: S => {modProp("心态", 14); modProp("压力", -12); modProp("健康", -2);}, d: "活着本身就有意义。", lore: "人是为了活着本身而活着。"},
+      {n: "《苏东坡传》", cost: 35, eff: S => {modProp("心态", 10); modProp("社交", 5); modProp("压力", -5);}, d: "一蓑烟雨任平生。", lore: "回首向来萧瑟处，归去，也无风雨也无晴。"},
+      {n: "《几何原本》", cost: 45, eff: S => {S.subj.数学 = (S.subj.数学 || 0) + 25; modProp("悟性", 4); modProp("压力", 8);}, d: "逻辑之美。", lore: "点、线、面，构成了这个世界最底层的逻辑。"},
+      {n: "《英语晨读》", cost: 30, eff: S => {S.subj.英语 = (S.subj.英语 || 0) + 25; modProp("效率", 3); modProp("压力", 4);}, d: "语感在朗读中生长。", lore: "The early bird catches the worm."},
+      {n: "《古文观止》", cost: 35, eff: S => {S.subj.语文 = (S.subj.语文 || 0) + 25; modProp("悟性", 4); modProp("压力", 5);}, d: "文言雅韵。", lore: "先天下之忧而忧，后天下之乐而乐。"},
+      {n: "《万历十五年》", cost: 40, eff: S => {S.subj.历史 = (S.subj.历史 || 0) + 25; modProp("悟性", 4); modProp("压力", 6);}, d: "以小见大。", lore: "历史的尘埃落在一个人的头上，就是一座山。"},
+      {n: "《物种起源》", cost: 45, eff: S => {S.subj.生物 = (S.subj.生物 || 0) + 25; modProp("悟性", 4); modProp("压力", 6);}, d: "自然选择的伟力。", lore: "物竞天择，适者生存。"},
+      {n: "《物理世界奇遇记》", cost: 45, eff: S => {S.subj.物理 = (S.subj.物理 || 0) + 25; modProp("悟性", 4); modProp("压力", 7);}, d: "物理也可以很有趣。", lore: "如果你能理解相对论，说明你还没疯。"},
+      {n: "《元素的故事》", cost: 45, eff: S => {S.subj.化学 = (S.subj.化学 || 0) + 25; modProp("悟性", 4); modProp("压力", 6);}, d: "化学元素的前世今生。", lore: "万物皆由元素组成，包括你和我。"},
+      {n: "《论语》", cost: 30, eff: S => {modProp("心态", 10); modProp("悟性", 5); modProp("社交", 3);}, d: "温故而知新。", lore: "学而时习之，不亦说乎？"},
+      {n: "《道德经》", cost: 25, eff: S => {modProp("心态", 14); modProp("压力", -14); modProp("效率", -3);}, d: "上善若水。", lore: "道可道，非常道；名可名，非常名。"},
+      {n: "《孙子兵法》", cost: 35, eff: S => {modProp("悟性", 9); modProp("效率", 5); modProp("压力", -3);}, d: "知己知彼。", lore: "兵者，诡道也。"},
+      {n: "《昆虫记》", cost: 25, eff: S => {S.subj.生物 = (S.subj.生物 || 0) + 20; modProp("心态", 6);}, d: "微观世界的大千。", lore: "在蚂蚁的世界里，也有战争与和平。"},
+      {n: "《海底两万里》", cost: 25, eff: S => {modProp("悟性", 8); modProp("心态", 6);}, d: "想象力是无价的。", lore: "海底的世界，比陆地更神秘。"},
+      {n: "《钢铁是怎样炼成的》", cost: 20, eff: S => {modProp("心态", 10); modProp("压力", -7); modProp("健康", 3);}, d: "钢铁意志。", lore: "人最宝贵的是生命。"},
+      {n: "《名人传》", cost: 30, eff: S => {modProp("心态", 8); modProp("悟性", 5);}, d: "伟人的苦难与光辉。", lore: "伟大的灵魂，在苦难中淬炼。"},
+      {n: "《边城》", cost: 20, eff: S => {S.subj.语文 = (S.subj.语文 || 0) + 20; modProp("心态", 7);}, d: "湘西的温柔。", lore: "这个人也许永远不回来了，也许明天回来。"},
+      {n: "《傅雷家书》", cost: 25, eff: S => {modProp("心态", 9); modProp("社交", 5);}, d: "父辈的叮咛。", lore: "孩子，你要做一个德艺俱备、人格卓越的艺术家。"},
+      {n: "《中国国家地理》", cost: 35, eff: S => {S.subj.地理 = (S.subj.地理 || 0) + 25; modProp("悟性", 4);}, d: "大好河山。", lore: "从大兴安岭到南海之滨，每一寸土地都有它的故事。"},
+      {n: "《少年法律读本》", cost: 30, eff: S => {S.subj.政治 = (S.subj.政治 || 0) + 25; modProp("心态", 5);}, d: "知法明理。", lore: "法律是底线，也是保护。"},
+      {n: "《国富论》", cost: 50, eff: S => {modProp("经济", 150); modProp("悟性", 4); modProp("压力", 6);}, d: "看不见的手。", lore: "市场是一只看不见的手。"},
+      {n: "《梦的解析》", cost: 45, eff: S => {modProp("心态", 8); modProp("悟性", 8); modProp("压力", 5);}, d: "潜意识之门。", lore: "梦，是愿望的达成。"},
+      {n: "《人类简史》", cost: 50, eff: S => {modProp("悟性", 9); modProp("社交", 4); modProp("压力", 5);}, d: "认知革命。", lore: "智人之所以能统治世界，是因为我们相信虚构的故事。"},
+      {n: "古籍残卷", cost: 150, eff: S => {const pool = Object.keys(TALENTS).filter(t => TALENTS[t].lv <= 5 && !Talent.have(t)); if (pool.length) {const t = pool[rnd(pool.length)]; gainTalent(t, "读书角·悟道"); count("bookTalent");} else say("你已阅尽群书，再无新悟。", "sys");}, d: "消耗 150 经济，随机获得一个 Lv.5 以下天赋", lore: "残卷泛黄，字迹模糊，却有先贤的气息。"},
+      {n: "先贤手札", cost: 300, eff: S => {const pool = Object.keys(TALENTS).filter(t => TALENTS[t].lv >= 6 && !Talent.have(t)); if (pool.length) {const t = pool[rnd(pool.length)]; gainTalent(t, "读书角·顿悟"); count("bookTalent");} else say("更高处已无书可读。", "sys");}, d: "消耗 300 经济，随机获得一个 Lv.6+ 天赋", lore: "手札上的字迹遒劲有力，仿佛先贤就在眼前。"},
+    ];
+
+    function openBookCorner(onDone) {
+      const normal = BOOKS.filter(b => b.cost < 100);
+      const special = BOOKS.filter(b => b.cost >= 100);
+      const shuffled = [...normal].sort(() => Math.random() - 0.5);
+      const picked = special.length > 0
+        ? [...shuffled.slice(0, 2), special[rnd(special.length)]]
+        : shuffled.slice(0, 3);
+      let read = false;
+      let closedByCancel = false;
+
+      const opts = picked.map(b => ({
+        t: b.n, sub: `花费 ${b.cost}`,
+        disabled: () => S.prop.经济 < b.cost,
+        fn: () => {
+          if (S.prop.经济 < b.cost) {say("经济不足，买不起这本书。", "bad"); return;}
+          modProp("经济", -b.cost);
+          b.eff(S);
+          count("read");
+          read = true;
+          say(`📖 你读了${b.n}。`, "good");
+          checkAch(); renderHUD();
+          showModal("读书角", `<div style='line-height:2'>${b.lore || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
+            t: "合上书", fn: () => { }
+          }], () => {if (onDone) onDone();}, false, false, {kind: "free", badge: "📚 本周行动 · 读书角", img: b.img});
+        }
+      }));
+      opts.push({t: "取消", fn: () => {closedByCancel = true;}});
+
+      showModal("读书角", `<div>窗边的小书架落满阳光。你抽出一本——<br><span style="color:var(--dim);font-size:.85rem">当前经济：${Math.round(S.prop.经济)}</span></div>`, opts, () => {
+        if (closedByCancel || !read) {
+          say("你合上了书架，转身离开。", "sys");
+          setTimeout(ensureActionPanel, 0);
+          return;
+        }
+        if (onDone) onDone();
+      }, false, true, {kind: "free", badge: "📚 本周行动 · 读书角"});
+    }
+
+    /* ==================================================================
+     * 成就
+     * ================================================================== */
+    const ACHIEVEMENTS = {
+      firstExam: {n: "初露锋芒", d: "第一次参加月考", c: S => S.cnt.exam >= 1},
+      topScore: {n: "一鸣惊人", d: "单次考试 ≥ 90 分", c: S => S.bestExam >= 90},
+      perfect: {n: "满分神话", d: "单次考试达到 100 分", c: S => S.bestExam >= 100},
+      exam10: {n: "考场老将", d: "参加 10 次考试", c: S => S.cnt.exam >= 10},
+      study30: {n: "学而不倦", d: "选择学习行动 30 次", c: S => S.cnt.study >= 30},
+      study60: {n: "卷王本王", d: "选择学习行动 60 次", c: S => S.cnt.study >= 60},
+      sportKing: {n: "运动达人", d: "参加运动 5 次", c: S => (S.cnt.sport || 0) >= 5},
+      sportWin: {n: "冠军之心", d: "赢得 2 次运动胜利", c: S => (S.cnt.sportWin || 0) >= 2},
+      social10: {n: "交际花", d: "选择社交行动 10 次", c: S => S.cnt.social >= 10},
+      lucky5: {n: "锦鲤本鲤", d: "好运连连 5 次", c: S => (S.cnt.lucky || 0) >= 5},
+      rich: {n: "小富翁", d: "经济达到 1000", c: S => S.prop.经济 >= 1000},
+      talent5: {n: "天赋异禀", d: "同时拥有 5 个天赋", c: S => Talent.owned.length >= 5},
+      talent8: {n: "天选之人", d: "同时拥有 8 个天赋", c: S => Talent.owned.length >= 8},
+      contest: {n: "竞赛之星", d: "入选竞赛班", c: S => (S.cnt.contestWin || 0) >= 1},
+      love: {n: "青春悸动", d: "递出情书", c: S => (S.cnt.love || 0) >= 1},
+      pressure100: {n: "压力山大", d: "压力达到 100", c: S => S.prop.压力 >= 100},
+      survive2y: {n: "初三老兵", d: "升入初三", c: S => S.term >= 4},
+      resist5: {n: "钢铁意志", d: "拒绝诱惑 5 次", c: S => (S.cnt.resist || 0) >= 5, unlock: "道心如铁"},
+      nightOwl: {n: "夜之王者", d: "挑灯夜读 6 次", c: S => (S.cnt.night || 0) >= 6, unlock: "熬夜冠军"},
+      foodie: {n: "干饭之魂", d: "光顾小吃摊 4 次", c: S => (S.cnt.food || 0) >= 4, unlock: "大胃袋"},
+      zhongkao: {n: "最后一战", d: "参加中考", c: S => S.cnt.zhongkao >= 1},
+      subjFull: {n: "单科状元", d: "任意科目考出满分", c: S => (S.cnt.subjFull || 0) >= 1},
+      allPerfect: {n: "全科封神", d: "一次考试所有科目 ≥ 90", c: S => (S.cnt.allPerfect || 0) >= 1},
+      dungeon3: {n: "副本达人", d: "完成 3 个假期副本", c: S => (S.cnt.dungeon || 0) >= 3},
+      bookworm: {n: "书虫", d: "在读书角读书 10 次", c: S => (S.cnt.read || 0) >= 10},
+      bookDao: {n: "以书入道", d: "通过读书角获得 3 个天赋", c: S => (S.cnt.bookTalent || 0) >= 3},
+      allRounder: {n: "六边形战士", d: "所有属性 ≥ 120", c: S => Object.values(S.prop).every(v => v >= 120)},
+      richKid: {n: "富甲一方", d: "经济 ≥ 3000", c: S => S.prop.经济 >= 3000},
+      poorScholar: {n: "寒门贵子", d: "经济 ≤ 50 且中考 ≥ 85", c: S => S.prop.经济 <= 50 && S.zhongkao >= 85},
+      volunteer: {n: "热心肠", d: "参加志愿服务 1 次", c: S => (S.cnt.volunteer || 0) >= 1},
+      honest: {n: "拾金不昧", d: "捡到钱包交给警察", c: S => (S.cnt.honest || 0) >= 1},
+      shopper: {n: "剁手党", d: "在小卖铺购买 5 件道具", c: S => Object.values(S.items).reduce((a, b) => a + b, 0) >= 5},
+    };
+
+    /* ==================================================================
+     * 结局
+     * ================================================================== */
+    const ENDINGS = [
+      {id: "top", n: "传说结局 · 状元之门", icon: "🏆", c: S => S.zhongkao >= 95, t: "中考放榜，你的名字高悬榜首。天行健，君子以自强不息——三年磨一剑，你做到了。"},
+      {id: "scholar", n: "学术结局 · 少年班", icon: "🔬", c: S => S.zhongkao >= 95 && Talent.have("学神降世"), t: "你被少年班提前录取。知识的星辰大海，刚刚启航。"},
+      {id: "citykey", n: "辉煌结局 · 市重点", icon: "🎓", c: S => S.zhongkao >= 85, t: "你被市重点高中录取。校门口的光荣榜上，有你的名字。"},
+      {id: "art", n: "艺术结局 · 艺考之路", icon: "🎨", c: S => S.zhongkao >= 55 && Talent.have("语感天成") && Talent.have("社交牛逼症"), t: "你选择了艺考。画笔与文字，都是你的语言。"},
+      {id: "sport", n: "体育结局 · 体校特招", icon: "🏃", c: S => S.zhongkao >= 50 && Talent.have("运动健将") && S.prop.健康 >= 130, t: "体校教练看中了你。跑道尽头，是另一种人生。"},
+      {id: "district", n: "优秀结局 · 区重点", icon: "📚", c: S => S.zhongkao >= 75, t: "你考入区重点高中。扎实，稳健，未来可期。"},
+      {id: "normal", n: "平凡结局 · 普通高中", icon: "🌱", c: S => S.zhongkao >= 60, t: "你被普通高中录取。中考只是逗号，高中还有三年可以拼。"},
+      {id: "kind", n: "温暖结局 · 平凡而幸福", icon: "🌻", c: S => S.prop.心态 >= 140 && S.zhongkao >= 60, t: "你考上了普通高中，但三年里你始终快乐。这本身就很了不起。"},
+      {id: "broken", n: "遗憾结局 · 与梦想擦肩", icon: "🌧", c: S => S.zhongkao >= 55 && S.zhongkao < 60, t: "差几分，与心仪的高中失之交臂。但路还长。"},
+      {id: "voc", n: "分岔结局 · 职高之路", icon: "🔧", c: S => S.zhongkao >= 40, t: "你去了职业高中。学一门手艺，也未必不是一条好路。"},
+      {id: "fail", n: "迷茫结局 · 提前离场", icon: "🍂", c: S => S.zhongkao < 40, t: "你没能继续学业，提前踏入社会。青春散场，路在何方？"},
+      {id: "sick", n: "悲剧结局 · 积劳成疾", icon: "🏥", c: S => S.dead === "健康", t: "你在初三倒下了。病床上的日子让你明白：没有健康，一切归零。"},
+      {id: "crazy", n: "悲剧结局 · 心理崩溃", icon: "💔", c: S => S.dead === "心态", t: "压力像潮水一样淹没了你。你休学了。愿世界对你温柔一些。"},
+      {id: "broke", n: "特殊结局 · 辍学打工", icon: "💸", c: S => S.dead === "经济", t: "家里实在供不起了。你提前结束学业，开始打工补贴家用。"},
+    ];
+
+    /* ==================================================================
+     * 状态与结算
+     * ================================================================== */
+    let S = null, slotCur = 0;
+    const rnd = n => Math.floor(Math.random() * n);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    /* ==================================================================
+     * 真实学习难度曲线
+     * ================================================================== */
+    function difficultyCurve(week, term) {
+      const t = Math.min(1, week / 144);
+      const termT = Math.min(1, term / 5);
+      const gainMul = 1.18 - 0.42 * Math.pow(t, 1.35);
+      const decay = 0.03 + 0.09 * Math.pow(t, 1.6);
+      const noise = 10 + 8 * t;
+      const examHard = 0.92 + 0.20 * Math.pow(t, 1.2);
+      return {gainMul, decay, noise, examHard, termT};
+    }
+
+    /* ==================================================================
+     * 每周固定悟性增长
+     * ==================================================================
+     * 不再依赖随机，改为：
+     *  - 基础 +1
+     *  - 随学期递增：term 0/1 +0，term 2/3 +1，term 4/5 +2
+     *  - 再叠加天赋修正（书香门第、七窍玲珑、文曲星、大彻大悟、迟钝、佛系少年）
+     */
+    function weeklyWuGain() {
+      let wu = 1;
+      if (S.term >= 4) wu += 2;
+      else if (S.term >= 2) wu += 1;
+      if (Talent.have("书香门第")) wu += 2;
+      if (Talent.have("七窍玲珑")) wu += 3;
+      if (Talent.have("文曲星")) wu += 3;
+      if (Talent.have("大彻大悟")) wu += 2;
+      if (Talent.have("迟钝")) wu = 0;
+      if (Talent.have("佛系少年")) wu = Math.max(0, wu - 1);
+      if (Talent.have("灵感迸发") && Math.random() < 0.15) {wu += 15; say("✨ 灵感迸发!悟性暴涨 +15", "talent");}
+      return wu;
+    }
+
+    function newGame(name, gender) {
+      Talent.owned = [];
+      S = {
+        week: 0, term: 0, name: name || "无名氏", gender: gender || "男",
+        evCnt: {},
+        prop: {心态: 100 + rnd(31) - 15, 经济: 100 + rnd(31) - 15, 健康: 100 + rnd(31) - 15, 效率: 100 + rnd(31) - 15, 悟性: 10 + rnd(15), 社交: 100 + rnd(31) - 15, 压力: 10},
+        score: 0, lastExamScore: 0, bestExam: 0, zhongkao: -1,
+        studyBuff: 0, buffWeeks: 0, studyDebuff: 0, debuffWeeks: 0,
+        cnt: {}, ach: [], over: false, dead: null, logs: [],
+        subj: {}, items: {},
+        evCntWeek: {},   // 本周已触发的事件 id
+        evCountWeek: 0,  // 本周已触发的事件次数
+      };
+      subjectsOf(0).forEach(s => S.subj[s] = 30 + rnd(20));
+      rollStartTalents();
+      applyStartTalentBonuses();
+    }
+
+    function applyStartTalentBonuses() {
+      const subjBonus = {};
+      if (Talent.have("书香门第")) {subjBonus.语文 = 15; subjBonus.历史 = 12;}
+      if (Talent.have("教师子女")) {Object.keys(S.subj).forEach(k => subjBonus[k] = (subjBonus[k] || 0) + 8);}
+      if (Talent.have("艺术世家")) {subjBonus.语文 = (subjBonus.语文 || 0) + 12; subjBonus.英语 = 12;}
+      if (Talent.have("数学脑")) subjBonus.数学 = 20;
+      if (Talent.have("语感天成")) subjBonus.语文 = 20;
+      if (Talent.have("单词机器")) subjBonus.英语 = 20;
+      if (Talent.have("实验狂人")) {subjBonus.物理 = (subjBonus.物理 || 0) + 15; subjBonus.化学 = 15;}
+      if (Talent.have("史海钩沉")) {subjBonus.历史 = (subjBonus.历史 || 0) + 15; subjBonus.生物 = 15;}
+      for (const k in subjBonus) {if (S.subj[k] !== undefined) S.subj[k] += subjBonus[k];}
+      if (Talent.have("家财万贯")) S.prop.经济 = 300 + rnd(100);
+      else if (Talent.have("家徒四壁")) S.prop.经济 = 30 + rnd(30);
+      else if (Talent.have("小康之家")) S.prop.经济 = 150 + rnd(50);
+      if (Talent.have("书香门第")) S.prop.悟性 += 10;
+      if (Talent.have("七窍玲珑")) S.prop.悟性 += 15;
+      S.score = Object.values(S.subj).reduce((a, b) => a + b, 0);
+    }
+
+    function rollStartTalents() {
+      const FAMILY_POOL = ["家财万贯", "家徒四壁", "小康之家", "书香门第", "官宦世家", "单亲家庭", "留守少年", "教师子女", "商人家庭", "艺术世家"];
+      const START_POOL = ["热情", "豪", "高冷", "吃货", "游戏宅", "晨型人", "熬夜冠军", "运动健将", "大胃袋", "理财达人", "佛系少年", "玻璃心", "内耗者"];
+      const NEGATIVE_POOL = ["厌学", "注意力涣散", "社恐", "网瘾", "拖延症", "考试焦虑", "偏食", "夜猫子", "暴躁"];
+      const fam = FAMILY_POOL[rnd(FAMILY_POOL.length)];
+      gainTalent(fam, "出身·免费");
+      const n = rnd(3);
+      const pool = [...START_POOL];
+      for (let i = 0; i < n; i++) {
+        const idx = rnd(pool.length);
+        gainTalent(pool[idx], "与生俱来的特质·免费");
+        pool.splice(idx, 1);
+      }
+      if (Math.random() < 0.35) {
+        const neg = NEGATIVE_POOL[rnd(NEGATIVE_POOL.length)];
+        gainTalent(neg, "天生的短板·免费");
+      }
+    }
+
+    function say(txt, cls = "") {
+      S.logs.push({txt, cls}); const el = document.getElementById("log");
+      const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = txt; el.appendChild(d); el.scrollTop = el.scrollHeight;
+    }
+    function count(k) {S.cnt[k] = (S.cnt[k] || 0) + 1}
+    /* story 模式下给 健康 / 心态 留一条保底线，避免展示时突然暴毙 */
+    function propFloor(k) {
+      return (GAME_CONFIG.difficulty === "story" && (k === "健康" || k === "心态")) ? GAME_CONFIG.storyFloor : 0;
+    }
+    function modProp(k, v) {
+      const cap = (k === "经济") ? Infinity : 150;
+      S.prop[k] = clamp(S.prop[k] + v, propFloor(k), cap);
+      if (Math.abs(v) >= 1) {
+        const good = (k === "压力") ? (v < 0) : (v > 0);
+        floatGain(`${k} ${v > 0 ? "+" : ""}${Math.round(v)}`, good);
+      }
+    }
+
+    function weeklySettle() {
+      const p = S.prop;
+
+      // 心态
+      if (Talent.have("道心如铁")) p.心态 = Math.max(130, p.心态 + rnd(21) - 10);
+      else {p.心态 += rnd(31) - 15 - (Talent.have("内耗者") ? 10 : 0) + (Talent.have("佛系少年") ? 4 : 0) - (Talent.have("深度抑郁") ? 8 : 0);}
+      p.心态 = clamp(p.心态, propFloor("心态"), 150);
+
+      // 经济
+      if (Talent.have("家财万贯")) p.经济 += 150;
+      else {
+        let v = rnd(41) - 20 - (Talent.have("家徒四壁") ? 10 : 0) - (Talent.have("大胃袋") ? 10 : 0) - (Talent.have("吃货") ? 5 : 0) + (Talent.have("偏食") ? 10 : 0);
+        if (Talent.have("理财达人") && v > 0) v = Math.floor(v * 1.5); p.经济 += v;
+      }
+      p.经济 = Math.max(0, p.经济);
+
+      // 健康
+      if (Talent.have("钢筋铁骨") || Talent.have("天行健")) p.健康 = Math.max(130, p.健康 + rnd(21) - 10);
+      else {p.健康 += rnd(31) - 15 - (Talent.have("体弱多病") ? rnd(5) : 0) + (Talent.have("大胃袋") ? 10 : 0) + (Talent.have("运动健将") ? 8 : 0) + (Talent.have("吃货") ? 3 : 0) - (Talent.have("熬夜冠军") ? 5 : 0) - (Talent.have("挑灯夜读") ? 3 : 0) - (Talent.have("偏食") ? 3 : 0) - (Talent.have("长期失眠") ? 8 : 0);}
+      p.健康 = clamp(p.健康, propFloor("健康"), 150);
+
+      // 效率
+      if (Talent.have("天行健")) p.效率 = Math.max(130, p.效率 + rnd(21) - 10);
+      else {p.效率 += rnd(31) - 15 + (Talent.have("知行合一") ? 0 : Math.floor((p.健康 - 100) / 8)) - (Talent.have("多动症") ? 20 : 0) + (Talent.have("自律机器") ? 5 : 0) + (Talent.have("晨型人") ? 6 : 0) + (Talent.have("熬夜冠军") ? 5 : 0) - (Talent.have("注意力涣散") ? 5 : 0) - (Talent.have("网瘾") ? 3 : 0) - (Talent.have("夜猫子") ? 5 : 0) - (Talent.have("严重网瘾") ? 10 : 0) - (Talent.have("长期失眠") ? 5 : 0);}
+      p.效率 = clamp(p.效率, 10, 150);
+
+      // 悟性：改为每周固定增长
+      const wuGain = weeklyWuGain();
+      if (wuGain > 0) {
+        p.悟性 = clamp(p.悟性 + wuGain, 10, 150);
+        if (wuGain >= 2) floatGain(`悟性 +${wuGain}`, true);
+      }
+      if (Talent.have("心如明镜")) p.心态 = clamp(p.心态 + 5, 0, 150);
+      if (Talent.have("大彻大悟")) {p.心态 = clamp(p.心态 + 5, 0, 150); p.压力 = clamp(p.压力 - 5, 0, 150);}
+      if (Talent.have("小康之家")) p.经济 += 40;
+      if (Talent.have("官宦世家")) p.社交 = clamp(p.社交 + 10, 10, 150);
+      if (Talent.have("单亲家庭")) {p.心态 = clamp(p.心态 - 3, 0, 150); p.效率 = clamp(p.效率 + 5, 10, 150);}
+      if (Talent.have("留守少年")) {p.社交 = clamp(p.社交 - 5, 10, 150); p.效率 = clamp(p.效率 + 5, 10, 150);}
+      if (Talent.have("商人家庭")) p.经济 = Math.floor(p.经济 * 1.03);
+      if (Talent.have("艺术世家")) {p.心态 = clamp(p.心态 + 3, 0, 150);}
+      if (Talent.have("静水流深")) {p.心态 = clamp(p.心态 + 3, 0, 150); p.压力 = clamp(p.压力 - 3, 0, 150);}
+      if (Talent.have("心如止水")) {p.心态 = 140; p.压力 = 40;}
+      if (Talent.have("天人合一")) {p.健康 = clamp(p.健康 + 5, 0, 150); p.效率 = clamp(p.效率 + 5, 10, 150); p.悟性 = clamp(p.悟性 + 5, 10, 150);}
+      if (Talent.have("暴躁")) p.压力 = clamp(p.压力 + 5, 0, 150);
+      if (Talent.have("深度抑郁")) {p.心态 = clamp(p.心态 - 8, 0, 150); p.压力 = clamp(p.压力 + 6, 0, 150);}
+      if (Talent.have("考试焦虑")) p.心态 = clamp(p.心态 - 3, 0, 150);
+      if (Talent.have("重度厌学")) p.压力 = clamp(p.压力 + 8, 0, 150);
+
+      // 社交
+      if (Talent.have("社交牛逼症")) p.社交 = Math.max(130, p.社交 + rnd(21) - 10);
+      else {p.社交 += rnd(31) - 15 - (Talent.have("高冷") ? 5 : 0) - (Talent.have("社恐") ? 8 : 0) - (Talent.have("社交恐惧") ? 15 : 0) + (Talent.have("热情") ? 10 : 0);}
+      p.社交 = clamp(p.社交, 10, 150);
+
+      // 压力
+      if (Talent.have("不吃压力")) p.压力 = 50 + rnd(21) - 10;
+      else {p.压力 += rnd(31) - 15 + (Talent.have("玻璃心") ? 20 : 0) + (Talent.have("自律机器") ? 5 : 0) + (Talent.have("卷王") ? 10 : 0) - (Talent.have("佛系少年") ? 8 : 0);}
+      p.压力 = clamp(p.压力, 0, 150);
+
+      // 周结算遗忘
+      const diff = difficultyCurve(S.week, S.term);
+      const subs = subjectsOf(S.term);
+      subs.forEach(sub => {
+        const decay = diff.decay * 0.6;
+        S.subj[sub] = Math.max(0, S.subj[sub] * (1 - decay));
+      });
+      S.score = Math.max(0, subs.reduce((s, x) => s + S.subj[x], 0));
+
+      // 重置本周事件计数
+      S.evCntWeek = {};
+      S.evCountWeek = 0;
+    }
+
+    function studySettle(action) {
+      const p = S.prop;
+      let base = {study: 5.5, rest: 1.2, social: 1.5, fun: 0.4, work: 0}[action];
+      let rate = base * (0.5 + p.效率 / 200) * (0.5 + p.悟性 / 200) * (0.6 + p.心态 / 250);
+      if (Talent.have("过目不忘")) rate *= 1.2;
+      if (Talent.have("挑灯夜读") && action === "study") rate *= 1.15;
+      if (Talent.have("卷王") && action === "study") rate *= 1.25;
+      if (Talent.have("游戏宅")) rate *= 0.85;
+      if (Talent.have("学习特困生")) rate *= 0.45;
+      if (Talent.have("知行合一")) rate *= 1.08;
+      if (Talent.have("学神降世")) rate *= 1.15;
+      if (Talent.have("教师子女")) rate *= 1.05;
+      if (Talent.have("笔耕不辍") && action === "study") rate *= 1.08;
+      if (Talent.have("融会贯通")) rate *= 1.1;
+      if (Talent.have("厌学") && action === "study") rate *= 0.8;
+      if (Talent.have("重度厌学") && action === "study") rate *= 0.6;
+      if (Talent.have("拖延症") && action === "study" && Math.random() < 0.3) rate *= 0.5;
+      if (Talent.have("网瘾") && action === "fun") rate *= 1.5;
+      if (Talent.have("严重网瘾") && action === "fun") rate *= 2.0;
+
+      rate *= 1 - (p.压力 / 150) * 0.30;
+
+      rate *= 1 + S.studyBuff - S.studyDebuff;
+      rate *= 1 + (Math.random() * 0.5 - 0.35);
+
+      const diff = difficultyCurve(S.week, S.term);
+      rate *= diff.gainMul;
+
+      const subs = subjectsOf(S.term);
+      let weekTotal = 0;
+      subs.forEach(s => {if (S.subj[s] === undefined) S.subj[s] = 25 + rnd(15)});
+      const weakest = subs.reduce((a, b) => S.subj[a] < S.subj[b] ? a : b);
+      const gains = [];
+      for (const sub of subs) {
+        let share = rate * (sub === weakest ? 1.2 : (0.75 + Math.random() * 0.3));
+        const tn = SUBJ_TALENT[sub];
+        if (tn && Talent.have(tn)) share *= 1.25;
+        if (Talent.have("实验狂人") && ["物理", "化学"].includes(sub)) share *= 1.15;
+        if (Talent.have("史海钩沉") && ["历史", "生物"].includes(sub)) share *= 1.15;
+        if (Talent.have("书香门第") && ["语文", "历史"].includes(sub)) share *= 1.15;
+        if (Talent.have("艺术世家") && ["语文", "英语"].includes(sub)) share *= 1.10;
+        if (Talent.have("过目成诵") && ["语文", "英语"].includes(sub)) share *= 1.2;
+        if (Talent.have("格物致知") && ["物理", "化学", "生物"].includes(sub)) share *= 1.2;
+        if (Talent.have("运筹帷幄") && sub === "数学") share *= 1.2;
+        if (Talent.have("博古通今") && ["历史", "政治", "地理"].includes(sub)) share *= 1.2;
+        if (Talent.have("夜猫子") && action === "study" && Math.random() < 0.5) share *= 1.15;
+        const rel = S.subj[sub] / (S.term + 1);
+        if (rel < 180) share *= 1.15;
+        else if (rel < 400) share *= 0.75;
+        else share *= 0.25;
+        share *= 1 + (Math.random() * 0.3 - 0.15);
+
+        const decay = diff.decay;
+        const before = S.subj[sub];
+        S.subj[sub] = Math.max(0, before * (1 - decay) + share);
+        const delta = S.subj[sub] - before;
+        weekTotal += delta;
+        if (action === "study" && Math.abs(delta) > 2) gains.push(`${sub}${delta > 0 ? "+" : ""}${delta.toFixed(1)}`);
+      }
+      S.score = Math.max(0, subs.reduce((s, x) => s + S.subj[x], 0));
+      if (action === "study" && gains.length) floatGain(gains.join(" "), true);
+      if (S.buffWeeks > 0 && --S.buffWeeks === 0) S.studyBuff = 0;
+      if (S.debuffWeeks > 0 && --S.debuffWeeks === 0) S.studyDebuff = 0;
+      if (action === "study") {count("study"); p.压力 = clamp(p.压力 + 4, 0, 150);}
+      if (action === "rest") {p.压力 = clamp(p.压力 - 10, 0, 150); p.健康 = clamp(p.健康 + 5, 0, 150); p.效率 = clamp(p.效率 + 8, 10, 150);}
+      if (action === "social") {count("social"); p.社交 = clamp(p.社交 + 6, 0, 150); p.心态 = clamp(p.心态 + 4, 0, 150); p.效率 = clamp(p.效率 + 3, 10, 150);}
+      if (action === "fun") {p.心态 = clamp(p.心态 + (Talent.have("游戏宅") ? 16 : 8), 0, 150); p.压力 = clamp(p.压力 - 8, 0, 150);}
+      if (action === "work") {
+        let g = Talent.have("理财达人") ? 25 : 15;
+        if (Math.random() < 0.2) {
+          const bad = rnd(4);
+          if (bad === 0) {g = 0; say("💢 老板以「干活不认真」为由扣光了工资。", "bad");}
+          else if (bad === 1) {g = Math.floor(g / 2); p.健康 = clamp(p.健康 - 6, 0, 150); say("💢 你累得腰酸背痛,还被扣了一半工资。", "bad");}
+          else if (bad === 2) {modProp("心态", -8); say("💢 被同学撞见你在发传单,你窘得满脸通红。", "bad");}
+          else {g = 0; p.压力 = clamp(p.压力 + 10, 0, 150); say("💢 干了一天,老板跑路了,一分钱没拿到。", "bad");}
+        }
+        modProp("经济", g);
+        p.效率 = clamp(p.效率 - 5, 0, 150);
+        p.健康 = clamp(p.健康 - 4, 0, 150);
+        p.压力 = clamp(p.压力 + 6, 0, 150);
+        p.心态 = clamp(p.心态 - 3, 0, 150);
+      }
+    }
+
+    function exam(name) {
+      const p = S.prop;
+      const subs = subjectsOf(S.term);
+      const diff = difficultyCurve(S.week, S.term);
+      let total = 0, rows = [], fullMarks = [], perfect = true;
+      for (const sub of subs) {
+        let v = S.subj[sub] / (S.term + 1) * 0.7 + p.悟性 * 0.2 + p.心态 * 0.06 + p.效率 * 0.04;
+        v = Math.sqrt(Math.max(0, v)) * 10;
+        if (S.examCharm) v += 5;
+        if (S.penCharm) v += 5;
+        v = v * diff.examHard + (Math.random() * 2 - 1) * diff.noise;
+        if (Talent.have("学霸光环")) v += 5;
+        if (Talent.have("考场黑马")) v += 3;
+        if (Talent.have("学神降世")) v += 8;
+        if (Talent.have("文曲星")) v += 4;
+        if (Talent.have("数学脑") && sub === "数学") v += 8;
+        if (Talent.have("语感天成") && sub === "语文") v += 8;
+        if (Talent.have("单词机器") && sub === "英语") v += 8;
+        if (Talent.have("实验狂人") && ["物理", "化学"].includes(sub)) v += 8;
+        if (Talent.have("史海钩沉") && ["历史", "生物"].includes(sub)) v += 8;
+        if (Talent.have("运筹帷幄") && sub === "数学") v += 8;
+        if (Talent.have("过目成诵") && ["语文", "英语"].includes(sub)) v += 5;
+        if (Talent.have("格物致知") && ["物理", "化学", "生物"].includes(sub)) v += 5;
+        if (Talent.have("博古通今") && ["历史", "政治", "地理"].includes(sub)) v += 5;
+        if (Talent.have("融会贯通")) v += 3;
+        if (Talent.have("考试焦虑")) v -= 8;
+        v = Math.round(clamp(v, 0, 100));
+        if (v === 100) fullMarks.push(sub);
+        if (v < 90) perfect = false;
+        total += v;
+        const color = v >= 90 ? "var(--green)" : (v >= 60 ? "var(--gold)" : "var(--red)");
+        rows.push(`<div class="subjrow"><span style="width:3em">${sub}</span><div class="bar"><i style="width:${v}%;background:${color}"></i></div><b style="color:${color};width:2.5em;text-align:right">${v}</b></div>`);
+      }
+      if (S.examCharm) {S.examCharm = false;}
+      if (S.penCharm) {S.penCharm = false;}
+      const avg = Math.round(total / subs.length);
+      S.lastExamScore = avg; S.bestExam = Math.max(S.bestExam, avg); count("exam");
+      say(`📝【${name}】总分 ${total}/${subs.length * 100}，均分 ${avg}`, "exam");
+      if (avg >= 90) {say("名列前茅！全年级都听说了你的名字。", "good");}
+      else if (avg < 45) {say("考砸了……心态 -8，压力 +10", "bad"); modProp("心态", -8); modProp("压力", 10);}
+      else modProp("心态", 2);
+      if (fullMarks.length) {S.cnt.subjFull = (S.cnt.subjFull || 0) + fullMarks.length;}
+      if (perfect && subs.length > 0) count("allPerfect");
+      showModal(`${name} · 成绩单`, `<div>${rows.join("")}</div><div style="margin-top:10px;text-align:right;color:var(--gold)">均分:<b>${avg}</b> / 满分 100</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">🎉 满分科目:${fullMarks.join("、")}</div>` : ""}`,
+        [{
+          t: "收下成绩单", fn: () => {
+            if (!S.daoDone && (avg >= 82 || p.悟性 >= 115) && Math.random() < 0.5) {examDao(avg);}
+            else {nextWeek();}
+          }
+        }], null, false, false, {kind: "fixed"});
+      return avg;
+    }
+
+    function examDao(v) {
+      showModal("考场悟道", "收卷铃响前的最后一刻，你盯着试卷，忽然觉得天地一静——<br>三年的知识在你脑海中连成了一条线。<br><br><span style='color:var(--gold)'>这是一次顿悟的机会，你选择抓住哪一种「道」？</span>", [
+        {t: "以笔为剑，杀伐果断", sub: "悟【学神降世】Lv.7(需悟性≥100)", disabled: () => S.prop.悟性 < 100, fn: () => {S.daoDone = true; gainTalent("学神降世", "考场悟道"); nextWeek();}},
+        {t: "文思泉涌，下笔如有神", sub: "悟【文曲星】Lv.6", fn: () => {S.daoDone = true; gainTalent("文曲星", "考场悟道"); nextWeek();}},
+        {t: "返观内照，照见本心", sub: "悟【心如明镜】Lv.6(需心态≥100)", disabled: () => S.prop.心态 < 100, fn: () => {S.daoDone = true; gainTalent("心如明镜", "考场悟道"); nextWeek();}},
+        {t: "电光石火，融会贯通", sub: "悟【知行合一】Lv.6(需效率≥100)", disabled: () => S.prop.效率 < 100, fn: () => {S.daoDone = true; gainTalent("知行合一", "考场悟道"); nextWeek();}},
+        {t: "心如止水，万念俱寂", sub: "悟【心如止水】Lv.7(需心态≥115)", disabled: () => S.prop.心态 < 115, fn: () => {S.daoDone = true; gainTalent("心如止水", "考场悟道"); nextWeek();}},
+        {t: "天人合一，物我两忘", sub: "悟【天人合一】Lv.7(需健康≥115且效率≥115)", disabled: () => S.prop.健康 < 115 || S.prop.效率 < 115, fn: () => {S.daoDone = true; gainTalent("天人合一", "考场悟道"); nextWeek();}},
+        {t: "顺其自然，不为所动", sub: "悟性 +5", fn: () => {modProp("悟性", 5); say("灵光散去了，但留下了一点什么。悟性 +5", ""); nextWeek();}},
+      ], null, false, false, {kind: "fixed"});
+    }
+  </script>
+
+  <script>
+    /* ==================================================================
+     * 流程控制
+     * ================================================================== */
+    function weekInTerm() {return S.week % (WEEKS_PER_TERM + 1)}
+    function gradeName() {return GRADES[Math.min(2, Math.floor(S.term / 2))]}
+    function termName() {return (S.term % 2 === 0) ? "上学期" : "下学期"}
+
+    function nextWeek() {
+      if (S.over) return;
+      S.week++;
+      saveGame(false);
+      startWeek();
+    }
+
+    function ensureActionPanel() {
+      if (!S || S.over || popupBusy) return;   // 有弹窗正在处理时不补行动面板
+      const panel = document.getElementById("actionPanel");
+      if (!panel) return;
+      if (panel.innerHTML !== "") return;
+      const wit = weekInTerm();
+      const fixed = fixedEventOf(S.term, wit);
+      if (!fixed) offerActions();
+    }
+
+    function startWeek() {
+      if (S) S.evQuota = 0;          // 新的一周：尚未排定事件额度
+      renderHUD();
+      if (S.over) return;
+      if (S.week > 0 && weekInTerm() === 0 && S.term >= TERMS) {return zhongkao();}
+      const wit = weekInTerm();
+      say(`—— 第 ${S.week} 周 · ${gradeName()}${termName()} ——`, "week-head");
+      const fixed = fixedEventOf(S.term, wit);
+      if (fixed) runFixed(fixed);
+      else offerActions();
+    }
+    function offerActions() {
+      const acts = [
+        {k: "study", t: "📖 努力学习"},
+        {k: "rest", t: "😴 好好休息"},
+        {k: "social", t: "👥 社交活动"},
+        {k: "fun", t: "🎮 摸鱼娱乐"},
+        {k: "work", t: "💼 打零工"},
+        {k: "read", t: "📚 读书角"},
+      ];
+      const box = document.getElementById("actionPanel");
+      box.innerHTML = "<div class='tag-title'>选择本周行动</div>";
+      acts.forEach(a => {
+        const b = document.createElement("button"); b.className = "btn";
+        b.innerHTML = `<b>${a.t}</b>`;
+        b.onclick = () => takeAction(a.k); box.appendChild(b);
+      });
+      const itemKeys = Object.keys(S.items).filter(k => S.items[k] > 0);
+      if (itemKeys.length > 0) {
+        const t = document.createElement("div"); t.className = "tag-title"; t.style.marginTop = "8px"; t.textContent = "使用道具";
+        box.appendChild(t);
+        itemKeys.forEach(id => {
+          const it = SHOP_ITEMS.find(x => x.id === id);
+          if (!it) return;
+          const b = document.createElement("button"); b.className = "btn";
+          b.innerHTML = `<b>${it.n} ×${S.items[id]}</b>`;
+          b.onclick = () => useItem(id); box.appendChild(b);
+        });
+      }
+      renderHUD();
+    }
+
+    /* 本周事件额度（消耗型弹窗的数量） */
+    function eventQuota() {
+      const cfg = GAME_CONFIG.eventQuotaByTerm;
+      const v = cfg[Math.min(cfg.length - 1, Math.max(0, S.term))];
+      return Math.min(GAME_CONFIG.maxEventPerWeek, v == null ? 2 : v);
+    }
+
+    /* 本周行动：结算 → 串行播放若干个「事件弹窗」→ 周结算 */
+    function takeAction(k) {
+      document.getElementById("actionPanel").innerHTML = "";
+      if (k === "read") {openBookCorner(() => afterWeek()); return;}
+      studySettle(k);
+      say(`本周行动:${{study: "努力学习", rest: "好好休息", social: "社交活动", fun: "摸鱼娱乐", work: "打零工"}[k]} → 学力结算后:${Math.round(S.score)}`, "sys");
+      S.evCntWeek = {};
+      S.evCountWeek = 0;
+      S.evQuota = eventQuota();
+      renderHUD();
+      runEventChain(afterWeek);
+    }
+
+    /* 事件链：一次只弹一个，玩家处理完再排下一个 */
+    let resultBase = 0;
+    function runEventChain(done) {
+      const step = () => {
+        if (S.over) return;
+        if (S.evCountWeek >= S.evQuota) return done();
+        const def = buildEventDef();          // 现场挑选（能感知上一条事件带来的变化）
+        if (!def) return done();              // 没有可用事件，直接结束本周
+        renderHUD();
+        showPopup(def, () => showEventResult(step));
+      };
+      step();
+    }
+
+    /* 挑一个随机事件，包装成统一的弹窗定义 */
+    function buildEventDef() {
+      if (S.evCountWeek >= GAME_CONFIG.maxEventPerWeek) return null;
+      let pool = EVENTS.filter(e => !e.cond || e.cond(S));
+      pool = pool.filter(e => !S.evCntWeek[e.id]);          // 同一事件每周最多 1 次
+      const fresh = pool.filter(e => (S.evCnt[e.id] || 0) < 2);
+      if (fresh.length > 0) pool = fresh;                    // 优先没见过的
+      if (!pool.length) return null;
+      const effW = e => e.w * (1 - Math.min(S.evCnt[e.id] || 0, 3) * 0.2);
+      const total = pool.reduce((s, e) => s + Math.max(0.1, effW(e)), 0);
+      let r = Math.random() * total, ev = pool[0];
+      for (const e of pool) {r -= Math.max(0.1, effW(e)); if (r <= 0) {ev = e; break;} }
+      S.evCntWeek[ev.id] = true;
+      S.evCountWeek++;
+      S.evCnt[ev.id] = (S.evCnt[ev.id] || 0) + 1;
+      const available = ev.opts.filter(o => !o.cond || o.cond(S));
+      if (!available.length) return null;
+      return {
+        kind: "event",
+        title: ev.t,
+        body: ev.c,
+        img: ev.img,
+        options: ev.opts.map(o => ({
+          t: o.t, sub: o.sub || "",
+          disabled: o.cond && !o.cond(S),
+          fn: () => {resultBase = S.logs.length; o.run(S); checkAch();}
+        }))
+      };
+    }
+
+    /* 事件结果：同一个弹窗原地变成结果，玩家点「继续」才进下一个 */
+    function showEventResult(next) {
+      const logs = S.logs.slice(resultBase);
+      if (GAME_CONFIG.eventResultMode === "log" || !logs.length) {next(); return;}
+      const html = logs.map(l => `<div class="${l.cls || ""}" style="margin:2px 0">${l.txt}</div>`).join("");
+      showPopup({
+        kind: "event",
+        badge: `⚡ 事件 ${Math.min(S.evCountWeek || 0, S.evQuota || 0)}/${S.evQuota || 0} · 结果`,
+        title: "事件结局",
+        body: `<div style="line-height:2.2">${html}</div>`,
+        options: [{t: "继续"}]
+      }, next);
+    }
+
+    function afterWeek() {
+      if (S.prop.健康 <= 0) {S.dead = "健康"; return gameOver();}
+      if (S.prop.心态 <= 0) {S.dead = "心态"; return gameOver();}
+      const brokeNeed = GAME_CONFIG.difficulty === "hard" ? 5 : (GAME_CONFIG.difficulty === "story" ? 12 : 8);
+      if (S.prop.经济 <= 0 && S.term >= 2) {count("brokeWeek"); if (S.cnt.brokeWeek >= brokeNeed) {S.dead = "经济"; return gameOver();} }
+
+      weeklySettle();
+      if (S.prop.压力 >= 100) {modProp("心态", GAME_CONFIG.difficulty === "story" ? -7 : -15); say(`压力爆表!心态 -${GAME_CONFIG.difficulty === "story" ? 7 : 15}`, "bad");}
+      if (S.prop.健康 < 30) say("⚠️ 身体在报警，下周该休息了。", "bad");
+      if (S.prop.心态 < 30) say("⚠️ 你最近情绪很低落，注意调节。", "bad");
+      if (S.prop.压力 >= 80 && !Talent.have("不吃压力")) {modProp("效率", -3);}
+      checkAch();
+
+      if (S.prop.健康 <= 0) {S.dead = "健康"; return gameOver();}
+      if (S.prop.心态 <= 0) {S.dead = "心态"; return gameOver();}
+
+      renderHUD();
+      if (!S.over) {nextWeek();}
+    }
+
+    function checkAch() {
+      for (const [id, a] of Object.entries(ACHIEVEMENTS)) {
+        if (S.ach.includes(id)) continue;
+        if (a.c(S)) {
+          S.ach.push(id);
+          say(`🏆 达成成就【${a.n}】——${a.d}`, "ach");
+          toast(`🏆 成就:${a.n}`, true);
+          if (a.unlock) gainTalent(a.unlock, "成就奖励·免费");
+        }
+      }
+    }
+
+    function zhongkao() {
+      count("zhongkao");
+      const p = S.prop, subs = subjectsOf(S.term);
+      const diff = difficultyCurve(S.week, S.term);
+      let total = 0;
+      for (const sub of subs) {
+        let v = S.subj[sub] / (S.term + 1) * 0.7 + p.悟性 * 0.2 + p.心态 * 0.06 + p.效率 * 0.04;
+        v = Math.sqrt(Math.max(0, v)) * 10;
+        v = v * diff.examHard + (Math.random() * 2 - 1) * diff.noise;
+        if (Talent.have("学神降世")) v += 8;
+        if (Talent.have("学霸光环")) v += 5;
+        if (Talent.have("考场黑马")) v += 3;
+        if (Talent.have("考试焦虑")) v -= 8;
+        total += clamp(v, 0, 100);
+      }
+      S.zhongkao = Math.round(total / subs.length);
+      S.lastExamScore = S.zhongkao;
+      say(`🎓 中考放榜!你的均分:${S.zhongkao}/100`, "exam");
+      checkAch();
+      gameOver();
+    }
+
+    function gameOver() {
+      S.over = true;
+      const end = ENDINGS.find(e => e.c(S)) || ENDINGS[ENDINGS.length - 1];
+      renderHUD();
+      const talentList = Talent.owned.length ? Talent.owned.map(t => `${t}(Lv.${TALENTS[t].lv})`).join("、") : "无";
+      const achList = S.ach.length ? S.ach.map(id => ACHIEVEMENTS[id].n).join("、") : "无";
+      let reasonLine = "";
+      if (S.zhongkao < 0) {
+        if (S.dead === "健康") reasonLine = "你因健康问题提前离场。";
+        else if (S.dead === "心态") reasonLine = "你因心理压力过重提前离场。";
+        else if (S.dead === "经济") reasonLine = "你因家庭经济困难提前离场。";
+      }
+      showModal("初中落幕",
+        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${end.n}</h2><p style="margin-top:12px;line-height:2">${end.t}</p>
+     ${reasonLine ? `<p style="margin-top:8px;color:var(--red);font-weight:bold">${reasonLine}</p>` : ""}
+     <p style="margin-top:16px;color:var(--dim)">历时 ${S.week} 周 · 中考 ${S.zhongkao < 0 ? "—" : S.zhongkao} 分 · 天赋 ${Talent.owned.length} 个 · 成就 ${S.ach.length}/${Object.keys(ACHIEVEMENTS).length}</p>
+     <div style="margin-top:14px;font-size:.85rem;color:var(--dim);text-align:left;line-height:1.9">
+       <b style="color:var(--purple)">天赋:</b>${talentList}<br>
+       <b style="color:#ffb86b">成就:</b>${achList}
+     </div></div>`,
+        [{t: "回到主菜单", fn: toStart}, {t: "重新开始", fn: () => {newGameAt(slotCur);}}], null, true, false, {kind: "ending"});
+    }
+
+    const SAVE_KEY = "zhongkao_life_saves_v6";
+    function loadSaves() {try {return JSON.parse(localStorage.getItem(SAVE_KEY)) || [null, null, null]} catch (e) {return [null, null, null]} }
+    function writeSaves(a) {localStorage.setItem(SAVE_KEY, JSON.stringify(a))}
+    function saveGame(manual) {
+      if (!S) return;
+      const a = loadSaves();
+      a[slotCur] = {week: S.week, term: S.term, name: S.name, gender: S.gender, evCnt: S.evCnt, daoDone: S.daoDone, subj: S.subj, prop: S.prop, score: S.score, lastExamScore: S.lastExamScore, bestExam: S.bestExam, zhongkao: S.zhongkao, buff: [S.studyBuff, S.buffWeeks, S.studyDebuff, S.debuffWeeks], cnt: S.cnt, ach: S.ach, over: S.over, dead: S.dead, talents: Talent.owned, items: S.items, evCntWeek: S.evCntWeek, evCountWeek: S.evCountWeek, time: new Date().toLocaleString()};
+      writeSaves(a);
+      if (manual) {toast("💾 已保存"); renderSlots();}
+    }
+    function resumeGame(i) {
+      const d = loadSaves()[i]; if (!d) return;
+      slotCur = i; Talent.owned = d.talents || []; Talent.solve();
+      S = {week: d.week, term: d.term, name: d.name || "无名氏", gender: d.gender || "男", evCnt: d.evCnt || {}, daoDone: d.daoDone, subj: d.subj || {}, prop: d.prop, score: d.score, lastExamScore: d.lastExamScore, bestExam: d.bestExam, zhongkao: d.zhongkao, studyBuff: d.buff[0], buffWeeks: d.buff[1], studyDebuff: d.buff[2], debuffWeeks: d.buff[3], cnt: d.cnt, ach: d.ach, over: d.over, dead: d.dead, logs: [], items: d.items || {}, evCntWeek: d.evCntWeek || {}, evCountWeek: d.evCountWeek || 0};
+      document.getElementById("startScreen").classList.add("hidden");
+      document.getElementById("gameScreen").classList.remove("hidden");
+      document.getElementById("log").innerHTML = "";
+      say("💾 存档读取成功，继续你的初中生活！", "sys");
+      if (S.over) {gameOver();} else startWeek();
+    }
+    function newGameAt(i) {
+      slotCur = i;
+      const m = document.getElementById("modalMask"); m.classList.remove("hidden"); m._lock = true;
+      popupBusy = true;
+      const _bd = document.getElementById("modalBadge"); if (_bd) _bd.style.display = "none";
+      const _md = document.getElementById("modalMedia"); if (_md) {_md.innerHTML = ""; _md.style.display = "none";}
+      document.getElementById("modalTitle").textContent = "创建角色";
+      document.getElementById("modalBody").innerHTML =
+        `<div style="line-height:2.4">
+       姓名:<input id="inpName" maxlength="8" placeholder="输入你的名字" style="background:#0b0818;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 12px;width:60%"><br>
+       性别:<label><input type="radio" name="inpGender" value="男" checked> 男</label>
+            <label style="margin-left:16px"><input type="radio" name="inpGender" value="女"> 女</label>
+     </div>
+     <div style="color:var(--dim);font-size:.85rem;margin-top:8px">或从下方随机名字中选一个：</div>
+     <div class="namegrid" id="nameGrid"></div>`;
+      const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
+      const btn = document.createElement("button"); btn.className = "btn primary"; btn.textContent = "开始初中生活";
+      btn.onclick = () => {
+        const nm = (document.getElementById("inpName").value || "").trim() || "无名氏";
+        const gd = document.querySelector("input[name=inpGender]:checked").value;
+        closeModal();
+        newGame(nm, gd);
+        document.getElementById("startScreen").classList.add("hidden");
+        document.getElementById("gameScreen").classList.remove("hidden");
+        document.getElementById("log").innerHTML = "";
+        say(`🌅 ${nm} 的初中生涯，开始了。`, "sys");
+        startWeek();
+      };
+      ob.appendChild(btn);
+      setTimeout(() => {
+        const grid = document.getElementById("nameGrid");
+        if (!grid) return;
+        const maleNames = ["李承宇", "王浩然", "张子墨", "刘俊熙", "陈宇航", "杨启航", "赵泽楷", "周天佑", "顾北辰", "沈亦白", "陆时安", "程星野", "谢知遥", "韩煜城", "顾言澈", "林书珩"];
+        const femaleNames = ["林诗涵", "苏婉清", "沈梦瑶", "顾念之", "叶清欢", "陆雨萱", "唐若曦", "许安然", "江晚吟", "沈知意", "顾星晚", "温以宁", "白书予", "叶挽晴", "林疏桐", "苏可盈"];
+        const getG = () => document.querySelector("input[name=inpGender]:checked").value;
+        const renderNames = () => {
+          const pool = getG() === "男" ? maleNames : femaleNames;
+          grid.innerHTML = "";
+          pool.forEach(n => {
+            const b = document.createElement("button");
+            b.className = "namebtn"; b.textContent = n;
+            b.onclick = () => {document.getElementById("inpName").value = n;};
+            grid.appendChild(b);
+          });
+        };
+        renderNames();
+        document.querySelectorAll("input[name=inpGender]").forEach(r => r.onchange = renderNames);
+      }, 0);
+    }
+
+    const STAT_COLOR = {心态: "#ffb4d1", 经济: "#d9b3ff", 健康: "#7ee0c0", 效率: "#b388ff", 悟性: "#c9a7ff", 社交: "#ffb86b", 压力: "#ff7aa2"};
+    function renderHUD() {
+      if (!S) return;
+      document.getElementById("hudGrade").textContent = `${S.name}(${S.gender}) · ${gradeName()}`;
+      document.getElementById("hudWeek").textContent = S.week;
+      document.getElementById("hudTerm").textContent = termName();
+      let h = "";
+      for (const [k, v] of Object.entries(S.prop)) {
+        const pct = k === "经济" ? clamp(v / 30, 2, 100) : v / 1.5;
+        h += `<div class="stat"><div style="display:flex;justify-content:space-between"><span>${k}</span><b>${Math.round(v)}</b></div><div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k]}"></i></div></div>`;
+      }
+      document.getElementById("statPanel").innerHTML = h;
+      document.getElementById("talentCount").textContent = Talent.owned.length;
+      document.getElementById("talentPanel").innerHTML = Talent.owned.length ?
+        [...Talent.owned].sort((a, b) => TALENTS[b].lv - TALENTS[a].lv).map(t => `<span class="badge c${TALENTS[t].lv}" title="${TALENTS[t].desc}" onclick="openTalentInfo('${t}')">${t} Lv.${TALENTS[t].lv}</span>`).join("") : "<span style='color:var(--dim)'>尚无天赋 —— 在选择中觉醒</span>";
+      const itemCount = Object.values(S.items).reduce((a, b) => a + b, 0);
+      document.getElementById("itemCount").textContent = itemCount;
+      document.getElementById("itemPanel").innerHTML = itemCount > 0 ?
+        Object.entries(S.items).filter(([k, v]) => v > 0).map(([k, v]) => {
+          const it = SHOP_ITEMS.find(x => x.id === k);
+          return it ? `<span class="badge" onclick="useItem('${k}')">${it.n} ×${v}</span>` : "";
+        }).join("") : "<span style='color:var(--dim)'>暂无道具 —— 可去小卖铺购买</span>";
+      document.getElementById("scoreNow").textContent = Math.round(S.score);
+      const subs = subjectsOf(S.term);
+      document.getElementById("subjPanel").innerHTML = subs.map(s => {
+        const v = S.subj[s] || 0, rel = v / (S.term + 1);
+        const pct = clamp(rel / 700 * 100, 2, 100);
+        const color = rel >= 480 ? "var(--green)" : (rel >= 220 ? "var(--gold)" : "var(--red)");
+        return `<div class="subjrow"><span style="width:3em">${s}</span><div class="bar"><i style="width:${pct}%;background:${color}"></i></div><b style="width:3em;text-align:right;color:${color}">${Math.round(v)}</b></div>`;
+      }).join("");
+      document.getElementById("lastExam").textContent = S.lastExamScore || "—";
+      const r = S.zhongkao >= 0 ? S.zhongkao : S.lastExamScore;
+      document.getElementById("rankNow").textContent = r ? ("前 " + Math.max(1, Math.round(100 - r)) + "%") : "—";
+
+      // 本周事件进度（消耗行动额度的弹窗）
+      const quota = S.evQuota || 0, now = Math.min(S.evCountWeek || 0, quota);
+      const dots = document.getElementById("evDots");
+      if (dots) dots.innerHTML = quota ? Array.from({length: quota}, (_, i) => `<span class="dot${i < now ? " on" : ""}"></span>`).join("") : "";
+      const pill = document.getElementById("evPill");
+      if (pill) pill.style.display = quota ? "" : "none";
+
+      // 弹窗处理中：暂时锁住自由面板，避免弹窗互相覆盖
+      ["btnShop", "btnTalentBook", "btnAch"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {el.disabled = popupBusy; el.classList.toggle("busy-lock", popupBusy);}
+      });
+      setTimeout(ensureActionPanel, 0);
+    }
+    function renderSlots() {
+      const a = loadSaves(), box = document.getElementById("slotList"); box.innerHTML = "";
+      a.forEach((d, i) => {
+        const el = document.createElement("div"); el.className = "slot";
+        if (d) {
+          el.innerHTML = `<div class="info"><b>存档 ${i + 1} · ${d.name || "无名氏"}(${d.gender || "男"})</b> · ${GRADES[Math.min(2, Math.floor(d.term / 2))]} 第 ${d.week} 周${d.over ? " · <span style='color:var(--red)'>已完结</span>" : ""}<br>中考:${d.zhongkao < 0 ? "—" : d.zhongkao} · 成就 ${d.ach.length} · ${d.time}</div>
+      <div><button class="btn green" onclick="resumeGame(${i})">继续</button><button class="btn" onclick="if(confirm('覆盖该存档?'))newGameAt(${i})">重开</button><button class="btn" onclick="delSave(${i})">删除</button></div>`;
+        } else {
+          el.innerHTML = `<div class="info"><b>存档 ${i + 1}</b> · 空</div><div><button class="btn primary" onclick="newGameAt(${i})">新开存档</button></div>`;
+        }
+        box.appendChild(el);
+      });
+    }
+    function delSave(i) {if (!confirm("确定删除该存档?")) return; const a = loadSaves(); a[i] = null; writeSaves(a); renderSlots();}
+
+    /* ------------------------------------------------------------------
+     * 统一弹窗层：一切「需要玩家点击选择」的界面都是弹窗，弹窗就是事件
+     *   kind 说明：
+     *     event  随机事件 —— 消耗本周行动额度
+     *     fixed  固定事件 —— 开学/考试/运动会/假期副本
+     *     free   自由操作 —— 小卖铺/道具/读书角/图鉴/成就，不消耗任何额度
+     *     ending 结局
+     * 同一时刻只会有一个弹窗，处理完才排下一个（避免弹窗互相覆盖）
+     * ------------------------------------------------------------------ */
+    let popupBusy = false;
+
+    function badgeText(kind) {
+      if (!S) return "";
+      if (kind === "event") return `⚡ 事件 ${Math.min(S.evCountWeek || 0, S.evQuota || 0)}/${S.evQuota || 0}`;
+      if (kind === "fixed") return "📅 固定事件";
+      if (kind === "free") return "🎒 自由操作 · 不消耗本周行动";
+      if (kind === "ending") return "🏁 结局";
+      return "";
+    }
+
+    function hideModalRaw() {document.getElementById("modalMask").classList.add("hidden")}
+
+    function showModal(title, body, opts, onClose, lock, showClose, meta) {
+      const m = document.getElementById("modalMask");
+      const modalEl = document.getElementById("modalBox") || m.querySelector(".modal");
+      const kind = (meta && meta.kind) || "free";
+      popupBusy = true;
+      m.classList.remove("hidden");
+      modalEl.classList.remove("k-event", "k-fixed", "k-ending", "k-free");
+      modalEl.classList.add("k-" + kind);
+      if (title === "天赋详情") modalEl.classList.add("talent-modal");
+      else modalEl.classList.remove("talent-modal");
+      document.getElementById("modalTitle").textContent = title === "天赋详情" ? "" : title;
+
+      const badge = document.getElementById("modalBadge");
+      const bt = (meta && meta.badge) || badgeText(kind);
+      if (bt) {badge.textContent = bt; badge.className = "pop-badge k-" + kind; badge.style.display = "";}
+      else badge.style.display = "none";
+
+      const media = document.getElementById("modalMedia");
+      if (media) {
+        if (meta && meta.img) {
+          media.innerHTML = `<img src="${meta.img}" alt="" onerror="this.parentNode.style.display='none'">`;
+          media.style.display = "";
+        } else {media.innerHTML = ""; media.style.display = "none";}
+      }
+
+      const closeX = document.getElementById("modalCloseX");
+      if (showClose) closeX.style.display = ""; else closeX.style.display = "none";
+      closeX.onclick = () => closeModal(onClose);
+
+      const b = document.getElementById("modalBody");
+      if (typeof body === "string" && body.includes("<")) b.innerHTML = body; else b.textContent = body;
+      const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
+      const list = opts || [{t: "继续", fn: () => { }}];
+      let anyEnabled = false;
+      list.forEach(o => {
+        const btn = document.createElement("button"); btn.className = "btn primary optbtn";
+        btn.innerHTML = o.sub ? `<b>${o.t}</b><br><small>${o.sub}</small>` : o.t;
+        const dis = typeof o.disabled === "function" ? o.disabled(S) : o.disabled;
+        if (dis) btn.disabled = true; else anyEnabled = true;
+        btn.onclick = () => {
+          popupBusy = false;              // 先释放当前弹窗
+          o.fn && o.fn(S);                // 若它内部又开了新弹窗，popupBusy 会重新变 true
+          if (!popupBusy) {               // 没有新弹窗 → 收尾并交还控制权
+            hideModalRaw();
+            setTimeout(ensureActionPanel, 0);
+            onClose && onClose();
+          }
+          renderHUD();
+        };
+        ob.appendChild(btn);
+      });
+      if (!anyEnabled) {
+        const btn = document.createElement("button"); btn.className = "btn primary optbtn";
+        btn.textContent = "继续";
+        btn.onclick = () => closeModal(onClose);
+        ob.appendChild(btn);
+      }
+      m._lock = lock;
+    }
+
+    function closeModal(onClose) {
+      hideModalRaw();
+      popupBusy = false;
+      setTimeout(ensureActionPanel, 0);
+      renderHUD();
+      onClose && onClose();
+    }
+
+    /* 语义化入口：def = {kind, title, body, img, options:[{t,sub,disabled,fn}], showClose, lock} */
+    function showPopup(def, onResolve) {
+      showModal(def.title, def.body, def.options, () => onResolve && onResolve(),
+        def.lock, def.showClose, {kind: def.kind || "free", img: def.img, badge: def.badge});
+    }
+    function toast(t, isAch) {
+      const d = document.createElement("div");
+      d.className = "toast" + (isAch ? " ach-toast" : "");
+      d.textContent = t;
+      document.getElementById("toastBox").appendChild(d);
+      setTimeout(() => d.remove(), 2600);
+    }
+    function openAch() {
+      let h = "<div class='achlist'>";
+      for (const [id, a] of Object.entries(ACHIEVEMENTS)) {
+        const got = S && S.ach.includes(id);
+        h += `<div class="achitem ${got ? "" : "lock"}"><b>${got ? "🏆" : "🔒"} ${a.n}</b><br><span style="color:var(--dim)">${a.d}</span></div>`;
+      }
+      showModal("成就系统", h + "</div>", [{t: "关闭", fn: () => { }}], null, false, true, {kind: "free"});
+    }
+    function toStart() {
+      saveGame(false);
+      document.getElementById("gameScreen").classList.add("hidden");
+      document.getElementById("startScreen").classList.remove("hidden");
+      renderSlots();
+    }
+    applyTheme();
+    renderSlots();
+  </script>
+</body>
+
+</html>
