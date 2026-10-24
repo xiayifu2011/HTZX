@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/02-components.css">
   <link rel="stylesheet" href="css/03-modal.css">
   <link rel="stylesheet" href="css/04-theme.css">
+  <link rel="stylesheet" href="css/05-mood.css">
 </head>
 
 <body>
@@ -89,12 +90,11 @@
           <div class="tag-title" style="margin-top:6px"><span id="itemLabel">道具</span>(<span id="itemCount">0</span>)</div>
           <div id="itemPanel" style="margin-top:4px;line-height:1.7"></div>
         </div>
+        <!-- 学科分数板块已移除：各科只在考试事件里出现。
+             综合学力 / 最近考试 / 年级排名三行留在下面这张卡里。 -->
         <div class="card">
-          <div class="tag-title" id="subjLabel">各科(本年级)</div>
-          <div id="subjPanel" style="margin-top:4px"></div>
-          <div class="tag-title" style="margin-top:6px" id="scoreLabel">成绩</div>
+          <div class="tag-title" id="scoreLabel">成绩</div>
           <div style="margin-top:4px;line-height:1.7;font-size:.85rem">
-            <span id="scoreTotalLabel">综合学力</span>:<b id="scoreNow" style="color:var(--gold)">0</b><br>
             <span id="lastExamLabel">最近考试</span>:<b id="lastExam" style="color:var(--blue)">—</b><br>
             <span id="rankLabel">年级排名(估)</span>:<b id="rankNow" style="color:var(--green)">—</b>
           </div>
@@ -135,6 +135,10 @@
   <script src="js/02b-time.js"></script>
   <!-- 天赋表 -->
   <script src="js/03-data-talents.js"></script>
+  <!-- 亲情与家庭称呼（单亲家庭不再一会爸一会妈） -->
+  <script src="js/03c-family.js"></script>
+  <!-- 界面层：氛围特效（压力红雾 / 心态灰暗 …） -->
+  <script src="js/03b-mood.js"></script>
   <!-- 科目表 -->
   <script src="js/04-data-subjects.js"></script>
   <!-- 小卖铺道具 -->
@@ -145,6 +149,10 @@
   <script src="js/07-data-events.js"></script>
   <!-- 学校专属事件 -->
   <script src="js/08-data-events-school.js"></script>
+  <!-- 运动锻炼的事件链 -->
+  <script src="js/05c-data-sport.js"></script>
+  <!-- 做题题库与出题逻辑 -->
+  <script src="js/05d-data-quiz.js"></script>
   <script src="js/05b-data-clubs.js"></script>
   <!-- 固定事件与假期副本 -->
   <script src="js/09-data-fixed.js"></script>

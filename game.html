@@ -57,6 +57,26 @@
       --bg-overlay: rgba(18, 10, 24, .82);
     }
 
+    /* ============================================================
+     * 屏幕自适应：根字号随视口宽度线性变化
+     * ------------------------------------------------------------
+     * 全站尺寸都用 rem，所以只改这一个数，按钮 / 卡片 / 间距
+     * 会整整齐齐地一起放大缩小 —— 不会出现"大屏上字小得像蚂蚁"
+     * 或"小笔记本上按钮顶出屏幕"的情况。
+     *   1024 宽 → 约 14.3px　1280 宽 → 约 15.1px　1920 宽 → 约 17px
+     * 想整体更大/更小，调下面这行即可。
+     * ============================================================ */
+    html {
+      font-size: clamp(13px, calc(11px + 0.36vw), 18px)
+    }
+
+    /* 矮屏（1366×768 这类笔记本）：字号再收一档，换垂直空间 */
+    @media(max-height:820px) {
+      html {
+        font-size: clamp(12.5px, calc(10.5px + 0.26vw), 15px)
+      }
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -69,13 +89,39 @@
       background-color: var(--bg);
       color: var(--txt);
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: .92rem;
       min-height: 100vh;
-      padding: 12px
+      padding: clamp(8px, 0.9vh, 14px)
     }
 
+    /* 内容宽度：小屏跟着缩，大屏最多铺到 1280px 而不是一条 960 的窄带 */
     .screen {
-      max-width: 960px;
+      width: min(1280px, 96vw);
       margin: 0 auto
+    }
+
+    /* ============================================================
+     * 游戏屏：整屏自适应，一屏装下所有东西
+     * ------------------------------------------------------------
+     * 用 flex 撑满视口高度，日志区吃掉剩余空间（flex:1），
+     * 行动面板保持自身高度。这样 768 高的笔记本和 1440 高的
+     * 大屏看到的都是"不用滚的完整界面"，只是日志区高矮不同。
+     * ============================================================ */
+    #gameScreen {
+      height: calc(100vh - 2 * clamp(8px, 0.9vh, 14px));
+      height: calc(100dvh - 2 * clamp(8px, 0.9vh, 14px));
+      display: flex;
+      flex-direction: column;
+      min-height: 0
+    }
+
+    /* 窄屏 / 矮屏：放弃"一屏装下"，回到自然滚动（不然内容会被压扁） */
+    @media(max-width:760px),
+    (max-height:560px) {
+      #gameScreen {
+        height: auto;
+        min-height: calc(100vh - 2 * clamp(8px, 0.9vh, 14px))
+      }
     }
 
     h1 {
@@ -256,28 +302,43 @@
       display: none !important
     }
 
+    /* 主区：左栏宽度随视口变化（小屏 210 / 大屏 280），
+     * 并用 min-height:0 允许内部滚动 —— 否则 flex 子项会被内容撑破。 */
     #hud {
       display: grid;
-      grid-template-columns: 232px 1fr;
+      grid-template-columns: clamp(210px, 21vw, 280px) 1fr;
       gap: 10px;
-      align-items: start
+      align-items: stretch;
+      flex: 1 1 auto;
+      min-height: 0
     }
 
-    /* 左栏：状态卡片竖排，间距统一收紧 */
+    /* 左栏：状态卡片竖排，间距统一收紧；内容超高时自己滚 */
     .sidecol {
       display: grid;
-      gap: 8px
+      grid-template-rows: auto auto 1fr;
+      gap: 8px;
+      min-height: 0;
+      overflow-y: auto
     }
 
-    /* 右栏：日志 + 行动面板 */
+    /* 右栏：日志吃掉剩余高度，行动面板保持自身高度 */
     .maincol {
       display: grid;
-      gap: 8px
+      grid-template-rows: 1fr auto;
+      gap: 8px;
+      min-height: 0
     }
 
     @media(max-width:760px) {
       #hud {
-        grid-template-columns: 1fr
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr
+      }
+
+      .sidecol {
+        grid-template-rows: none;
+        overflow: visible
       }
     }
 
@@ -348,9 +409,12 @@
       text-shadow: 0 0 10px rgba(255, 184, 107, .7)
     }
 
-    /* 日志区限高：内部滚动，页面整体不会被日志撑长 */
+    /* 日志区：吃掉剩余高度，内部滚动，页面整体不会被日志撑长。
+     * min-height 保证矮屏上也不会被压成一条缝。 */
     .log {
-      height: 172px;
+      height: auto;
+      min-height: 120px;
+      max-height: 46vh;
       overflow-y: auto;
       background: #0b0818;
       border: 1px solid var(--line);
@@ -421,12 +485,12 @@
     .statgrid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1px 10px
+      gap: 4px 10px
     }
 
     .stat.compact {
       margin: 1px 0;
-      font-size: .76rem
+      font-size: .78rem
     }
 
     .stat.compact .bar {
@@ -434,11 +498,69 @@
       margin-top: 1px
     }
 
-    /* 亲情：占整行但只有半宽，视觉上更弱，因为它不是主属性 */
-    .stat.famrow {
-      grid-column: 1 / -1;
-      opacity: .75;
-      font-size: .7rem
+    /* 属性名 + 档位文字一行，档位靠右 */
+    .stathead {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 4px
+    }
+
+    .stathead .num {
+      color: var(--gold)
+    }
+
+    /* 档位文字：t0 最糟 → t4 最好（压力由 JS 反向传 tone，配色自动对调） */
+    .stathead .lv {
+      font-size: .74rem;
+      letter-spacing: .5px;
+      white-space: nowrap
+    }
+
+    .stathead .lv.t0,
+    .segbar.t0 i.on {
+      color: var(--red);
+      background: var(--red)
+    }
+
+    .stathead .lv.t1,
+    .segbar.t1 i.on {
+      color: #ffb86b;
+      background: #ffb86b
+    }
+
+    .stathead .lv.t2,
+    .segbar.t2 i.on {
+      color: var(--gold);
+      background: var(--gold)
+    }
+
+    .stathead .lv.t3,
+    .segbar.t3 i.on {
+      color: #b9e37a;
+      background: #b9e37a
+    }
+
+    .stathead .lv.t4,
+    .segbar.t4 i.on {
+      color: var(--green);
+      background: var(--green)
+    }
+
+    /* 五格刻度条：只暴露"第几档"，不暴露精确数值 */
+    .segbar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2px;
+      margin-top: 3px
+    }
+
+    .segbar i {
+      display: block;
+      height: 5px;
+      border-radius: 2px;
+      background: #11152e;
+      transition: background .5s ease
     }
 
     /* 行动按钮：单列竖排。每一行只占一行高，六行也不会把屏幕顶下去 */
@@ -472,7 +594,7 @@
 
     @media(max-width:760px) {
       .log {
-        height: 150px
+        max-height: 40vh
       }
     }
 
@@ -695,6 +817,31 @@
     body.scroll-hint .scrollfade.at-end::after {
       opacity: 0;
       transition: opacity .2s ease
+    }
+
+    /* ============================================================
+     * 矮屏（1366×768 这类笔记本）：收紧垂直节奏
+     * ------------------------------------------------------------
+     * 顶栏和卡片的内边距压一档，把省下的高度让给日志与行动面板。
+     * ============================================================ */
+    @media(max-height:820px) {
+      .topline {
+        gap: 4px;
+        margin-bottom: 6px
+      }
+
+      .topline .btn {
+        padding: 5px 10px;
+        margin: 2px
+      }
+
+      .card {
+        padding: 8px 10px
+      }
+
+      .actgrid .btn {
+        padding: 6px 10px
+      }
     }
 
 </style>
@@ -1540,6 +1687,136 @@
     }
 
 </style>
+  <style>
+/* ============================================================
+ * 氛围层：屏幕情绪（压力红雾 / 心态灰暗 / 健康发虚 / 经济见底）
+ * ------------------------------------------------------------
+ * 这一层只负责"长什么样"，由 js/03b-mood.js 往 <html> 上挂 class 驱动。
+ * 强度写进 --mood-stress 等变量（1 轻 / 2 重），CSS 按强度调透明度。
+ *
+ * 想彻底关掉：js/02-config.js 里 GAME_CONFIG.mood.enabled = false。
+ * 想调强弱：改下面 --mood-* 的 calc 系数。
+ * ============================================================ */
+
+    /* ------------------------------------------------------------
+     * 压力：四周涌起红雾
+     * ------------------------------------------------------------
+     * 用一层 fixed 的径向渐变从四周向中间压进来，中间留空，
+     * 保证文字始终看得清 —— 红雾是"压迫感"，不是"挡视线"。
+     * 强度 2 时加一次缓慢的呼吸动画，像喘不上气。
+     */
+    html.mood-stress::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      pointer-events: none;
+      /* 椭圆半径要小于 100%，红雾才会真的压到四条边上；
+       * 中心 40% 以内保持全透明，文字永远在最清楚的位置。 */
+      background: radial-gradient(ellipse 78% 62% at 50% 50%,
+          transparent 40%,
+          rgba(200, 30, 45, calc(.13 * var(--mood-stress, 1))) 70%,
+          rgba(150, 10, 30, calc(.24 * var(--mood-stress, 1))) 100%);
+      animation: moodBreath 4.2s ease-in-out infinite;
+      transition: background .8s ease
+    }
+
+    html.mood-stress[style*="--mood-stress: 2"]::before {
+      animation: moodBreath 2.6s ease-in-out infinite
+    }
+
+    @keyframes moodBreath {
+
+      0%,
+      100% {
+        opacity: .78
+      }
+
+      50% {
+        opacity: 1
+      }
+    }
+
+    /* ------------------------------------------------------------
+     * 心态过低：整屏褪色
+     * ------------------------------------------------------------
+     * 直接给内容层降饱和 + 提亮对比，画面像褪了色的旧照片。
+     * 用 filter 而不是叠灰层，这样文字仍然清晰可读。
+     */
+    html.mood-dark #hud,
+    html.mood-dark .topline {
+      filter: saturate(calc(1 - .28 * var(--mood-dark, 1))) brightness(calc(1 - .12 * var(--mood-dark, 1)));
+      transition: filter 1.2s ease
+    }
+
+    /* 强档再压一层冷灰，让"提不起劲"更明显 */
+    html.mood-dark[style*="--mood-dark: 2"]::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 39;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(60, 62, 78, .12), rgba(30, 32, 44, .20));
+      mix-blend-mode: multiply;
+      transition: background 1.2s ease
+    }
+
+    /* ------------------------------------------------------------
+     * 健康过低：画面发虚
+     * ------------------------------------------------------------
+     * 轻微失焦 + 边缘发暗，像蹲久了站起来那一下。
+     * 模糊只给 0.6px，看得出"不对劲"但不影响阅读。
+     */
+    html.mood-weak #hud {
+      filter: blur(calc(.6px * var(--mood-weak, 1))) brightness(calc(1 - .08 * var(--mood-weak, 1)));
+      transition: filter 1.2s ease
+    }
+
+    html.mood-weak::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 38;
+      pointer-events: none;
+      background: radial-gradient(ellipse 78% 62% at 50% 50%,
+          transparent 42%,
+          rgba(20, 10, 10, calc(.26 * var(--mood-weak, 1))) 100%)
+    }
+
+    /* ------------------------------------------------------------
+     * 经济见底：边缘发冷（最轻一档，不喧宾夺主）
+     * ------------------------------------------------------------ */
+    html.mood-broke::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 37;
+      pointer-events: none;
+      background: radial-gradient(ellipse 78% 62% at 50% 50%,
+          transparent 46%,
+          rgba(40, 78, 100, .26) 100%)
+    }
+
+    /* ------------------------------------------------------------
+     * 兜底：特效层一律不吃点击，也不拦截滚动
+     * ------------------------------------------------------------ */
+    html[class*="mood-"]::before,
+    html[class*="mood-"]::after {
+      pointer-events: none
+    }
+
+    /* 尊重系统「减少动态效果」设置：只留静态色调，去掉呼吸动画 */
+    @media(prefers-reduced-motion:reduce) {
+      html.mood-stress::before {
+        animation: none
+      }
+
+      html.mood-weak #hud {
+        filter: brightness(calc(1 - .08 * var(--mood-weak, 1)))
+      }
+    }
+
+</style>
 </head>
 
 <body>
@@ -1616,12 +1893,11 @@
           <div class="tag-title" style="margin-top:6px"><span id="itemLabel">道具</span>(<span id="itemCount">0</span>)</div>
           <div id="itemPanel" style="margin-top:4px;line-height:1.7"></div>
         </div>
+        <!-- 学科分数板块已移除：各科只在考试事件里出现。
+             综合学力 / 最近考试 / 年级排名三行留在下面这张卡里。 -->
         <div class="card">
-          <div class="tag-title" id="subjLabel">各科(本年级)</div>
-          <div id="subjPanel" style="margin-top:4px"></div>
-          <div class="tag-title" style="margin-top:6px" id="scoreLabel">成绩</div>
+          <div class="tag-title" id="scoreLabel">成绩</div>
           <div style="margin-top:4px;line-height:1.7;font-size:.85rem">
-            <span id="scoreTotalLabel">综合学力</span>:<b id="scoreNow" style="color:var(--gold)">0</b><br>
             <span id="lastExamLabel">最近考试</span>:<b id="lastExam" style="color:var(--blue)">—</b><br>
             <span id="rankLabel">年级排名(估)</span>:<b id="rankNow" style="color:var(--green)">—</b>
           </div>
@@ -1724,11 +2000,56 @@ function openDoc(key) {
       亲情: [10, 150, 80]
     };
 
-    // 主界面属性栏要显示的项（顺序即显示顺序）
-    const PROP_HUD = ["心态", "经济", "健康", "效率", "悟性", "社交", "压力"];
+    /* ==================================================================
+     * 属性可见性（v1.1 起）
+     * ------------------------------------------------------------------
+     * PROP_HUD     面板上真正看得见的四项：心态 / 经济 / 健康 / 压力
+     * PROP_HIDDEN  后台实时计算、面板上一律不出现：效率 / 悟性 / 社交 / 亲情
+     * PROP_BLUR    HUD 里除「经济」之外都要模糊化：只给档位文字，不给数字
+     *
+     * 学科属性（语文 / 数学 ……）不再常驻面板，只在考试事件里显示。
+     * 想恢复完整数值面板：把 PROP_HUD 改成 Object.keys(PROP_RANGE)，
+     * 并把 PROP_BLUR 改成空数组即可。
+     * ================================================================== */
+    const PROP_HUD = ["心态", "经济", "健康", "压力"];
 
-    // 不在 HUD 显示、但参与数值计算的属性
-    const PROP_HIDDEN = ["亲情"];
+    const PROP_HIDDEN = ["效率", "悟性", "社交", "亲情"];
+
+    const PROP_BLUR = ["心态", "健康", "压力"];
+
+    /* ==================================================================
+     * 档位：把 0~150 的数值翻译成「极低 / 较低 / 中 / 较高 / 极高」
+     * ------------------------------------------------------------------
+     * 五档均分，档位宽度 30。面板上只显示档位文字 + 五格刻度条，
+     * 玩家看到的是"状态好不好"，不是精确的 87 还是 88。
+     * 想改档位文案改 js/01b-i18n.js 的 level.* ；想改宽度改这里的 STEP。
+     * ================================================================== */
+    const PROP_LEVEL_STEP = 30;
+
+    const PROP_LEVELS = [
+      {lv: 0, key: "level.vlow"},
+      {lv: 1, key: "level.low"},
+      {lv: 2, key: "level.mid"},
+      {lv: 3, key: "level.high"},
+      {lv: 4, key: "level.vhigh"}
+    ];
+
+    /* 数值落在第几档（0~4） */
+    function propLevel(v) {
+      const x = clamp(num(v, 0), 0, 150);
+      return clamp(Math.floor(x / PROP_LEVEL_STEP), 0, 4);
+    }
+
+    /* 属性的语义方向：+"越高越好" / -"越高越糟"
+     * 压力是唯一反向的 —— 档位文字照写「极高」，但颜色要反过来。 */
+    function propPolarity(k) {return k === "压力" ? -1 : 1;}
+
+    /* 档位文字（已过双语层） */
+    function propLevelText(k, v) {
+      const lv = propLevel(v);
+      const key = (PROP_LEVELS[lv] || PROP_LEVELS[2]).key;
+      return L(key);
+    }
 
     const SUBJ_CAP = 1500;   // 单科学力上限，防止长期累积后失控
 
@@ -1788,15 +2109,48 @@ function openDoc(key) {
       if (S.prop[k] === undefined || !isFinite(S.prop[k])) S.prop[k] = fixProp(k, undefined);
       v = num(v, 0);
       if (!v) return;
+      const before = S.prop[k];
       S.prop[k] = clamp(S.prop[k] + v, propFloor(k), PROP_RANGE[k] ? PROP_RANGE[k][1] : 150);
       if (S.prop[k] < (PROP_RANGE[k] ? PROP_RANGE[k][0] : 0)) S.prop[k] = PROP_RANGE[k] ? PROP_RANGE[k][0] : 0;
       if (Math.abs(v) >= 1) {
         const good = (k === "压力") ? (v < 0) : (v > 0);
-        floatGain(`${k} ${v > 0 ? "+" : ""}${Math.round(v)}`, good);
+        // 隐藏属性（效率 / 悟性 / 社交 / 亲情）：面板上看不到，
+        // 飘一个带数字的字只会暴露它们，改成不带数字的方向提示。
+        if (isHiddenProp(k)) {
+          if (floatHiddenWanted()) floatGain(`${propName(k)} ${v > 0 ? "▲" : "▼"}`, good);
+        } else if (isBlurProp(k) && !floatNumbersWanted()) {
+          // 模糊属性且关掉了数字飘字：只说升了还是降了
+          floatGain(`${propName(k)} ${v > 0 ? "▲" : "▼"}`, good);
+        } else {
+          floatGain(`${propName(k)} ${v > 0 ? "+" : ""}${Math.round(v)}`, good);
+        }
       }
     }
 
+    /* 该属性是否在面板上隐藏 */
+    function isHiddenProp(k) {
+      return (typeof PROP_HIDDEN !== "undefined") && PROP_HIDDEN.indexOf(k) >= 0;
+    }
+
+    /* 该属性是否要模糊化（只给档位，不给数字） */
+    function isBlurProp(k) {
+      return (typeof PROP_BLUR !== "undefined") && PROP_BLUR.indexOf(k) >= 0;
+    }
+
+    /* 飘字开关，见 GAME_CONFIG.ui */
+    function floatNumbersWanted() {
+      const u = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.ui) || {};
+      return u.floatNumbers !== false;
+    }
+
+    function floatHiddenWanted() {
+      const u = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.ui) || {};
+      return u.hiddenFloats === true;
+    }
+
     function say(txt, cls = "") {
+      /* 单亲 / 留守家庭：日志里爸爸妈妈的称呼也要统一（双亲家庭原样） */
+      if (typeof famText === "function" && typeof txt === "string") txt = famText(txt);
       S.logs.push({txt, cls}); const el = document.getElementById("log");
       const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = txt; el.appendChild(d); el.scrollTop = el.scrollHeight;
     }
@@ -1913,9 +2267,65 @@ function openDoc(key) {
         "prop.亲情": "亲情",
 
         /* ---------------- 本周行动 ---------------- */
+        /* ---------------- 属性档位（模糊化显示） ---------------- */
+        "level.vlow": "极低",
+        "level.low": "较低",
+        "level.mid": "中",
+        "level.high": "较高",
+        "level.vhigh": "极高",
+
+        "mood.stress": "压力快要撑不住了。",
+        "mood.dark": "世界好像褪色了。",
+        "mood.weak": "身体在发虚。",
+
+        /* ---------------- 运动锻炼 ---------------- */
+        "sport.log": "🏃 你去操场动了一身汗。",
+        "sport.float": "身体结实了一点",
+
+        /* ---------------- 做题 ---------------- */
+        "quiz.badge": "✏️ 本周行动 · 做题",
+        "quiz.title": "一道{0}题",
+        "quiz.tip": "答对该科有加成，答错会小幅倒扣。",
+        "quiz.placeholder": "在这里写答案",
+        "quiz.fillTip": "不用写单位，中英文标点都算对。",
+        "quiz.submit": "交卷",
+        "quiz.giveup": "放弃这道题",
+        "quiz.giveupLog": "你跳过了这道{0}题。",
+        "quiz.gaveup": "你空着交了上去。",
+        "quiz.resultTitle": "对答案",
+        "quiz.correct": "✔ 答对了。",
+        "quiz.incorrect": "✘ 答错了。",
+        "quiz.answer": "正确答案：",
+        "quiz.yours": "你写的：",
+        "quiz.why": "讲解：",
+        "quiz.right": "{0}答对了，本科目有长进。",
+        "quiz.wrong": "{0}做错了，这一块还是没吃透。",
+        "quiz.rightFloat": "{0} ▲",
+        "quiz.wrongFloat": "{0} ▼",
+        "quiz.none": "这个年级暂时没有合适的题，你改成了自己看书。",
+
+        /* ---------------- 亲情 / 家庭 ---------------- */
+        "fam.badge": "🏠 家庭 · 矛盾",
+        "fam.apologize": "低头认错",
+        "fam.shutup": "一句话不说",
+        "fam.hug": "主动去抱一下",
+        "fam.apologizeLog": "{0} 你说了句对不起，气氛缓了一些，但心里还是堵。",
+        "fam.shutupLog": "{0} 你什么都没说，这顿饭吃得格外久。",
+        "fam.hugLog": "你走过去抱了一下。僵了很久的肩膀，终于松了一点。",
+        "fam.conflictLog": "🏠 家里起了摩擦。",
+
+        /* ---------------- 遗憾离场 ---------------- */
+        "burn.badge": "🕯 压力 · 警告",
+        "burn.warn": "⚠ 压力已连续 {0} 周爆表，再撑 {1} 周就要撑不住了。",
+        "burn.warnTitle": "最后一周",
+        "burn.warnBody": "你已经连续好几周顶着压力硬扛了。\n再这样下去，身体会先替你做决定。\n这周试着休息一次、运动一次，或者找人说说。",
+        "burn.over": "🕯 压力连续三周爆表，你没能撑到中考。",
+
         "act.title": "选择行动",
         "act.titleN": "选择行动（第 {0}/{1} 次）",
         "act.study": "📖 努力学习",
+        "act.quiz": "✏️ 做题",
+        "act.sport": "🏃 运动锻炼",
         "act.rest": "😴 好好休息",
         "act.social": "👥 社交活动",
         "act.fun": "🎮 摸鱼娱乐",
@@ -2009,9 +2419,11 @@ function openDoc(key) {
 
         /* ---------------- 流程提示 ---------------- */
         "flow.weekHead": "—— 第 {0} 周 · {1}{2} · {3}月{4}{5} ——",
-        "flow.actionLog": "本周行动({0}/{1}):{2} → 学力结算后:{3}",
+        "flow.actionLog": "本周行动({0}/{1}):{2} → 学力已结算",
         "flow.clubLog": "🎪 周三社团课：{0}",
         "flow.study": "努力学习",
+        "flow.quiz": "做题",
+        "flow.sport": "运动锻炼",
         "flow.rest": "好好休息",
         "flow.social": "社交活动",
         "flow.fun": "摸鱼娱乐",
@@ -2039,6 +2451,20 @@ function openDoc(key) {
         "alw.hint": "当前亲情：{0}　·　亲情越高，父母越愿意给，也越少念叨",
         "alw.thanks": "谢谢爸妈",
         "alw.know": "知道了",
+        "alw.t1": "父母多塞了点",
+        "alw.t2": "痛快给了",
+        "alw.t3": "给了",
+        "alw.t4": "被念叨了一顿",
+        "alw.t5": "被拒绝了",
+        "alw.t6": "只给了很少一点",
+        "alw.l1": "你刚开口，{0}就掏出了钱包：「在学校别省着，该买的就买。」临走又多塞了十五块。",
+        "alw.l2": "{0}二话没说就转了钱，还问你最近学习累不累。",
+        "alw.l3": "{0}数了数钱递给你，顺口叮嘱了一句「别乱花」。",
+        "alw.l4": "「上周不是才给过吗？」{0}一边数落一边还是掏了钱。你觉得脸上有点发热。",
+        "alw.l5": "{0}皱着眉：「家里最近也不宽裕。」你张了张嘴，最后没再说什么。",
+        "alw.l6": "{0}翻遍口袋，只凑出几张零票。你说了声谢谢，心里不是滋味。",
+        "alw.refusedLog": "这次一分钱也没要到。",
+        "alw.costLog": "开口的那一刻，亲情 -{0}。有些话一出口就收不回来了。",
         "alw.log": "🏠 向父母要零花钱：{0}{1}",
         "alw.got": "，拿到 {0} 元",
         "alw.none": "，一分没拿到",
@@ -2065,6 +2491,7 @@ function openDoc(key) {
         "end.reasonHealth": "你因健康问题提前离场。",
         "end.reasonMind": "你因心理压力过重提前离场。",
         "end.reasonMoney": "你因家庭经济困难提前离场。",
+        "end.reasonStress": "你因压力连续爆表提前离场。",
 
         /* ---------------- 提示 ---------------- */
         "toast.saved": "💾 已保存",
@@ -2132,9 +2559,65 @@ function openDoc(key) {
         "prop.压力": "Stress",
         "prop.亲情": "Family",
 
+        /* ---------------- 属性档位（模糊化显示） ---------------- */
+        "level.vlow": "Very low",
+        "level.low": "Low",
+        "level.mid": "Fair",
+        "level.high": "High",
+        "level.vhigh": "Very high",
+
+        "mood.stress": "You are about to break.",
+        "mood.dark": "The world has lost its colour.",
+        "mood.weak": "Your body is failing.",
+
+        /* ---------------- 运动锻炼 ---------------- */
+        "sport.log": "🏃 You broke a sweat on the field.",
+        "sport.float": "Getting stronger",
+
+        /* ---------------- 做题 ---------------- */
+        "quiz.badge": "✏️ Action · Problem",
+        "quiz.title": "A {0} question",
+        "quiz.tip": "A correct answer boosts the subject; a wrong one costs you a little.",
+        "quiz.placeholder": "Type your answer",
+        "quiz.fillTip": "Units optional; punctuation is ignored.",
+        "quiz.submit": "Submit",
+        "quiz.giveup": "Skip it",
+        "quiz.giveupLog": "You skipped the {0} question.",
+        "quiz.gaveup": "You handed in a blank.",
+        "quiz.resultTitle": "Check the answer",
+        "quiz.correct": "✔ Correct.",
+        "quiz.incorrect": "✘ Wrong.",
+        "quiz.answer": "Answer: ",
+        "quiz.yours": "Yours: ",
+        "quiz.why": "Why: ",
+        "quiz.right": "{0} — correct. That subject moved forward.",
+        "quiz.wrong": "{0} — wrong. This part still slips.",
+        "quiz.rightFloat": "{0} ▲",
+        "quiz.wrongFloat": "{0} ▼",
+        "quiz.none": "No problem fits your grade yet — you ended up reading instead.",
+
+        /* ---------------- 亲情 / 家庭 ---------------- */
+        "fam.badge": "🏠 Family · Friction",
+        "fam.apologize": "Say sorry",
+        "fam.shutup": "Say nothing",
+        "fam.hug": "Go and hug them",
+        "fam.apologizeLog": "{0} You said sorry. It eased a little, but it still sits heavy.",
+        "fam.shutupLog": "{0} You said nothing. That meal took forever.",
+        "fam.hugLog": "You walked over and hugged them. Shoulders that had been tight for weeks finally loosened.",
+        "fam.conflictLog": "🏠 There was friction at home.",
+
+        /* ---------------- 遗憾离场 ---------------- */
+        "burn.badge": "🕯 Stress · Warning",
+        "burn.warn": "⚠ Stress has been maxed out for {0} week(s) — {1} more and you will break.",
+        "burn.warnTitle": "Last week",
+        "burn.warnBody": "You have been pushing through for weeks.\nKeep going and your body will decide for you.\nRest once, work out, or talk to someone this week.",
+        "burn.over": "🕯 Stress stayed maxed out for three weeks. You did not make it to the exam.",
+
         "act.title": "Choose an action",
         "act.titleN": "Choose an action ({0}/{1})",
         "act.study": "📖 Study hard",
+        "act.quiz": "✏️ Do a problem",
+        "act.sport": "🏃 Work out",
         "act.rest": "😴 Rest",
         "act.social": "👥 Socialize",
         "act.fun": "🎮 Slack off",
@@ -2220,9 +2703,11 @@ function openDoc(key) {
         "cc.begin": "🌅 {0}'s middle school life begins.",
 
         "flow.weekHead": "—— Week {0} · {1}{2} · {3}月{4}{5} ——",
-        "flow.actionLog": "Action ({0}/{1}): {2} → after study: {3}",
+        "flow.actionLog": "Action ({0}/{1}): {2} → settled",
         "flow.clubLog": "🎪 Wednesday club: {0}",
         "flow.study": "Study hard",
+        "flow.quiz": "Do a problem",
+        "flow.sport": "Work out",
         "flow.rest": "Rest",
         "flow.social": "Socialize",
         "flow.fun": "Slack off",
@@ -2248,6 +2733,20 @@ function openDoc(key) {
         "alw.hint": "Family bond: {0}　·　the closer you are, the more they give and the less they nag",
         "alw.thanks": "Thanks, Mom and Dad",
         "alw.know": "Okay",
+        "alw.t1": "They added a bit more",
+        "alw.t2": "Given gladly",
+        "alw.t3": "Given",
+        "alw.t4": "Given with a lecture",
+        "alw.t5": "Refused",
+        "alw.t6": "Only a little",
+        "alw.l1": "Before you finished asking, {0} had the wallet out: \"Don't scrimp at school.\" Then fifteen more.",
+        "alw.l2": "{0} transferred it without a word, then asked whether school has been tiring.",
+        "alw.l3": "{0} counted it out and handed it over, adding \"don't waste it\".",
+        "alw.l4": "\"Didn't I just give you some last week?\" {0} scolded, but paid anyway. Your face went hot.",
+        "alw.l5": "{0} frowned: \"Money is tight at home right now.\" You opened your mouth, then closed it.",
+        "alw.l6": "{0} emptied every pocket and scraped together a few notes. You said thanks, and it tasted strange.",
+        "alw.refusedLog": "You got nothing this time.",
+        "alw.costLog": "The moment you asked, family bond -{0}. Some words cannot be taken back.",
         "alw.log": "🏠 Ask parents for money: {0}{1}",
         "alw.got": ", got {0}",
         "alw.none": ", got nothing",
@@ -2272,6 +2771,7 @@ function openDoc(key) {
         "end.reasonHealth": "You left early because of your health.",
         "end.reasonMind": "You left early under too much pressure.",
         "end.reasonMoney": "You left early because your family could not afford it.",
+        "end.reasonStress": "You left early after weeks of unrelenting stress.",
 
         "toast.saved": "💾 Saved",
         "toast.theme": "🎨 Theme: {0}",
@@ -2353,13 +2853,16 @@ function openDoc(key) {
       if (typeof applyLangToDom === "function") applyLangToDom();
       if (typeof saveSettings === "function") saveSettings();
       if (!silent) toast(LANG === "en" ? L("toast.lang") : L("toast.langZh"));
+      // 主菜单是静态 HTML，标签要靠 renderStartExtras 重刷一遍
+      if (typeof renderStartExtras === "function") renderStartExtras();
+      // 行动按钮是动态生成的，切语言时原地换字（不能重建，会重置本周进度）
+      if (typeof relabelActions === "function") relabelActions();
       if (typeof renderHUD === "function" && S) renderHUD();
       return LANG;
     }
 
     function toggleLang() {
       setLang(LANG === "zh" ? "en" : "zh");
-      if (typeof renderStartExtras === "function") renderStartExtras();
       if (typeof ensureActionPanel === "function") {
         const p = document.getElementById("actionPanel");
         if (p && p.innerHTML !== "" && S && !S.over) {p.innerHTML = ""; ensureActionPanel();}
@@ -2493,13 +2996,89 @@ function openDoc(key) {
       // —— 界面 ——
       ui: {
         hideScrollbar: true,   // 隐藏滚动条（仍能滚动，只是看不见那条杠）
-        scrollHint: true       // 内容没看完时，底部显示一道渐隐，暗示"下面还有"
+        scrollHint: true,      // 内容没看完时，底部显示一道渐隐，暗示"下面还有"
+        floatNumbers: true,    // 可见属性飘字是否带数字（关掉就只显示 ▲/▼）
+        hiddenFloats: false,   // 隐藏属性（效率/悟性/社交/亲情）是否也飘提示
+      },
+
+      // —— 氛围特效 ——
+      // 屏幕会随玩家状态变化：压力红雾、心态灰暗、健康发虚、经济见底发冷。
+      // 不想要就把它整个删掉或写 enabled: false。
+      mood: {
+        enabled: true,
+        stressAt: 100,   // 压力 ≥ 此值：红雾拉满
+        warnAt: 78,      // 压力 ≥ 此值：红雾轻微出现（预警）
+        darkAt: 35,      // 心态 ≤ 此值：画面灰暗拉满
+        weakAt: 30,      // 健康 ≤ 此值：画面失血发虚拉满
+        brokeAt: 20      // 经济 ≤ 此值：边缘发冷
       },
 
       difficulty: "story",
       storyFloor: 15,        // story 模式下 健康 / 心态 的最低保底线
-      storyFloorFamily: 35,  // story 模式下 亲情 的最低保底线（不想让玩家"众叛亲离"）
+      /* story 模式下 亲情 的最低保底线。
+       * 原来是 35，高于「家庭矛盾」的触发线 30 —— 等于剧情模式永远吵不起来。
+       * 改成 22：仍能触发矛盾与"要不到钱"，但不至于真的众叛亲离。 */
+      storyFloorFamily: 22,
       storyFloorMoney: 10,   // story 模式下 经济 的最低保底线（不想让玩家因贫辍学）
+
+      /* ==============================================================
+       * 学习难度（v1.1 起：比 1.0 明显更难）
+       * --------------------------------------------------------------
+       * 四个旋钮同时收紧，想调回原版把四个数都改成 1 即可。
+       *   gainMul    收益：学力涨幅的倍率（0.80 = 少两成）
+       *   decayMul   遗忘：每周全科遗忘的倍率（1.30 = 忘快三成）
+       *   examMul    考试：卷面分的倍率（0.94 = 同样学力少拿 6%）
+       *   stressMul  压力：学习带来的压力倍率（1.4 = 学一次更累）
+       *
+       * 实测（无天赋、每周 2 次学习、压力与心态维持得较好）：
+       *   旧版 1.0  初三 86 分  →  现在 75 分
+       *   旧版 1.0  每周只学 1 次也有 70 分  →  现在 60 分
+       * 加上天赋 / 图书角 / 社团加成后，认真玩仍有 82~88 分的空间。
+       * 另：learnBleed = 长期不学习时，学力额外流失的比例（破茧的负面来源）
+       * ============================================================== */
+      study: {
+        gainMul: 0.80,
+        decayMul: 1.30,
+        examMul: 0.94,
+        stressMul: 1.4,
+        stressPenalty: 0.40,   // 压力对学习效率的惩罚上限（原为 0.30）
+        learnBleed: 0.03       // 一周没学习 → 全科额外 -3%
+      },
+
+      /* ==============================================================
+       * 「遗憾离场」判定：压力连续爆表几周才提前结束
+       * --------------------------------------------------------------
+       * 中途会给预警，给玩家自救的机会。设 0 就退回"压力 ≥100 立刻扣心态"的旧行为。
+       * ============================================================== */
+      burnout: {
+        stressAt: 100,     // 压力到多少算「爆表」
+        weeks: 3           // 连续爆表几周 → 遗憾离场
+      },
+
+      /* ==============================================================
+       * 亲情（第八属性，只在家庭事件与要零花钱时生效）
+       * --------------------------------------------------------------
+       * 要钱会掉亲情；亲情太低会触发家庭矛盾，也要不到钱。
+       * ============================================================== */
+      family: {
+        askCost: 6,        // 每开口要一次钱，亲情掉多少
+        askCostRich: 2,    // 亲情很好时只掉一点点
+        lowAt: 40,         // 亲情低于此值 → 可能被拒绝
+        conflictAt: 30,    // 亲情低于此值 → 有几率触发家庭矛盾事件
+        conflictChance: 0.35,
+        weeklyDrop: 0.35,  // 每周自然回落的概率
+        weeklyDropVal: 2   // 每次掉多少（合起来约 -0.7/周，靠家庭事件维护）
+      },
+
+      /* ==============================================================
+       * 运动锻炼：触发连锁运动事件的概率
+       * --------------------------------------------------------------
+       * [第 1 条, 第 2 条] —— 第 2 条只在第 1 条抽到之后才判定。
+       * 全部改成 0 就是"纯粹锻炼身体，不出事件"。
+       * ============================================================== */
+      sport: {
+        chainChance: [0.70, 0.35]
+      },
 
       // —— 中考 / 考试怎么算分 ——
       // 分数 = √(学力项 + 悟性项 + 心态项 + 效率项) × 10
@@ -3098,7 +3677,10 @@ function openDoc(key) {
       "内耗者": {lv: 2, inc: ["天行健", "道心如铁", "心态大师"], desc: "心态每周额外下降", hint: "想太多的人", poem: "剪不断，理还乱，是离愁。"},
       "大胃袋": {lv: 3, inc: ["偏食"], desc: "健康上升,经济消耗变大", hint: "干饭人的尊严", poem: "日啖荔枝三百颗，不辞长作岭南人。"},
       "体弱多病": {lv: 3, inc: ["天行健", "钢筋铁骨"], desc: "健康容易下降", hint: "病弱的身体", poem: "万里悲秋常作客，百年多病独登台。"},
-      "家财万贯": {lv: 5, inc: ["家徒四壁", "小康之家", "书香门第"], desc: "每周经济 +150，开局经济充裕", hint: "含着金汤匙", poem: "五花马，千金裘，呼儿将出换美酒。"},
+      /* v1.1 削弱：原来每周白送 +150，几乎不用管经济。
+       * 现在每周 +45（约等于小康之家的水平），开局也只给 150 上下 ——
+       * 富二代依然是优势，但不再是"钱多到可以无视经济系统"。 */
+      "家财万贯": {lv: 5, inc: ["家徒四壁", "小康之家", "书香门第"], desc: "每周经济 +45，开局经济充裕", hint: "含着金汤匙", poem: "五花马，千金裘，呼儿将出换美酒。"},
       "家徒四壁": {lv: 3, inc: ["家财万贯", "小康之家", "书香门第"], desc: "经济每周额外下降，但心态更坚韧", hint: "贫寒的家境", poem: "环堵萧然，不蔽风日。"},
       "小康之家": {lv: 2, inc: ["家财万贯", "家徒四壁"], desc: "每周经济 +40，心态稳定", hint: "不富不穷，刚刚好", poem: "采菊东篱下，悠然见南山。"},
       "书香门第": {lv: 4, inc: ["家徒四壁", "商人家庭", "艺术世家"], desc: "悟性每周 +2，语文/历史学习 +15%", hint: "家里三面墙都是书", poem: "腹有诗书气自华。"},
@@ -3170,6 +3752,345 @@ function openDoc(key) {
       "社交恐惧": {lv: 4, inc: ["社恐", "高冷"], desc: "社交 -15/周，社交事件概率大幅下降", hint: "连和同桌说话都会紧张", poem: "举世皆浊我独清，众人皆醉我独醒。"},
       "长期失眠": {lv: 4, inc: ["熬夜冠军", "夜猫子"], desc: "健康每周 -8，效率每周 -5", hint: "夜夜辗转反侧", poem: "夜夜除非，好梦留人睡。"},
     };
+
+</script>
+  <!-- 亲情与家庭称呼（单亲家庭不再一会爸一会妈） -->
+  <script>
+/* ==== 03c-family.js ==== */
+/* ==================================================================
+ * 内容层 · 亲情与家庭称呼
+ * ==================================================================
+ * 两件事：
+ *   1. 亲情逻辑：要钱掉亲情、亲情低会触发家庭矛盾、也会要不到钱
+ *   2. 家庭称呼：带「单亲家庭」天赋时，事件里的爸爸妈妈不会再换来换去
+ *
+ * 维护等级：内容层（可直接改文案与数值）
+ * ================================================================== */
+
+    /* ---------------- 配置读取 ---------------- */
+
+    function famCfg() {
+      const f = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.family) || {};
+      return {
+        askCost: num(f.askCost, 6),
+        askCostRich: num(f.askCostRich, 2),
+        lowAt: num(f.lowAt, 40),
+        conflictAt: num(f.conflictAt, 30),
+        conflictChance: num(f.conflictChance, 0.35),
+        weeklyDrop: num(f.weeklyDrop, 0.45),
+        weeklyDropVal: num(f.weeklyDropVal, 4)
+      };
+    }
+
+    function famOf() {
+      if (!S || !S.prop) return 80;
+      return clampNum(S.prop.亲情, 0, 150, 80);
+    }
+
+    /* ==================================================================
+     * 家庭称呼：单亲家庭只会有一个大人
+     * ------------------------------------------------------------------
+     * S.familyMain 记录"家里是谁" —— "妈" 或 "爸"。
+     * 普通家庭：事件里写妈妈就是妈妈，写爸爸就是爸爸（原样）。
+     * 单亲家庭：两种称呼一律收敛成同一位家长，不会再一会爸爸一会妈妈。
+     * 留守少年：父母在外，家里说话的是奶奶。
+     *
+     * ★ 想改称呼，只改下面 PARENT_WORD 这一张表。
+     * ================================================================== */
+
+    const PARENT_WORD = {
+      mom: {zh: "妈妈", en: "Mum"},
+      dad: {zh: "爸爸", en: "Dad"},
+      grandma: {zh: "奶奶", en: "Grandma"},
+      grandpa: {zh: "爷爷", en: "Grandpa"}
+    };
+
+    /* 这位家长在游戏里叫什么 */
+    function parentCall(which) {
+      const w = PARENT_WORD[which] || PARENT_WORD.mom;
+      return (typeof LANG !== "undefined" && LANG === "en") ? w.en : w.zh;
+    }
+
+    /* 家里现在主要靠谁（缓存，避免每次都随机）
+     * ★ 家庭结构变了（比如中途拿到/失去「单亲家庭」）会重新定一次。 */
+    function familyMain() {
+      if (!S) return "mom";
+      const type = (typeof familyType === "function") ? familyType() : "both";
+      const cur = S.familyMain;
+      const okSingle = (cur === "mom" || cur === "dad");
+      const okLeft = (cur === "grandma");
+
+      if (type === "left") {if (!okLeft) S.familyMain = "grandma"; return S.familyMain;}
+      if (type === "single") {
+        if (!okSingle) S.familyMain = Math.random() < 0.5 ? "mom" : "dad";
+        return S.familyMain;
+      }
+      return cur || "mom";
+    }
+
+    /* 家庭结构：single 单亲 / left 留守 / both 双亲 */
+    function familyType() {
+      if (typeof Talent === "undefined") return "both";
+      if (Talent.have("留守少年")) return "left";
+      if (Talent.have("单亲家庭")) return "single";
+      return "both";
+    }
+
+    /* ==================================================================
+     * 事件文本里的家长称呼统一替换
+     * ------------------------------------------------------------------
+     * 用法：渲染事件前对 title / body / 选项文字跑一遍 famText()。
+     * 双亲家庭：原样返回（事件里写什么就是什么）。
+     * 单亲 / 留守：所有"爸爸""妈妈""爸妈"都收敛成同一位家长。
+     * ================================================================== */
+
+    function famText(s) {
+      if (s == null) return s;
+      if (typeof s !== "string") return s;
+      const type = familyType();
+      if (type === "both") return s;             // 双亲家庭不需要改
+      if (s.indexOf("妈") < 0 && s.indexOf("爸") < 0 && s.indexOf("父母") < 0 && s.indexOf("家长") < 0) return s;
+
+      const who = parentCall(familyMain());
+      let out = s;
+
+      if (type === "left") {
+        // 留守：爸妈都在外地，家里管你的是爷爷奶奶
+        out = out.replace(/妈妈/g, parentCall("grandma"));
+        out = out.replace(/爸爸/g, parentCall("grandpa"));
+        return out;                 // 「爸妈 / 父母」保留，因为说的确实是那两个人
+      }
+
+      // 单亲：一律用同一位家长
+      out = out.replace(/爸妈|父母|家长/g, who);
+      out = out.replace(/妈妈|母亲/g, who);
+      out = out.replace(/爸爸|父亲/g, who);
+      return out;
+    }
+
+    /* ==================================================================
+     * 亲情数值操作
+     * ================================================================== */
+
+    /* 要一次钱 → 掉多少亲情（亲情本来就低时掉得更多，形成恶性循环） */
+    function askCostFam() {
+      const c = famCfg(), fam = famOf();
+      if (fam >= 120) return c.askCostRich;
+      if (fam >= 80) return Math.round(c.askCost * 0.6);
+      return c.askCost;
+    }
+
+    /* 亲情是否低到"开口都难" */
+    function famLow() {return famOf() < famCfg().lowAt;}
+
+    /* ==================================================================
+     * 家庭矛盾：亲情过低时触发
+     * ------------------------------------------------------------------
+     * 负面效果是实打实的：心态、压力、效率都受挫，且亲情再掉一截。
+     * 触发后设一个冷却，不会连续几周连环炸。
+     * ================================================================== */
+
+    const FAMILY_CONFLICTS = [
+      {
+        t: "饭桌上的沉默",
+        c: "晚饭时你多夹了一筷子菜，{p}把碗一放：「你现在眼里还有这个家吗？」\n你低头扒饭，没接话。\n碗筷碰撞的声音，比吵起来还难熬。",
+        say: "饭桌上的一句话，堵了你一整晚。",
+      },
+      {
+        t: "电话里的争吵",
+        c: "你在电话里提了一句想要买资料，{p}在那头沉默了很久。\n「上周不是刚给过？」\n你说那是用完了，{p}说：「那你说说花在哪了。」\n你忽然觉得很累。",
+        say: "电话挂断后，宿舍安静得能听见走廊的灯管在响。",
+      },
+      {
+        t: "成绩单被翻了出来",
+        c: "{p}收拾房间时翻出了上次考试的卷子。\n分数就印在右上角，谁都看得见。\n「这就是你说的好好学？」\n你想解释，但张开嘴发现自己也没有底气。",
+        say: "你躲进房间，把那张卷子压在了抽屉最底下。",
+      },
+      {
+        t: "谁也不肯先开口",
+        c: "周末回家，你和{p}一整天没说超过三句话。\n不是不在乎，是都太累了 —— 一个累于生计，一个累于期待。\n晚上你听见客厅的电视一直开着，其实没人看。",
+        say: "有些隔阂不是吵出来的，是慢慢长出来的。",
+      },
+    ];
+
+    /* 是否该在本周结算时触发一次家庭矛盾 */
+    function shouldFamilyConflict() {
+      const c = famCfg();
+      if (famOf() >= c.conflictAt) return false;
+      if (S.famConflictWeek != null && Math.abs(num(S.week, 0) - num(S.famConflictWeek, 0)) < 3) return false;  // 冷却 3 周
+      return Math.random() < c.conflictChance;
+    }
+
+    /* 弹一次家庭矛盾（返回弹窗定义，由调用方 showPopup） */
+    function buildFamilyConflict() {
+      const e = FAMILY_CONFLICTS[rnd(FAMILY_CONFLICTS.length)];
+      const p = parentCall(familyMain());
+      S.famConflictWeek = num(S.week, 0);
+
+      const body = famText(e.c).replace(/\{p\}/g, p);
+      return {
+        kind: "event",
+        badge: L("fam.badge"),
+        title: famText(e.t).replace(/\{p\}/g, p),
+        body: `<div style="line-height:2.2">${body.replace(/\n/g, "<br>")}</div>`,
+        options: [{
+          t: L("fam.apologize"),
+          fn: () => {
+            modProp("心态", -6); modProp("压力", 8); modProp("效率", -6); modProp("亲情", 4);
+            say(L("fam.apologizeLog", e.say), "bad");
+          }
+        }, {
+          t: L("fam.shutup"),
+          fn: () => {
+            modProp("心态", -10); modProp("压力", 12); modProp("效率", -4); modProp("亲情", -5);
+            say(L("fam.shutupLog", e.say), "bad");
+          }
+        }, {
+          t: L("fam.hug"),
+          cond: () => famOf() >= 20,
+          fn: () => {
+            modProp("心态", -2); modProp("压力", 2); modProp("亲情", 10);
+            say(L("fam.hugLog"), "good");
+          }
+        }]
+      };
+    }
+
+</script>
+  <!-- 界面层：氛围特效（压力红雾 / 心态灰暗 …） -->
+  <script>
+/* ==== 03b-mood.js ==== */
+/* ==================================================================
+ * 界面层 · 氛围特效（屏幕情绪）
+ * ==================================================================
+ * 让画面本身替玩家"感受"状态：
+ *   压力爆表  → 四周涌起红雾 .mood-stress
+ *   心态过低  → 整屏褪色灰暗 .mood-dark
+ *   健康过低  → 画面失血发虚 .mood-weak
+ *   经济见底  → 边角发冷发青 .mood-broke（最弱一档，不喧宾夺主）
+ *
+ * 三档强度：0 关 / 1 轻 / 2 重。数值越糟档位越高，特效越强。
+ * 全部走 CSS 变量与 class，不改任何 DOM 结构，也不碰存档数据。
+ *
+ * 开关：GAME_CONFIG.mood（enabled / stressAt / darkAt / weakAt / brokeAt）
+ *
+ * 维护等级：界面层
+ * ================================================================== */
+
+    const MOOD_CLASSES = ["mood-stress", "mood-dark", "mood-weak", "mood-broke"];
+
+    /* 上一次的状态，用于避免每帧重复写 class */
+    let MOOD_LAST = "";
+
+    function moodCfg() {
+      const m = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.mood) || {};
+      return {
+        enabled: m.enabled !== false,
+        stressAt: num(m.stressAt, 100),
+        darkAt: num(m.darkAt, 35),
+        weakAt: num(m.weakAt, 30),
+        brokeAt: num(m.brokeAt, 20),
+        warnAt: num(m.warnAt, 78)      // 预警档：还没爆表，先给一点提示
+      };
+    }
+
+    /* ==================================================================
+     * 计算当前应该挂哪些 class
+     * ------------------------------------------------------------------
+     * 每一档都写成 "类名:强度"，强度 1 = 轻，2 = 重。
+     * 最后由 CSS 按强度调 --mood-* 这几个变量。
+     * ================================================================== */
+    function moodState() {
+      const out = {};
+      if (!S) return out;
+      const c = moodCfg();
+      if (!c.enabled) return out;
+
+      const st = clampNum(S.prop.压力, 0, 150, 0);
+      const md = clampNum(S.prop.心态, 0, 150, 100);
+      const hp = clampNum(S.prop.健康, 0, 150, 100);
+      const mo = clampNum(S.prop.经济, 0, 1e9, 100);
+
+      // 压力：先预警，再爆表
+      if (st >= c.stressAt) out["mood-stress"] = 2;
+      else if (st >= c.warnAt) out["mood-stress"] = 1;
+
+      // 心态：越低越灰
+      if (md <= c.darkAt) out["mood-dark"] = 2;
+      else if (md <= c.darkAt + 20) out["mood-dark"] = 1;
+
+      // 健康：越低越虚
+      if (hp <= c.weakAt) out["mood-weak"] = 2;
+      else if (hp <= c.weakAt + 20) out["mood-weak"] = 1;
+
+      // 经济：见底时边缘发冷（最轻的一档）
+      if (mo <= c.brokeAt) out["mood-broke"] = 1;
+
+      return out;
+    }
+
+    /* ==================================================================
+     * 把状态刷到 <html> 上
+     * ------------------------------------------------------------------
+     * 只在状态真的变了时才写 DOM —— renderHUD 每周会调好几次，
+     * 无脑重写 class 会让 CSS 动画反复重启，红雾会一直闪。
+     * ================================================================== */
+    function updateMood() {
+      const root = document.documentElement;
+      if (!root || !root.classList) return;
+      const st = moodState();
+
+      // 结局画面不压特效：那是一段收束，不该再被红雾盖住
+      const ending = S && S.over;
+      const keys = Object.keys(st);
+      const sig = ending ? "" : keys.sort().map(k => k + st[k]).join("|");
+      if (sig === MOOD_LAST) return;
+      MOOD_LAST = sig;
+
+      MOOD_CLASSES.forEach(c => root.classList.remove(c));
+      root.style.removeProperty("--mood-stress");
+      root.style.removeProperty("--mood-dark");
+      root.style.removeProperty("--mood-weak");
+      root.style.removeProperty("--mood-broke");
+      if (ending) return;
+
+      keys.forEach(k => {
+        root.classList.add(k);
+        const lvl = clampNum(st[k], 1, 2, 1);
+        const varName = "--mood-" + k.slice(5);        // mood-stress → --mood-stress
+        root.style.setProperty(varName, String(lvl));
+      });
+    }
+
+    /* 关掉全部特效（设置里点一下，或进结局时调用） */
+    function clearMood() {
+      const root = document.documentElement;
+      if (!root || !root.classList) return;
+      MOOD_CLASSES.forEach(c => root.classList.remove(c));
+      MOOD_LAST = "";
+    }
+
+    /* ==================================================================
+     * 氛围文案：状态糟糕时在日志里轻轻提一句（每周最多一次）
+     * ================================================================== */
+    let moodSaidWeek = -1;
+
+    function moodWhisper() {
+      if (!S) return;
+      const c = moodCfg();
+      if (!c.enabled) return;
+      if (moodSaidWeek === num(S.week, -1)) return;      // 一周只说一次
+      const st = clampNum(S.prop.压力, 0, 150, 0);
+      const md = clampNum(S.prop.心态, 0, 150, 100);
+      const hp = clampNum(S.prop.健康, 0, 150, 100);
+      let line = "";
+      if (st >= c.stressAt) line = L("mood.stress");
+      else if (md <= c.darkAt) line = L("mood.dark");
+      else if (hp <= c.weakAt) line = L("mood.weak");
+      if (!line) return;
+      moodSaidWeek = num(S.week, -1);
+      say(line, "bad");
+    }
 
 </script>
   <!-- 科目表 -->
@@ -3370,6 +4291,7 @@ function openDoc(key) {
           modProp("经济", -b.cost);
           b.eff(S);
           count("read");
+          S.didReadWeek = num(S.week, 0);
           read = true;
           say(L("book.read", TZ(b.n)), "good");
           checkAch(); renderHUD();
@@ -4102,6 +5024,291 @@ const SCHOOL_EVENTS = [
 })();
 
 </script>
+  <!-- 运动锻炼的事件链 -->
+  <script>
+/* ==== 05c-data-sport.js ==== */
+/* ==================================================================
+ * 内容层 · 运动锻炼事件链
+ * ==================================================================
+ * 「本周行动 → 运动锻炼」消耗一次行动，之后有概率连锁出 1~2 条运动事件。
+ * 这些事件的 id 一律以 sp_ 开头，只有运动行动能抽到，平时不会乱入。
+ *
+ * 写新事件照抄一条即可，字段和 js/07-data-events.js 完全一致。
+ *
+ * 维护等级：内容层（社团同学可以直接加事件）
+ * ================================================================== */
+
+    const SPORT_EVENTS = [
+      {
+        id: "sp_run", w: 6, dist: "uniform", minGap: 3, slot: "any",
+        t: "操场夜跑",
+        c: "晚自习后你没回宿舍，绕着操场跑起来。\n跑道上的白线在路灯下一段一段往后退，呼吸慢慢找到了节奏。\n第三圈开始，白天的那些事好像没那么重了。",
+        opts: [
+          {t: "再跑两圈", run: ["健康 +7", "压力 -9", "心态 +4", "提示 你跑完了最后一圈，汗水把校服后背浸湿了一片。!good"]},
+          {t: "差不多了", run: ["健康 +4", "压力 -5", "心态 +2", "提示 你慢下来走了一圈，风把汗吹干了。!good"]},
+          {t: "拼一把冲刺", cond: S => S.prop.健康 >= 70, run: ["健康 +10", "压力 -12", "效率 +5", "提示 最后一百米你全速冲了出去，肺里像有火。!good"]}
+        ]
+      },
+      {
+        id: "sp_basketball", w: 6, dist: "uniform", minGap: 3, slot: "weekend",
+        t: "球场有人喊你",
+        c: "楼下有人在拍球，声音一下一下，很有节奏。\n有人抬头看见你：「下来啊，差一个！」",
+        opts: [
+          {t: "下去打", run: ["健康 +6", "社交 +8", "压力 -8", "心态 +6", "提示 打到天黑才散场。你很久没笑得这么放开了。!good"]},
+          {t: "说还有卷子", run: ["压力 +3", "提示 你摆摆手上了楼。拍球声还在下面响着。"]},
+          {t: "打，但打到一半回教室", run: ["健康 +3", "社交 +3", "压力 -4", "效率 +3", "提示 你打到一半想起卷子，跑回教室时心情意外地不错。!good"]}
+        ]
+      },
+      {
+        id: "sp_pullup", w: 5, dist: "uniform", minGap: 4, slot: "weekday",
+        t: "单杠上的赌局",
+        c: "课间几个男生围在单杠边数数。\n有人问你：「你能做几个？」\n你知道自己一个都做不了，但大家都看着你。",
+        opts: [
+          {t: "试试", cond: S => S.prop.健康 >= 40, run: ["健康 +5", "社交 +5", "压力 -3", "提示 你做完了两个，第三个上不去。没人嘲笑你，反而有人说明天再来。!good"]},
+          {t: "试试（身体不太行）", cond: S => S.prop.健康 < 40, run: ["健康 -3", "心态 -4", "压力 +5", "提示 你一个都没拉上去，手一滑摔了下来。有人笑了，你拍拍手上的灰。!bad"]},
+          {t: "笑着走开", run: ["心态 -2", "提示 你说「下次吧」，转身走了。背后的数数声还在继续。"]}
+        ]
+      },
+      {
+        id: "sp_rain", w: 4, dist: "uniform", minGap: 5, slot: "any",
+        t: "雨里的体育课",
+        c: "体育课遇上了雨。老师看了看天，说：「绕操场跑三圈，解散。」\n雨不大，但落在脸上是凉的。",
+        opts: [
+          {t: "认真跑完", run: ["健康 +6", "压力 -6", "心态 +3", "提示 你跑完三圈，头发全湿了。回到教室时同桌递了张纸巾。!good"]},
+          {t: "慢慢走完", run: ["健康 +2", "压力 -3", "提示 你和几个人一起慢慢走完了三圈，聊了一路。!good"]},
+          {t: "躲回走廊", run: ["健康 +1", "效率 -3", "提示 你在走廊站了一整节课，看着操场上的同学在雨里跑。"]}
+        ]
+      },
+      {
+        id: "sp_sprain", w: 3, dist: "decay", decay: 0.5, slot: "any",
+        t: "脚踝拧了一下",
+        c: "起跳落地时踩到了别人的脚，脚踝一阵尖锐的疼。\n你坐在地上缓了一会儿，能站起来，但走起来有点瘸。",
+        opts: [
+          {t: "去医务室", run: ["健康 -4", "效率 -6", "心态 -2", "提示 校医给你喷了药，说这两天别剧烈运动。!bad"]},
+          {t: "说没事，继续", run: ["健康 -9", "压力 +4", "提示 你咬牙又跑了两圈。晚上脚踝肿了起来。!bad"]},
+          {t: "坐场边看别人打", run: ["健康 -2", "社交 +4", "心态 +2", "提示 你在场边坐了一节课，有人递过来一瓶水。"]}
+        ]
+      },
+      {
+        id: "sp_coach", w: 3, dist: "front", minTerm: 0, maxTerm: 3, slot: "any",
+        t: "体育老师叫住了你",
+        c: "体训队的老师在操场边喊了你的名字。\n「你跑得不错，有没有兴趣放学后留下来练练？」\n你看见操场上那几个体训队的，放学后还要再跑十圈。",
+        opts: [
+          {t: "答应", run: ["健康 +8", "效率 +4", "压力 +6", "社交 +3", "提示 你留下了。前十分钟还好，第二十分钟你开始怀疑人生，但身体确实在变结实。!good"]},
+          {t: "说要考虑", run: ["心态 -2", "提示 你说「我回去想想」。老师说行，随时欢迎。"]},
+          {t: "婉拒", run: ["心态 +2", "提示 你说学业为重。老师点点头，没多说什么。"]}
+        ]
+      },
+      {
+        id: "sp_morning", w: 4, dist: "uniform", minGap: 4, slot: "weekday",
+        t: "五点四十的操场",
+        c: "你不知道为什么今天醒得这么早。\n天还没亮透，操场上只有雾和两三个身影。\n跑道上有露水，踩上去有点滑。",
+        opts: [
+          {t: "下去跑", run: ["健康 +6", "效率 +8", "心态 +5", "压力 -5", "提示 你跑了两千米。天亮的时候，你觉得这一天还很长，够用。!good"]},
+          {t: "在窗口站一会儿", run: ["心态 +3", "压力 -3", "提示 你站了一会儿，看了会儿雾散。"]},
+          {t: "回去接着睡", run: ["健康 +2", "提示 你躺回床上，很快又睡着了。"]}
+        ]
+      },
+      {
+        id: "sp_exam", w: 3, dist: "back", minTerm: 2, slot: "any",
+        t: "体育中考模拟",
+        c: "体育也要算分。今天测了一千米。\n站在起跑线上时，你听见自己的心跳。",
+        opts: [
+          {t: "全力跑", cond: S => S.prop.健康 >= 60, run: ["健康 +5", "效率 +5", "压力 -4", "心态 +5", "提示 你跑进了及格线，还快了几秒。老师说这个成绩中考没问题。!good"]},
+          {t: "全力跑（身体吃力）", cond: S => S.prop.健康 < 60, run: ["健康 -5", "压力 +8", "心态 -5", "提示 最后两百米你几乎是走着过的。成绩单上的数字不太好看。!bad"]},
+          {t: "保存体力慢慢跑", run: ["健康 +1", "心态 -2", "提示 你匀速跑完了全程，成绩平平，但至少没出洋相。"]}
+        ]
+      },
+      {
+        id: "sp_rope", w: 3, dist: "uniform", minGap: 5, slot: "weekend",
+        t: "家里的跳绳",
+        c: "周末在家，你从柜子里翻出一根跳绳。\n塑料绳上落了灰，手柄还是好的。",
+        opts: [
+          {t: "跳五百个", run: ["健康 +5", "效率 +4", "心态 +3", "提示 你跳到第三百个就喘得不行，但还是撑完了五百。!good"]},
+          {t: "跳两百个意思一下", run: ["健康 +2", "提示 你跳了两百个，把它又放回了柜子。"]},
+          {t: "放回柜子", run: ["心态 -1", "提示 你看了它一眼，又关上了柜门。"]}
+        ]
+      },
+      {
+        id: "sp_friend", w: 4, dist: "uniform", minGap: 4, slot: "any",
+        t: "有人约你一起练",
+        c: "同桌说最近胖了，问你要不要放学后一起去操场。\n「一个人跑太傻了。」他说。",
+        opts: [
+          {t: "一起去", run: ["健康 +5", "社交 +7", "压力 -7", "心态 +5", "提示 你们跑跑走走聊了一路。有个伴，两千米好像变短了。!good"]},
+          {t: "明天再说", run: ["社交 -2", "提示 你说「明天吧」。他说行，然后第二天又忘了问你。"]},
+          {t: "推荐他一个 App", run: ["社交 +3", "效率 +2", "提示 你给他推荐了个计时软件。他认真记下了名字。!good"]}
+        ]
+      },
+    ];
+
+    /* ==================================================================
+     * 抽一条运动事件
+     * ------------------------------------------------------------------
+     * 只从 SPORT_EVENTS 里挑，挑不到就返回 null（调用方直接跳过）。
+     * ================================================================== */
+
+    function pickSportEvent() {
+      if (!Array.isArray(SPORT_EVENTS) || !SPORT_EVENTS.length) return null;
+      const pool = SPORT_EVENTS.filter(e =>
+        e && e.id && !(S.evCntWeek && S.evCntWeek[e.id])
+        && (!e.cond || e.cond(S))
+        && (typeof eventAllowed === "function" ? eventAllowed(e) : true)
+      );
+      if (!pool.length) return null;
+      const effW = e => Math.max(0.1, (typeof eventWeight === "function") ? eventWeight(e) : num(e.w, 1));
+      const total = pool.reduce((s, e) => s + effW(e), 0);
+      let r = Math.random() * total, ev = pool[0];
+      for (const e of pool) {r -= effW(e); if (r <= 0) {ev = e; break;} }
+      return ev;
+    }
+
+</script>
+  <!-- 做题题库与出题逻辑 -->
+  <script>
+/* ==== 05d-data-quiz.js ==== */
+/* ==================================================================
+ * 内容层 · 做题（本周行动）
+ * ==================================================================
+ * 消耗一次行动，随机出一道「当前年级 + 当前科目」范围内的题：
+ *   选择题：四个选项，选对 → 本科目学力加成；选错 → 小幅倒扣
+ *   填空题：手写一个答案，对/错的奖惩同上
+ *
+ * 加题很简单，往 QUIZ_BANK[科目] 里 push 一条即可，字段说明见下：
+ *   g     最低年级（0=初一 1=初二 2=初三），不写就是全年级通用
+ *   type  "choice" 选择题 | "fill" 填空题
+ *   q     题干
+ *   opts  选项数组（choice 必填，2~4 个，答案写哪个都行，脚本会自动打乱）
+ *   ans   正确答案：choice 填选项文字，fill 填答案字符串
+ *   why   答完显示的一句讲解（可留空）
+ *
+ * 填空题的判定：去空格、不分大小写、中英文括号与句号都算对。
+ *
+ * 维护等级：内容层（同学可以直接加题）
+ * ================================================================== */
+
+    const QUIZ_BANK = {
+      语文: [
+        {g: 0, type: "choice", q: "「床前明月光」的下一句是：", opts: ["疑是地上霜", "低头思故乡", "举头望明月", "霜叶红于二月花"], ans: "疑是地上霜", why: "李白《静夜思》"},
+        {g: 0, type: "fill", q: "补全诗句：会当凌绝顶，______。", ans: "一览众山小", why: "杜甫《望岳》"},
+        {g: 0, type: "choice", q: "下列成语书写正确的一项是：", opts: ["再接再励", "再接再厉", "在接再厉", "再接再历"], ans: "再接再厉", why: "「厉」通「砺」，磨砺之意"},
+        {g: 1, type: "fill", q: "补全诗句：沉舟侧畔千帆过，______。", ans: "病树前头万木春", why: "刘禹锡《酬乐天扬州初逢席上见赠》"},
+        {g: 1, type: "choice", q: "「先天下之忧而忧」出自：", opts: ["《岳阳楼记》", "《醉翁亭记》", "《桃花源记》", "《小石潭记》"], ans: "《岳阳楼记》", why: "范仲淹《岳阳楼记》"},
+        {g: 2, type: "fill", q: "补全诗句：长风破浪会有时，______。", ans: "直挂云帆济沧海", why: "李白《行路难》"},
+        {g: 2, type: "choice", q: "「人生自古谁无死」的下一句是：", opts: ["留取丹心照汗青", "留取丹心照汉青", "留得丹心照汗青", "留取真心照汗青"], ans: "留取丹心照汗青", why: "文天祥《过零丁洋》"},
+        {g: 1, type: "choice", q: "「锲而不舍」的下一句是：", opts: ["金石可镂", "朽木不折", "金石可鉴", "朽木难雕"], ans: "金石可镂", why: "《荀子·劝学》"},
+      ],
+      数学: [
+        {g: 0, type: "choice", q: "计算：(-3) × (-4) + (-6) =", opts: ["6", "-6", "18", "-18"], ans: "6", why: "负负得正：12 - 6 = 6"},
+        {g: 0, type: "fill", q: "解方程 2x + 6 = 14，x = ___", ans: "4", why: "2x = 8，x = 4"},
+        {g: 1, type: "choice", q: "若 x² = 16，则 x 的值为：", opts: ["4", "±4", "-4", "8"], ans: "±4", why: "平方根有两个"},
+        {g: 1, type: "fill", q: "直角三角形两直角边为 3 和 4，斜边长为 ___", ans: "5", why: "勾股定理：3²+4²=5²"},
+        {g: 2, type: "choice", q: "一元二次方程 x² - 5x + 6 = 0 的两根之和为：", opts: ["5", "-5", "6", "-6"], ans: "5", why: "韦达定理：两根之和 = -b/a = 5"},
+        {g: 2, type: "fill", q: "函数 y = 2x + 1，当 x = 3 时，y = ___", ans: "7", why: "2×3+1 = 7"},
+        {g: 2, type: "choice", q: "不等式 2x - 4 > 0 的解集是：", opts: ["x > 2", "x < 2", "x > -2", "x > 4"], ans: "x > 2", why: "2x > 4，x > 2"},
+      ],
+      英语: [
+        {g: 0, type: "choice", q: "「library」的意思是：", opts: ["图书馆", "实验室", "食堂", "操场"], ans: "图书馆", why: "library = 图书馆"},
+        {g: 0, type: "fill", q: "拼写：学校（英文）___", ans: "school", why: "school"},
+        {g: 0, type: "choice", q: "He ______ to school every day.", opts: ["go", "goes", "going", "gone"], ans: "goes", why: "第三人称单数加 -es"},
+        {g: 1, type: "fill", q: "拼写：环境（英文）___", ans: "environment", why: "environment"},
+        {g: 1, type: "choice", q: "「I have been here ______ two hours.」", opts: ["for", "since", "in", "at"], ans: "for", why: "for + 一段时间，since + 时间点"},
+        {g: 2, type: "choice", q: "The book ______ by him yesterday.", opts: ["was written", "is written", "wrote", "writes"], ans: "was written", why: "一般过去时的被动语态"},
+        {g: 2, type: "fill", q: "拼写：机会（英文）___", ans: "opportunity", why: "opportunity"},
+      ],
+      物理: [
+        {g: 1, type: "choice", q: "光在真空中的传播速度约为：", opts: ["3×10⁸ m/s", "3×10⁶ m/s", "340 m/s", "1500 m/s"], ans: "3×10⁸ m/s", why: "约三十万公里每秒"},
+        {g: 1, type: "fill", q: "水的密度是 ___ g/cm³", ans: "1", why: "1 g/cm³，即 1000 kg/m³"},
+        {g: 2, type: "choice", q: "一个物体受到的重力方向总是：", opts: ["竖直向下", "垂直向下", "指向地心", "向下"], ans: "竖直向下", why: "重力方向竖直向下"},
+        {g: 2, type: "fill", q: "欧姆定律：I = U / ___", ans: "R", why: "I = U/R"},
+      ],
+      化学: [
+        {g: 2, type: "choice", q: "水的化学式是：", opts: ["H₂O", "CO₂", "O₂", "H₂O₂"], ans: "H₂O", why: "两个氢原子一个氧原子"},
+        {g: 2, type: "fill", q: "空气中体积分数最大的气体是 ___（填化学式）", ans: "N2", why: "氮气约占 78%"},
+        {g: 2, type: "choice", q: "下列变化属于化学变化的是：", opts: ["铁生锈", "冰融化", "玻璃破碎", "水蒸发"], ans: "铁生锈", why: "有新物质生成才是化学变化"},
+      ],
+      生物: [
+        {g: 0, type: "choice", q: "植物进行光合作用的主要场所是：", opts: ["叶绿体", "线粒体", "细胞核", "液泡"], ans: "叶绿体", why: "叶绿体是光合作用的场所"},
+        {g: 0, type: "fill", q: "人体最大的消化腺是 ___", ans: "肝脏", why: "肝脏分泌胆汁"},
+        {g: 1, type: "choice", q: "血液中运输氧气的细胞是：", opts: ["红细胞", "白细胞", "血小板", "血浆"], ans: "红细胞", why: "红细胞含血红蛋白"},
+      ],
+      历史: [
+        {g: 0, type: "choice", q: "中国近代史的开端事件是：", opts: ["鸦片战争", "辛亥革命", "洋务运动", "甲午战争"], ans: "鸦片战争", why: "1840 年鸦片战争"},
+        {g: 0, type: "fill", q: "辛亥革命爆发于 ___ 年", ans: "1911", why: "1911 年武昌起义"},
+        {g: 1, type: "choice", q: "「百家争鸣」出现在哪个时期？", opts: ["春秋战国", "秦汉", "隋唐", "宋元"], ans: "春秋战国", why: "春秋战国时期思想大爆发"},
+        {g: 2, type: "fill", q: "新中国成立的时间是 ___ 年 10 月 1 日", ans: "1949", why: "1949 年"},
+      ],
+      地理: [
+        {g: 0, type: "choice", q: "地球上面积最大的大洋是：", opts: ["太平洋", "大西洋", "印度洋", "北冰洋"], ans: "太平洋", why: "太平洋约占海洋面积一半"},
+        {g: 0, type: "fill", q: "中国陆地面积约 ___ 万平方千米", ans: "960", why: "约 960 万平方千米"},
+        {g: 1, type: "choice", q: "云南省的省会是：", opts: ["昆明", "大理", "丽江", "玉溪"], ans: "昆明", why: "昆明，春城"},
+      ],
+      政治: [
+        {g: 0, type: "choice", q: "我国的根本政治制度是：", opts: ["人民代表大会制度", "政治协商制度", "民族区域自治制度", "基层群众自治制度"], ans: "人民代表大会制度", why: "根本政治制度"},
+        {g: 1, type: "fill", q: "我国是 ___ 领导的社会主义国家（填两个字的阶级）", ans: "工人", why: "工人阶级领导"},
+        {g: 2, type: "choice", q: "我国处理民族关系的基本原则不包括：", opts: ["民族自决", "民族平等", "民族团结", "各民族共同繁荣"], ans: "民族自决", why: "三大原则是平等、团结、共同繁荣"},
+      ],
+    };
+
+    /* ==================================================================
+     * 出题
+     * ------------------------------------------------------------------
+     * 从「当前年级考的科目」里随机挑一科，再从该科题库里挑一道
+     * 不超过当前年级的题。选项顺序会打乱，避免背答案。
+     * ================================================================== */
+
+    function gradeNow() {
+      return clamp(Math.floor(clampNum(S && S.term, 0, 9, 0) / 2), 0, 2);
+    }
+
+    function pickQuiz() {
+      const g = gradeNow();
+      const subs = (typeof subjectsOf === "function" ? subjectsOf(S.term) : []) || [];
+      const usable = subs.filter(s => QUIZ_BANK[s] && QUIZ_BANK[s].length);
+      if (!usable.length) return null;
+
+      const sub = usable[rnd(usable.length)];
+      const bank = QUIZ_BANK[sub].filter(x => num(x.g, 0) <= g);
+      const pool = bank.length ? bank : QUIZ_BANK[sub];
+      const raw = pool[rnd(pool.length)];
+      if (!raw) return null;
+
+      const item = {sub, type: raw.type === "fill" ? "fill" : "choice", q: raw.q, ans: String(raw.ans), why: raw.why || ""};
+
+      if (item.type === "choice") {
+        const opts = (raw.opts || []).slice();
+        if (opts.length < 2) return null;
+        // 洗牌，避免同一道题永远是同一个正确位置
+        for (let i = opts.length - 1; i > 0; i--) {
+          const j = rnd(i + 1);
+          const t = opts[i]; opts[i] = opts[j]; opts[j] = t;
+        }
+        item.opts = opts.map(String);
+        item.ansIndex = Math.max(0, item.opts.indexOf(String(raw.ans)));
+      }
+      return item;
+    }
+
+    /* 填空题的答案比对：去空格、不分大小写、中英文标点都算对 */
+
+    function quizMatch(input, ans) {
+      const norm = s => String(s == null ? "" : s)
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "")
+        .replace(/[（）()]/g, "")
+        .replace(/[。．.,，、]/g, "")
+        .replace(/₂/g, "2").replace(/₂/g, "2")
+        .replace(/²/g, "2")
+        .replace(/×/g, "*");
+      const a = norm(input), b = norm(ans);
+      if (!a) return false;
+      if (a === b) return true;
+      // 数学：允许 "x=4" 只填 "4"
+      if (b.indexOf("=") >= 0 && a === b.split("=").pop()) return true;
+      return false;
+    }
+
+</script>
   <script>
 /* ==== 05b-data-clubs.js ==== */
 /* ==================================================================
@@ -4740,6 +5947,9 @@ const SCHOOL_EVENTS = [
  * ================================================================== */
 
     const ENDINGS = [
+      /* ★「遗憾离场」必须排在最前面：它是中途触发的，不看分数。
+       * 条件：压力连续三周爆表（连续三周 ≥100），见 GAME_CONFIG.burnout。 */
+      {id: "burnout", n: "遗憾结局 · 提前离场", icon: "🕯", c: S => S.dead === "压力", t: "连着三周，你都是咬着牙撑过来的。\n第四周的一个早自习，你趴在桌上，忽然就不想再起来了。\n不是放弃，是身体先一步替你做了决定。\n休学那天天气很好，你回头看了一眼教室——窗明几净，还有人在早读。"},
       {id: "scholar", n: "学术结局 · 少年班", icon: "🔬", c: S => S.zhongkao >= 95 && Talent.have("学神降世"), t: "你被少年班提前录取。别人还在填报志愿，你已经站在了下一道门口。知识的星辰大海，刚刚启航。"},
       {id: "top", n: "传说结局 · 状元之门", icon: "🏆", c: S => S.zhongkao >= 95, t: "中考放榜，你的名字高悬榜首。天行健，君子以自强不息——三年磨一剑，你做到了。"},
       {id: "citykey", n: "辉煌结局 · 市重点", icon: "🎓", c: S => S.zhongkao >= 85, t: "你被市重点高中录取。校门口的光荣榜上，有你的名字，风一吹，纸角轻轻掀起来。"},
@@ -4852,6 +6062,129 @@ const SCHOOL_EVENTS = [
         text: "你曾经跑两百米就要停下来扶着膝盖喘。\n后来是四百米、八百米。\n病弱不是你的标签，它只是你出发时的起点——而你已经走了很远。",
         poem: "千磨万击还坚劲，任尔东西南北风。"},
     ];
+
+    /* ==================================================================
+     * 破茧的另一面：天赋退化
+     * ------------------------------------------------------------------
+     * 「破茧」不只是把负面天赋消掉 —— 放着不用，正面天赋也会悄悄走掉。
+     *
+     * 字段说明：
+     *   talent   会退化掉的天赋
+     *   stat     靠什么行为维持（study=学习 / sport=运动 / read=读书 / social=社交）
+     *   idle     连续几周没做这件事就开始退化
+     *   chance   达到条件后每周的退化概率
+     *   grant    退化之后留下的阴影（负面天赋，可留空）
+     *   title / text / poem  弹窗文案
+     *
+     * 想让某条永不退化，把 chance 改成 0 或直接删掉这一条。
+     * ================================================================== */
+
+    const TALENT_DECAY = [
+      {talent: "过目不忘", stat: "study", idle: 3, chance: 0.30, grant: "",
+        title: "背过的东西开始溜走",
+        text: "你翻开上周背过的那页，发现自己只记得第一行。\n不是记性变差了，是你太久没有认真记过什么。\n那些背得又快又准的日子，像是从来没发生过。",
+        poem: "学如逆水行舟，不进则退。"},
+      {talent: "融会贯通", stat: "study", idle: 4, chance: 0.25, grant: "",
+        title: "知识之间的线断了",
+        text: "老师把两章内容串起来讲，你发现自己接不上。\n那些本来连在一起的东西，又变成了各管各的一块块。\n贯通不是天赋，是天天练出来的手感。",
+        poem: "问渠那得清如许，为有源头活水来。"},
+      {talent: "数学脑", stat: "study", idle: 4, chance: 0.22, grant: "",
+        title: "数字不再听话了",
+        text: "你盯着那道题，思路卡在第二步。\n以前你几乎不用想，笔就自己往下走了。\n脑子是要用的，不用就会钝。",
+        poem: "刀不磨要生锈，人不学要落后。"},
+      {talent: "语感天成", stat: "study", idle: 4, chance: 0.22, grant: "",
+        title: "读到一半卡住了",
+        text: "那段话你读了三遍，还是没抓住它要说什么。\n语感这种东西，离开阅读一久就自己散了。\n像一盆没人浇的花。",
+        poem: "读书破万卷，下笔如有神；一日不读，笔涩三分。"},
+      {talent: "单词机器", stat: "study", idle: 3, chance: 0.28, grant: "",
+        title: "单词开始不认识了",
+        text: "那个明明背过无数遍的词，此刻看着很陌生。\n你翻到单词表最前面，发现已经很久没往下走了。\n机器停久了，也会生锈。",
+        poem: "一日曝之，十日寒之，未有能生者也。"},
+      {talent: "运筹帷幄", stat: "study", idle: 4, chance: 0.20, grant: "",
+        title: "算不动了",
+        text: "你在草稿纸上画了半天辅助线，画错了三次。\n以前这种题你扫一眼就有思路。\n算式不会等你，它只会离你越来越远。",
+        poem: "业精于勤，荒于嬉。"},
+      {talent: "博古通今", stat: "study", idle: 5, chance: 0.18, grant: "",
+        title: "记不清是哪一年了",
+        text: "老师说到一个年代，你脑子里只有模糊的一片。\n那些你曾经如数家珍的年份，正在一个个褪色。\n历史不会因为你忘了它就重来一次。",
+        poem: "以铜为镜，可以正衣冠；以史为镜，可以知兴替。"},
+      {talent: "格物致知", stat: "study", idle: 4, chance: 0.20, grant: "",
+        title: "原理讲不出来了",
+        text: "你知道答案，但说不清为什么。\n以前你总要追问一句「为什么会这样」，现在你只是把结论抄下来。\n好奇心也是需要喂的。",
+        poem: "纸上得来终觉浅，绝知此事要躬行。"},
+      {talent: "笔耕不辍", stat: "study", idle: 3, chance: 0.30, grant: "",
+        title: "笔停在半路上",
+        text: "你打开本子，写了两行，然后发起了呆。\n一天不写，两天不写，第三天就忘了为什么要写。\n坚持是最容易断掉的东西。",
+        poem: "一日一钱，千日千钱；绳锯木断，水滴石穿。"},
+      {talent: "卷王", stat: "study", idle: 5, chance: 0.20, grant: "",
+        title: "卷不动了",
+        text: "你本该是这个教室里最拼的那个人。\n但连着好几周，你都在放学铃响的第一时间收拾书包。\n卷王也会累，累久了就只是个普通人。",
+        poem: "靡不有初，鲜克有终。"},
+      {talent: "学神降世", stat: "study", idle: 6, chance: 0.15, grant: "",
+        title: "光环暗了下去",
+        text: "没有人宣布，也没有什么仪式。\n只是某天你发现自己不再是那个「一看就会」的人了。\n神从来不是天生的，是一天天坐出来的。",
+        poem: "天才是百分之一的灵感，加百分之九十九的汗水。"},
+      {talent: "运动健将", stat: "sport", idle: 6, chance: 0.15, grant: "",
+        title: "跑不动了",
+        text: "两百米下来你就开始喘。\n操场还是那个操场，但你的腿已经不记得节奏了。\n身体是最诚实的，你给它什么，它还你什么。",
+        poem: "流水不腐，户枢不蠹。"},
+      {talent: "钢筋铁骨", stat: "sport", idle: 8, chance: 0.12, grant: "",
+        title: "开始容易生病了",
+        text: "换季的时候你第一个倒下。\n以前你以为自己天生结实，后来才明白那不过是常年在动。\n停下来，身体就跟着停了。",
+        poem: "养身莫善于习动。"},
+    ];
+
+    /* 该行为最近一次发生在第几周（用于判定"多久没做了"） */
+
+    function lastDidWeek(stat) {
+      if (!S) return -999;
+      const map = {study: "didStudyWeek", sport: "didSportWeek", read: "didReadWeek", social: "didSocialWeek"};
+      const key = map[stat];
+      if (!key) return -999;
+      return (S[key] == null) ? -999 : num(S[key], -999);
+    }
+
+    /* 连续几周没做这件事 */
+    function idleWeeksOf(stat) {
+      const last = lastDidWeek(stat);
+      if (last < 0) return num(S.week, 0) + 1;      // 从没做过
+      return Math.max(0, num(S.week, 0) - last);
+    }
+
+    /* 检查是否有天赋该退化，有就弹窗（一次只处理一个，弹完再查下一个） */
+
+    function flushDecay(done) {
+      if (!S || S.over || !Array.isArray(TALENT_DECAY)) {done && done(); return;}
+
+      const hit = TALENT_DECAY.find(d =>
+        Talent.have(d.talent)
+        && idleWeeksOf(d.stat) >= num(d.idle, 99)
+        && Math.random() < num(d.chance, 0)
+      );
+      if (!hit) {done && done(); return;}
+
+      Talent.remove(hit.talent);
+      let got = "";
+      if (hit.grant && !Talent.have(hit.grant)) {
+        gainTalent(hit.grant, "退化·免费");
+        if (Talent.have(hit.grant)) got = `<div style="margin-top:10px;color:var(--red)">💧 你留下了阴影【${hit.grant}】</div>`;
+      }
+      say(`💧 退化：你失去了【${hit.talent}】。`, "talent");
+      toast(`💧 退化：${hit.talent} 已消失`, false);
+      checkAch();
+      renderHUD();
+
+      const body = `<div style="line-height:2">
+        <div style="color:var(--red);font-size:.9rem">已失去天赋：<b>${hit.talent}</b></div>
+        <div style="margin-top:10px;white-space:pre-wrap">${hit.text}</div>
+        ${got}
+        <div style="margin-top:12px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
+      </div>`;
+      showPopup({
+        kind: "free", badge: "💧 退化", title: hit.title, body: body,
+        options: [{t: L("modal.continue")}]
+      }, () => flushDecay(done));
+    }
 
     /* 累积「破茧」进度（只加数字，不弹窗） */
 
@@ -5175,8 +6508,66 @@ function runEffectSpec(spec, S) {
       v = Math.sqrt(Math.max(0, num(v, 0))) * 10;
       if (S.examCharm) v += 5;
       if (S.penCharm) v += 5;
-      v = v * num(diff.examHard, 1) + (Math.random() * 2 - 1) * num(diff.noise, 0);
+      v = v * num(diff.examHard, 1) * (typeof studyCfg === "function" ? studyCfg().examMul : 1)
+        + (Math.random() * 2 - 1) * num(diff.noise, 0);
       return v;
+    }
+
+    /* ==================================================================
+     * v1.1 学习难度旋钮
+     * ------------------------------------------------------------------
+     * 四个系数全部写在 GAME_CONFIG.study 里，老师觉得太难就往 1 调。
+     *   gainMul   收益变少  0.65 → 同样的"努力学习"，学力少涨三成半
+     *   decayMul  遗忘变快  1.60 → 一周不学，倒退得比以前明显
+     *   examMul   考试变难  0.90 → 同样的学力，卷面分少一成
+     *   stressMul 压力变大  1.50 → 学一次更累，高压对效率的惩罚也更重
+     * ================================================================== */
+    function studyCfg() {
+      const c = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.study) || {};
+      return {
+        gainMul: num(c.gainMul, 1),
+        decayMul: num(c.decayMul, 1),
+        examMul: num(c.examMul, 1),
+        stressMul: num(c.stressMul, 1),
+        stressPenalty: num(c.stressPenalty, 0.30),
+        learnBleed: num(c.learnBleed, 0)
+      };
+    }
+
+    /* ==================================================================
+     * 「运动锻炼」结算
+     * ------------------------------------------------------------------
+     * 消耗一次行动，换身体的底子：健康、效率、抗压。
+     * 学力几乎不涨（去操场了就没在书桌前），但有运动天赋的人收益更大。
+     * 之后由 runSportChain() 决定要不要连锁出运动事件。
+     * ================================================================== */
+
+    function sportSettle(onDone) {
+      const p = S.prop;
+      for (const k in PROP_RANGE) p[k] = fixProp(k, p[k]);
+
+      let hp = 6, eff = 4, stress = -8, mind = 4;
+      if (Talent.have("运动健将")) {hp += 4; eff += 3; stress -= 4;}
+      if (Talent.have("天行健")) {hp += 3; eff += 2;}
+      if (Talent.have("钢筋铁骨")) hp += 3;
+      if (Talent.have("体弱多病")) {hp = Math.round(hp * 0.5); stress += 3;}
+      if (Talent.have("大胃袋")) hp = Math.round(hp * 0.8);
+      if (p.健康 < 40) {hp = Math.round(hp * 0.6); stress += 4; mind -= 2;}   // 身体差，练不动
+
+      modProp("健康", hp);
+      modProp("效率", eff);
+      modProp("压力", stress);
+      modProp("心态", mind);
+
+      S.actCount = (S.actCount || 0) + 1;
+      S.evCntWeek = {};
+      S.evCountWeek = 0;
+      count("sport");                       // 推进「体弱多病」等破茧进度
+      S.didSportWeek = num(S.week, 0);      // 记一下，用于天赋退化判定
+      renderHUD();
+      say(L("sport.log"), "sys");
+      floatGain(L("sport.float"), true);
+      if (typeof onDone === "function") onDone();
     }
 
     function difficultyCurve(week, term) {
@@ -5267,7 +6658,7 @@ function runEffectSpec(spec, S) {
       if (Talent.have("实验狂人")) {subjBonus.物理 = (subjBonus.物理 || 0) + 15; subjBonus.化学 = 15;}
       if (Talent.have("史海钩沉")) {subjBonus.历史 = (subjBonus.历史 || 0) + 15; subjBonus.生物 = 15;}
       for (const k in subjBonus) {if (S.subj[k] !== undefined) S.subj[k] += subjBonus[k];}
-      if (Talent.have("家财万贯")) S.prop.经济 = 300 + rnd(100);
+      if (Talent.have("家财万贯")) S.prop.经济 = 150 + rnd(60);   // v1.1 削弱：原为 300+rnd(100)
       else if (Talent.have("家徒四壁")) S.prop.经济 = 30 + rnd(30);
       else if (Talent.have("小康之家")) S.prop.经济 = 150 + rnd(50);
       if (Talent.have("书香门第")) S.prop.悟性 += 10;
@@ -5303,7 +6694,10 @@ function runEffectSpec(spec, S) {
       p.心态 = clamp(p.心态, propFloor("心态"), 150);
 
       // 经济
-      if (Talent.have("家财万贯")) p.经济 += 150;
+      /* v1.1 削弱：家财万贯由每周 +150 降到 +45（和小康之家持平），
+       * 但富家子弟依然有"不会为钱发愁"的底气（见下面的额外补贴）。 */
+      if (Talent.have("家财万贯")) p.经济 += 45;
+      if (Talent.have("家财万贯") && p.经济 < 80) p.经济 = 80;    // 兜底：不至于真的没钱
       else {
         let v = rnd(41) - 20 - (Talent.have("家徒四壁") ? 10 : 0) - (Talent.have("大胃袋") ? 10 : 0) - (Talent.have("吃货") ? 5 : 0) + (Talent.have("偏食") ? 10 : 0);
         if (Talent.have("理财达人") && v > 0) v = Math.floor(v * 1.5); p.经济 += v;
@@ -5351,9 +6745,25 @@ function runEffectSpec(spec, S) {
       p.社交 = clamp(p.社交, 10, 150);
 
       // 压力
+      /* 压力
+       * ★ v1.1：原来是纯粹的随机漫步（rnd(31)-15 长期无回归），
+       *   三年下来压力迟早撞上 0 或 150 —— 配上"连续三周爆表就离场"的新规则，
+       *   等于掷骰子决定生死，玩家做什么都救不回来。
+       *   现在改成"向学业基线回归 + 随机扰动"：
+       *     基线随年级升高（初一 25 → 初三 50），压力自然往基线回落一点；
+       *     但连续学习每周净增约 +11，照样能把压力顶到爆表。
+       *   这样"压力爆表"就变成玩家自己选出来的结果，而不是随机数。 */
       if (Talent.have("不吃压力")) p.压力 = 50 + rnd(21) - 10;
-      else {p.压力 += rnd(31) - 15 + (Talent.have("玻璃心") ? 20 : 0) + (Talent.have("自律机器") ? 5 : 0) + (Talent.have("卷王") ? 10 : 0) - (Talent.have("佛系少年") ? 8 : 0);}
-      p.压力 = clamp(p.压力, 0, 150);
+      else {
+        const base = 25 + clampNum(S.term, 0, 5) * 5;
+        p.压力 += (base - num(p.压力, base)) * 0.18
+          + (rnd(21) - 10)
+          + (Talent.have("玻璃心") ? 20 : 0)
+          + (Talent.have("自律机器") ? 5 : 0)
+          + (Talent.have("卷王") ? 10 : 0)
+          - (Talent.have("佛系少年") ? 8 : 0);
+      }
+      p.压力 = clamp(p.压力, propFloor("压力"), 150);
 
       // 社团每周加成（入社后才生效）
       if (typeof applyClubPerk === "function") applyClubPerk();
@@ -5363,17 +6773,24 @@ function runEffectSpec(spec, S) {
       // 约每两周 -1（不是每周都掉，否则 150 周会掉光）；
       // 压力过高时额外 -1（情绪不好容易和家人起摩擦）。
       // 想让亲情掉得更慢/更快，改 0.45 这个概率即可。
-      const famDrop = (Math.random() < 0.45 ? 1 : 0) + (p.压力 > 110 ? 1 : 0);
-      p.亲情 = clamp(num(p.亲情, 80) - famDrop, 10, 150);
+      const fc = (typeof famCfg === "function") ? famCfg() : {weeklyDrop: 0.45, weeklyDropVal: 4};
+      const famDrop = (Math.random() < fc.weeklyDrop ? fc.weeklyDropVal : 0) + (p.压力 > 110 ? 2 : 0);
+      p.亲情 = clamp(num(p.亲情, 80) - famDrop, propFloor("亲情"), 150);
 
       // 周结算遗忘
+      // v1.1：decayMul 让遗忘变快，且"一周没学习"会额外流失 learnBleed。
       ensureSubj();
       const diff = difficultyCurve(S.week, S.term);
       const subs = subjectsOf(S.term);
+      const cfgS = studyCfg();
+      const idle = (S.didStudyWeek !== num(S.week, 0)) && (S.didQuizWeek !== num(S.week, 0));
+      const bleed = idle ? clampNum(cfgS.learnBleed, 0, 0.5) : 0;
       subs.forEach(sub => {
-        const decay = clampNum(diff.decay * 0.6, 0, 0.9);
+        const decay = clampNum(diff.decay * 0.6 * cfgS.decayMul + bleed, 0, 0.9);
         S.subj[sub] = clamp(num(S.subj[sub], 30) * (1 - decay), 0, SUBJ_CAP);
       });
+      if (idle && bleed > 0) S.idleWeeks = num(S.idleWeeks, 0) + 1;
+      else S.idleWeeks = 0;
       recalcScore();
 
       // 属性兜底：任何一项变成非法值都会在这里被修正
@@ -5388,7 +6805,7 @@ function runEffectSpec(spec, S) {
       const p = S.prop;
       for (const k in PROP_RANGE) p[k] = fixProp(k, p[k]);
       ensureSubj();
-      let base = num({study: 5.5, rest: 1.2, social: 1.5, fun: 0.4, allowance: 0}[action], 0);
+      let base = num({study: 5.5, quiz: 2.0, rest: 1.2, social: 1.5, fun: 0.4, allowance: 0}[action], 0);
       let rate = base * (0.5 + p.效率 / 200) * (0.5 + p.悟性 / 200) * (0.6 + p.心态 / 250);
       if (!isFinite(rate)) rate = base;
       if (Talent.have("过目不忘")) rate *= 1.2;
@@ -5407,13 +6824,13 @@ function runEffectSpec(spec, S) {
       if (Talent.have("网瘾") && action === "fun") rate *= 1.5;
       if (Talent.have("严重网瘾") && action === "fun") rate *= 2.0;
 
-      rate *= 1 - (p.压力 / 150) * 0.30;
+      rate *= 1 - (p.压力 / 150) * studyCfg().stressPenalty;   // 压力越大越学不进去
 
       rate *= 1 + S.studyBuff - S.studyDebuff;
       rate *= 1 + (Math.random() * 0.5 - 0.35);
 
       const diff = difficultyCurve(S.week, S.term);
-      rate *= diff.gainMul;
+      rate *= diff.gainMul * studyCfg().gainMul;   // v1.1：收益整体下调
 
       const subs = subjectsOf(S.term);
       let weekTotal = 0;
@@ -5451,16 +6868,21 @@ function runEffectSpec(spec, S) {
         S.subj[sub] = clamp(after, 0, SUBJ_CAP);
         const delta = S.subj[sub] - before;
         weekTotal += delta;
-        if (action === "study" && Math.abs(delta) > 2) gains.push(`${sub}${delta > 0 ? "+" : ""}${delta.toFixed(1)}`);
+        /* 学科数值只在考试事件里出现，这里只说"哪科动了"，不说动了多少 */
+        if (action === "study" && Math.abs(delta) > 2) gains.push(`${sub}${delta > 0 ? "▲" : "▼"}`);
       }
       recalcScore();
       if (action === "study" && gains.length) floatGain(gains.join(" "), true);
       if (S.buffWeeks > 0 && --S.buffWeeks === 0) S.studyBuff = 0;
       if (S.debuffWeeks > 0 && --S.debuffWeeks === 0) S.studyDebuff = 0;
-      if (action === "study") {count("study"); p.压力 = clamp(p.压力 + 4, 0, 150);}
+      if (action === "study") {
+        count("study");
+        S.didStudyWeek = num(S.week, 0);      // 记一下，用于「天赋退化」判定
+        p.压力 = clamp(p.压力 + 4 * studyCfg().stressMul, 0, 150);
+      }
       if (action === "rest") {count("rest"); p.压力 = clamp(p.压力 - 10, 0, 150); p.健康 = clamp(p.健康 + 5, 0, 150); p.效率 = clamp(p.效率 + 8, 10, 150);}
-      if (action === "social") {count("social"); p.社交 = clamp(p.社交 + 6, 0, 150); p.心态 = clamp(p.心态 + 4, 0, 150); p.效率 = clamp(p.效率 + 3, 10, 150);}
-      if (action === "fun") {p.心态 = clamp(p.心态 + (Talent.have("游戏宅") ? 16 : 8), 0, 150); p.压力 = clamp(p.压力 - 8, 0, 150);}
+      if (action === "social") {count("social"); S.didSocialWeek = num(S.week, 0); p.社交 = clamp(p.社交 + 6, 0, 150); p.心态 = clamp(p.心态 + 4, 0, 150); p.效率 = clamp(p.效率 + 3, 10, 150);}
+      if (action === "fun") {count("fun"); p.心态 = clamp(p.心态 + (Talent.have("游戏宅") ? 16 : 8), 0, 150); p.压力 = clamp(p.压力 - 8, 0, 150);}
       // 注：原来的「打零工」已改为「向父母要零花钱」，走 allowanceSettle()
     }
 
@@ -5481,52 +6903,60 @@ function runEffectSpec(spec, S) {
       let g = Math.round(12 + (fam - 20) * 0.36);
       if (Talent.have("理财达人")) g = Math.round(g * 1.25);
 
+      /* ★ v1.1：开口本身就是有代价的 —— 亲情越低，开口掉得越多。
+       * 亲情已经很僵的时候，多半直接要不到钱。 */
+      const famCfgV = (typeof famCfg === "function") ? famCfg() : {askCost: 6, askCostRich: 2, lowAt: 40};
+      const cost = (typeof askCostFam === "function") ? askCostFam() : 6;
+      const who = (typeof parentCall === "function") ? parentCall(familyMain()) : "妈妈";
+
       let title, line, cls;
       if (fam >= 120) {
         // 感情好：父母主动多给
         if (Math.random() < 0.35) {
           g += 15;
-          title = "父母多塞了点";
-          line = "你刚开口，妈妈就掏出了钱包：「在学校别省着，该买的就买。」临走又多塞了十五块。";
+          title = L("alw.t1");
+          line = L("alw.l1", who);
           cls = "good";
-          modProp("心态", 6); modProp("压力", -4); modProp("亲情", 2);
+          modProp("心态", 6); modProp("压力", -4); modProp("亲情", 2 - cost);
         } else {
-          title = "痛快给了";
-          line = "爸爸二话没说就转了钱，还问你最近学习累不累。";
+          title = L("alw.t2");
+          line = L("alw.l2", who);
           cls = "good";
-          modProp("心态", 4); modProp("压力", -3); modProp("亲情", 1);
+          modProp("心态", 4); modProp("压力", -3); modProp("亲情", 1 - cost);
         }
       } else if (fam >= 70) {
-        title = "给了";
-        line = "妈妈数了数钱递给你，顺口叮嘱了一句「别乱花」。";
+        title = L("alw.t3");
+        line = L("alw.l3", who);
         cls = "good";
-        modProp("心态", 2);
-      } else if (fam >= 40) {
-        // 感情一般：会被念叨
+        modProp("心态", 2); modProp("亲情", -cost);
+      } else if (fam >= famCfgV.lowAt) {
+        // 感情一般：会被念叨，钱也给得少
         g = Math.round(g * 0.7);
-        title = "被念叨了一顿";
-        line = "「上周不是才给过吗？」妈妈一边数落一边还是掏了钱。你觉得脸上有点发热。";
+        title = L("alw.t4");
+        line = L("alw.l4", who);
         cls = "";
-        modProp("心态", -4); modProp("压力", 3); modProp("亲情", -2);
+        modProp("心态", -4); modProp("压力", 3); modProp("亲情", -2 - cost);
       } else {
-        // 感情疏远：多半被拒
-        if (Math.random() < 0.5) {
+        // 感情疏远：多半被拒（亲情越低，被拒的概率越高）
+        const refuseP = clampNum(0.5 + (famCfgV.lowAt - fam) / famCfgV.lowAt * 0.35, 0.5, 0.9);
+        if (Math.random() < refuseP) {
           g = 0;
-          title = "被拒绝了";
-          line = "爸爸皱着眉：「家里最近也不宽裕。」你张了张嘴，最后没再说什么。";
+          title = L("alw.t5");
+          line = L("alw.l5", who);
           cls = "bad";
-          modProp("心态", -8); modProp("压力", 6); modProp("亲情", -3);
+          modProp("心态", -8); modProp("压力", 6); modProp("亲情", -3 - cost);
         } else {
           g = Math.round(g * 0.5);
-          title = "只给了很少一点";
-          line = "妈妈翻遍口袋，只凑出几张零票。你说了声谢谢，心里不是滋味。";
+          title = L("alw.t6");
+          line = L("alw.l6", who);
           cls = "bad";
-          modProp("心态", -5); modProp("压力", 4); modProp("亲情", -2);
+          modProp("心态", -5); modProp("压力", 4); modProp("亲情", -2 - cost);
         }
       }
 
       // 开口要钱本身有一点心理成本（亲情高时抵消）
       if (fam < 100) modProp("压力", 2);
+      if (g === 0) say(L("alw.refusedLog"), "bad");
 
       modProp("经济", g);
       S.actCount = (S.actCount || 0) + 1;
@@ -5534,6 +6964,7 @@ function runEffectSpec(spec, S) {
       S.evCountWeek = 0;
       renderHUD();
       say(L("alw.log", title, g > 0 ? L("alw.got", g) : L("alw.none")), cls || "sys");
+      if (cost > 0) say(L("alw.costLog", cost), "bad");
       /* 弹完这一个才继续走事件链 —— 否则两个弹窗会互相覆盖，
        * 玩家根本看不到父母说了什么。 */
       showPopup({
@@ -5704,6 +7135,8 @@ function runEffectSpec(spec, S) {
 
       const acts = [
         {k: "study", t: L("act.study")},
+        {k: "quiz", t: L("act.quiz")},
+        {k: "sport", t: L("act.sport")},
         {k: "rest", t: L("act.rest")},
         {k: "social", t: L("act.social")},
         {k: "fun", t: L("act.fun")},
@@ -5720,6 +7153,7 @@ function runEffectSpec(spec, S) {
       acts.forEach(a => {
         const b = document.createElement("button"); b.className = "btn";
         b.innerHTML = `<b>${a.t}</b>`;
+        b.dataset.actKey = "act." + a.k;      // 记住文案键，切语言时原地改字
         b.onclick = () => takeAction(a.k); grid.appendChild(b);
       });
       box.appendChild(grid);
@@ -5739,21 +7173,51 @@ function runEffectSpec(spec, S) {
       const grid = document.createElement("div");
       grid.className = "actgrid";
 
-      const mk = (t, sub, fn) => {
+      const mk = (t, sub, fn, key, subKey) => {
         const b = document.createElement("button");
         b.className = "btn";
         b.innerHTML = sub ? `<b>${t}</b><br><small>${sub}</small>` : `<b>${t}</b>`;
+        if (key) b.dataset.actKey = key;
+        if (subKey) b.dataset.actSubKey = subKey;
         b.onclick = fn;
         grid.appendChild(b);
       };
 
-      mk(`${c ? c.icon : "🎪"} ${L("act.club")}`, c ? TZ(c.n) : "", () => takeAction("club"));
-      mk(L("act.clubSkip"), L("act.clubSub"), () => takeAction("study"));
-      mk(L("act.clubRest"), L("act.restSub"), () => takeAction("rest"));
-      mk(L("act.clubSocial"), L("act.socialSub"), () => takeAction("social"));
+      mk(`${c ? c.icon : "🎪"} ${L("act.club")}`, c ? TZ(c.n) : "", () => takeAction("club"), "act.club");
+      mk(L("act.clubSkip"), L("act.clubSub"), () => takeAction("study"), "act.clubSkip", "act.clubSub");
+      mk(L("act.clubRest"), L("act.restSub"), () => takeAction("rest"), "act.clubRest", "act.restSub");
+      mk(L("act.clubSocial"), L("act.socialSub"), () => takeAction("social"), "act.clubSocial", "act.socialSub");
 
       box.appendChild(grid);
       renderHUD();
+    }
+
+    /* 切换语言后，把行动按钮上的字原地换成新语言
+     * （不能重新 offerActions —— 那会重置本周的行动进度） */
+
+    function relabelActions() {
+      const box = document.getElementById("actionPanel");
+      if (!box) return;
+      box.querySelectorAll("button[data-act-key]").forEach(b => {
+        const key = b.dataset.actKey;
+        const subKey = b.dataset.actSubKey;
+        const icon = (b.textContent.match(/^[^\u4e00-\u9fa5A-Za-z]*/) || [""])[0];
+        const t = L(key);
+        if (subKey) {
+          const small = b.querySelector("small");
+          const clubName = small ? small.textContent : "";
+          b.innerHTML = `<b>${t}</b><br><small>${L(subKey) || clubName}</small>`;
+        } else {
+          b.innerHTML = `<b>${t}</b>`;
+        }
+      });
+      // 标题行（含时段名与进度）整体重刷一次
+      const tag = box.querySelector(".tag-title");
+      if (tag && typeof slotName === "function") {
+        const slot = SLOT_MAP[S.slot] || SLOTS[0];
+        const allN = num(S.actQuota, 1), doneN = num(S.actCount, 0);
+        tag.innerHTML = `${slot.icon} ${slotName(slot)} · ${allN > 1 ? L("act.titleN", doneN + 1, allN) : L("act.title")}`;
+      }
     }
 
     /* 本周可以选几次行动（按学期取配置） */
@@ -5788,6 +7252,10 @@ function runEffectSpec(spec, S) {
     function takeAction(k) {
       document.getElementById("actionPanel").innerHTML = "";
       if (k === "read") {openBookCorner(() => afterAction(k)); return;}
+      // 「做题」：先弹一道题，答完才算这一周的行动结算完毕
+      if (k === "quiz") {openQuiz(() => afterAction(k)); return;}
+      // 「运动锻炼」：先结算身体收益，再按概率连锁运动类事件
+      if (k === "sport") {sportSettle(() => runSportChain(() => afterAction(k))); return;}
       // 「向父母要零花钱」不产生学力，走单独的结算（弹完再走事件链）
       if (k === "allowance") {allowanceSettle(() => runEventChain(() => afterAction(k))); return;}
       // 「去社团活动」：走社团专属事件（周三社团课）
@@ -5807,6 +7275,38 @@ function runEffectSpec(spec, S) {
       S.evCountWeek = 0;
       renderHUD();
       runEventChain(() => afterAction(k));
+    }
+
+    /* ==================================================================
+     * 运动锻炼的连锁事件
+     * ------------------------------------------------------------------
+     * 运动完之后，按配置概率从 SPORT_EVENTS 里抽 1~2 条运动类事件。
+     * 抽不到就安静收尾 —— 运动本身已经给了身体上的收益。
+     * ================================================================== */
+
+    function runSportChain(done) {
+      const cfg = (GAME_CONFIG && GAME_CONFIG.sport) || {};
+      const chances = [num(cfg.chainChance && cfg.chainChance[0], 0.7), num(cfg.chainChance && cfg.chainChance[1], 0.35)];
+      if (typeof pickSportEvent !== "function") {done(); return;}
+
+      let i = 0;
+      const step = () => {
+        if (S.over || i >= chances.length) {done(); return;}
+        if ((S.evWeekTotal || 0) >= GAME_CONFIG.maxEventsPerWeek) {done(); return;}
+        if (Math.random() >= chances[i]) {done(); return;}
+        const ev = pickSportEvent();
+        if (!ev) {done(); return;}
+        i++;
+        S.evCntWeek[ev.id] = true;
+        S.evCnt[ev.id] = (S.evCnt[ev.id] || 0) + 1;
+        if (!S.evLastWeek) S.evLastWeek = {};
+        S.evLastWeek[ev.id] = num(S.week, 0);
+        S.evWeekTotal = (S.evWeekTotal || 0) + 1;
+        S.evCountWeek = (S.evCountWeek || 0) + 1;
+        renderHUD();
+        showPopup(defOf(ev, "🏃 运动 · 连锁"), () => showEventResult(step));
+      };
+      step();
     }
 
     /* 周三社团课：保证出一个本社团的事件
@@ -5843,7 +7343,11 @@ function runEffectSpec(spec, S) {
           offerActions();
         } else afterWeek();
       };
-      flushCure(cont);
+      // 先消负面天赋（破茧），再检查有没有正面天赋因为久不练习而退化
+      flushCure(() => {
+        if (typeof flushDecay === "function") flushDecay(cont);
+        else cont();
+      });
     }
 
     /* 事件链：一次只弹一个；保底 1 个，之后按概率连锁，最多 maxChainEvents 个 */
@@ -6068,15 +7572,19 @@ function runEffectSpec(spec, S) {
 
     function defOf(ev, badge) {
       const slot = SLOT_MAP[S.slot] || SLOTS[0];
+      /* 单亲 / 留守家庭：事件里爸爸妈妈的称呼要统一，不能一会妈一会爸。
+       * 双亲家庭 famText 原样返回，不做任何改动。 */
+      const F = (typeof famText === "function") ? famText : (x => x);
+      const body = ev.c;
       return {
         kind: "event",
-        title: ev.t,
-        body: ev.c,
+        title: F(ev.t),
+        body: F(body),
         img: ev.img,
         badge: badge || "",
         slotNote: slot.icon + slot.name,
         options: ev.opts.filter(o => true).map(o => ({
-          t: o.t, sub: o.sub || "",
+          t: F(o.t), sub: F(o.sub || ""),
           disabled: !!(o.cond && !o.cond(S)),
           fn: () => {execOption(o);}
         }))
@@ -6098,6 +7606,62 @@ function runEffectSpec(spec, S) {
       }, next);
     }
 
+    /* ==================================================================
+     * 「遗憾离场」：压力连续爆表若干周
+     * ------------------------------------------------------------------
+     * v1.1 起不再"压力一到 100 就崩"，而是给玩家三周的自救窗口：
+     *   第 1 周 → 记一笔，日志里提醒
+     *   第 2 周 → 黄牌警告（弹窗）
+     *   第 3 周 → 遗憾离场
+     * 中间任何一周把压力压回阈值以下，计数立刻清零。
+     * ================================================================== */
+
+    function burnCfg() {
+      const b = (GAME_CONFIG && GAME_CONFIG.burnout) || {};
+      return {at: num(b.stressAt, 100), weeks: Math.max(0, num(b.weeks, 3))};
+    }
+
+    function checkBurnout(done) {
+      const c = burnCfg();
+      if (c.weeks <= 0 || !S || S.over) {done(); return;}
+      const hot = num(S.prop.压力, 0) >= c.at;
+
+      if (!hot) {S.stressStreak = 0; done(); return;}
+
+      S.stressStreak = num(S.stressStreak, 0) + 1;
+
+      if (S.stressStreak >= c.weeks) {
+        S.dead = "压力";
+        say(L("burn.over"), "bad");
+        gameOver();
+        return;
+      }
+
+      // 还没到：给一次明确的警告（最后一次警告用弹窗，别让玩家莫名其妙就结束）
+      const left = c.weeks - S.stressStreak;
+      say(L("burn.warn", S.stressStreak, left), "bad");
+      if (left <= 1) {
+        showPopup({
+          kind: "free",
+          badge: L("burn.badge"),
+          title: L("burn.warnTitle"),
+          body: `<div style="line-height:2.2">${L("burn.warnBody", left)}</div>`,
+          options: [{t: L("modal.continue")}]
+        }, done);
+      } else done();
+    }
+
+    /* ==================================================================
+     * 亲情过低 → 家庭矛盾
+     * ================================================================== */
+
+    function checkFamilyConflict(done) {
+      if (typeof shouldFamilyConflict !== "function" || typeof buildFamilyConflict !== "function") {done(); return;}
+      if (!shouldFamilyConflict()) {done(); return;}
+      say(L("fam.conflictLog"), "bad");
+      showPopup(buildFamilyConflict(), done);
+    }
+
     function afterWeek() {
       if (S.prop.健康 <= 0) {S.dead = "健康"; return gameOver();}
       if (S.prop.心态 <= 0) {S.dead = "心态"; return gameOver();}
@@ -6115,7 +7679,16 @@ function runEffectSpec(spec, S) {
       if (S.prop.心态 <= 0) {S.dead = "心态"; return gameOver();}
 
       renderHUD();
-      if (!S.over) {nextWeek();}
+
+      // 压力连续爆表 → 遗憾离场（判定要在进下一周之前）
+      checkBurnout(() => {
+        if (S.over) return;
+        // 亲情过低 → 家庭矛盾
+        checkFamilyConflict(() => {
+          if (S.over) return;
+          if (!S.over) {nextWeek();}
+        });
+      });
     }
 
     function checkAch() {
@@ -6158,6 +7731,7 @@ function runEffectSpec(spec, S) {
       const end = ENDINGS.find(e => e.c(S)) || ENDINGS[ENDINGS.length - 1];
       const sc = GAME_CONFIG.school;
       setBackground("end");            // 结局画面切到「立行号」列车背景
+      if (typeof clearMood === "function") clearMood();   // 结局不该再被红雾盖住
       renderHUD();
       const talentList = Talent.owned.length ? Talent.owned.map(t => `${TZ(t)}(Lv.${TALENTS[t].lv})`).join("、") : L("end.none");
       const achList = S.ach.length ? S.ach.map(id => TZ(ACHIEVEMENTS[id].n)).join("、") : L("end.none");
@@ -6166,6 +7740,7 @@ function runEffectSpec(spec, S) {
         if (S.dead === "健康") reasonLine = L("end.reasonHealth");
         else if (S.dead === "心态") reasonLine = L("end.reasonMind");
         else if (S.dead === "经济") reasonLine = L("end.reasonMoney");
+        else if (S.dead === "压力") reasonLine = L("end.reasonStress");
       }
       showModal(L("end.title"),
         `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${TZ(end.n)}</h2><p style="margin-top:12px;line-height:2">${TZ(end.t)}</p>
@@ -6280,13 +7855,49 @@ function runEffectSpec(spec, S) {
 
     const STAT_COLOR = {心态: "#ffb4d1", 经济: "#d9b3ff", 健康: "#7ee0c0", 效率: "#b388ff", 悟性: "#c9a7ff", 社交: "#ffb86b", 压力: "#ff7aa2", 亲情: "#ffd08a"};
 
-    /* 学科栏展开/收起（默认收起，缩短界面高度） */
+    /* ==================================================================
+     * 属性面板
+    /* ==================================================================
+     * 属性面板
+     * ------------------------------------------------------------------
+     * v1.1 起只显示四项：心态 / 经济 / 健康 / 压力。
+     *   经济 —— 显示具体数值（钱本来就该数得清）
+     *   其余 —— 只显示「极低 / 较低 / 中 / 较高 / 极高」+ 五格刻度条
+     * 效率 / 悟性 / 社交 / 亲情 仍在后台实时计算，但面板上一律不出现。
+     * ================================================================== */
 
-    function toggleSubjPanel() {
-      const el = document.getElementById("subjPanel");
-      if (!el) return;
-      el.dataset.open = el.dataset.open ? "" : "1";
-      renderHUD();
+    function renderStatPanel() {
+      const list = (typeof PROP_HUD !== "undefined") ? PROP_HUD : Object.keys(PROP_RANGE);
+      let h = "<div class='statgrid'>";
+      for (const k of list) {
+        const v = fixProp(k, S.prop[k]); S.prop[k] = v;
+        h += `<div class="stat compact">${statRowHtml(k, v)}</div>`;
+      }
+      h += "</div>";
+      return h;
+    }
+
+    /* 单条属性：经济给数字，其余给档位 */
+    function statRowHtml(k, v) {
+      const name = propName(k);
+
+      // 经济：唯一显示数字的一项
+      if (k === "经济") {
+        const pct = clampNum(v / 30, 0, 100, 2);
+        return `<div class="stathead"><span>${name}</span><b class="num">${Math.round(v)}</b></div>
+          <div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k] || "var(--gold)"}"></i></div>`;
+      }
+
+      // 其余：档位文字 + 五格刻度
+      const lv = propLevel(v);
+      const text = propLevelText(k, v);
+      const tone = propPolarity(k) > 0 ? lv : (4 - lv);   // 压力反向配色
+      let segs = "";
+      for (let i = 0; i < 5; i++) {
+        segs += `<i class="${i <= lv ? "on" : ""}"></i>`;
+      }
+      return `<div class="stathead"><span>${name}</span><b class="lv t${tone}">${text}</b></div>
+        <div class="segbar t${tone}">${segs}</div>`;
     }
 
     function renderHUD() {
@@ -6294,18 +7905,8 @@ function runEffectSpec(spec, S) {
       document.getElementById("hudGrade").textContent = `${S.name}(${genderName(S.gender)}) · ${gradeName()}`;
       document.getElementById("hudWeekText").textContent = L("hud.week", S.week);
       document.getElementById("hudTerm").textContent = termName();
-      // 属性栏：只显示 PROP_HUD 里的项（亲情不在主界面显示）
-      let h = "<div class='statgrid'>";
-      for (const k of (typeof PROP_HUD !== "undefined" ? PROP_HUD : Object.keys(PROP_RANGE))) {
-        const v = fixProp(k, S.prop[k]); S.prop[k] = v;
-        const pct = k === "经济" ? clampNum(v / 30, 0, 100, 2) : clampNum(v / 1.5, 0, 100, 0);
-        h += `<div class="stat compact"><div style="display:flex;justify-content:space-between;gap:4px"><span>${propName(k)}</span><b>${Math.round(v)}</b></div><div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k]}"></i></div></div>`;
-      }
-      // 亲情：折叠进属性栏末尾一行小字，不占整行高度
-      const fam = fixProp("亲情", S.prop.亲情); S.prop.亲情 = fam;
-      h += `<div class="stat compact famrow"><div style="display:flex;justify-content:space-between;gap:4px"><span>${propName("亲情")}</span><b>${Math.round(fam)}</b></div><div class="bar"><i style="width:${clampNum(fam / 1.5, 0, 100, 0)}%;background:${STAT_COLOR.亲情}"></i></div></div>`;
-      h += "</div>";
-      document.getElementById("statPanel").innerHTML = h;
+      // 属性栏：只显示 PROP_HUD 的四项，且除经济外一律只给档位
+      document.getElementById("statPanel").innerHTML = renderStatPanel();
       document.getElementById("talentCount").textContent = Talent.owned.length;
       document.getElementById("talentPanel").innerHTML = Talent.owned.length ?
         [...Talent.owned].sort((a, b) => TALENTS[b].lv - TALENTS[a].lv).map(t => `<span class="badge c${TALENTS[t].lv}" title="${TZ(TALENTS[t].desc)}" onclick="openTalentInfo('${t}')">${TZ(t)} Lv.${TALENTS[t].lv}${cureProgress(t)}</span>`).join("") : `<span style='color:var(--dim)'>${L("hud.noTalent")}</span>`;
@@ -6316,19 +7917,6 @@ function runEffectSpec(spec, S) {
           const it = SHOP_ITEMS.find(x => x.id === k);
           return it ? `<span class="badge" onclick="useItem('${k}')">${TZ(it.n)} ×${v}</span>` : "";
         }).join("") : `<span style='color:var(--dim)'>${L("hud.noItem")}</span>`;
-      document.getElementById("scoreNow").textContent = Math.round(num(S.score, 0));
-      const subs = subjectsOf(S.term) || [];
-      // 学科栏默认折叠，点击展开；只在展开时才渲染每一行，界面更短
-      const subjOpen = !!document.getElementById("subjPanel").dataset.open;
-      const subjRows = subs.map(s => {
-        const v = clampNum(S.subj[s], 0, SUBJ_CAP, 0), rel = v / (clampNum(S.term, 0, 10) + 1);
-        const pct = clampNum(rel / 700 * 100, 0, 100, 2);
-        const color = rel >= 480 ? "var(--green)" : (rel >= 220 ? "var(--gold)" : "var(--red)");
-        return `<div class="subjrow"><span style="width:3em">${TZ(s)}</span><div class="bar"><i style="width:${pct}%;background:${color}"></i></div><b style="width:3em;text-align:right;color:${color}">${Math.round(v)}</b></div>`;
-      }).join("");
-      document.getElementById("subjPanel").innerHTML =
-        `<div class="subjtoggle" onclick="toggleSubjPanel()">${subjOpen ? "▾" : "▸"} ${L("hud.subjToggle", subs.length)}</div>` +
-        (subjOpen ? `<div class="subjbody">${subjRows}</div>` : "");
       document.getElementById("lastExam").textContent = S.lastExamScore || "—";
       const r = S.zhongkao >= 0 ? S.zhongkao : (S.lastExamScore || 0);
       document.getElementById("rankNow").textContent = r ? L("hud.rankVal", Math.max(1, Math.round(clampNum(100 - r, 1, 100)))) : "—";
@@ -6336,9 +7924,7 @@ function runEffectSpec(spec, S) {
       setText("talentLabel", L("hud.talent"));
       setText("talentHint", L("hud.talentHint"));
       setText("itemLabel", L("hud.item"));
-      setText("subjLabel", L("hud.subjects"));
       setText("scoreLabel", L("hud.score"));
-      setText("scoreTotalLabel", L("hud.scoreTotal"));
       setText("lastExamLabel", L("hud.lastExam"));
       setText("rankLabel", L("hud.rank"));
       setText("actLabel", L("hud.act"));
@@ -6350,6 +7936,10 @@ function runEffectSpec(spec, S) {
       setText("btnSave", L("hud.save"));
       setText("btnHome", L("hud.home"));
       setText("btnLang", L("hud.lang"));
+
+      // 氛围特效：压力红雾 / 心态灰暗 / 健康发虚 / 经济见底
+      if (typeof updateMood === "function") updateMood();
+      if (typeof moodWhisper === "function") moodWhisper();
 
       // 本周行动进度
       const aq = num(S.actQuota, 0), ac = clampNum(S.actCount, 0, aq || 0);
@@ -6520,6 +8110,124 @@ function runEffectSpec(spec, S) {
         def.lock, def.showClose, {kind: def.kind || "free", img: def.img, badge: def.badge});
     }
 
+    /* ==================================================================
+     * 做题（本周行动）
+     * ------------------------------------------------------------------
+     * 消耗一次行动，出一道「当前年级 + 当前科目」范围内的题。
+     * 答对：该科学力加成（随年级放大），心态小涨
+     * 答错：该科小幅倒扣，压力小涨 —— 做错题也是有代价的
+     * 题库见 js/05d-data-quiz.js 的 QUIZ_BANK。
+     * ================================================================== */
+
+    function openQuiz(done) {
+      const q = (typeof pickQuiz === "function") ? pickQuiz() : null;
+
+      // 该年级暂无题目：退化成一次普通学习，不浪费玩家的行动
+      if (!q) {
+        say(L("quiz.none"), "sys");
+        studySettle("quiz");
+        S.actCount = (S.actCount || 0) + 1;
+        S.didQuizWeek = num(S.week, 0);
+        count("quiz");
+        renderHUD();
+        if (typeof done === "function") done();
+        return;
+      }
+
+      const grad = clamp(Math.floor(clampNum(S.term, 0, 9, 0) / 2), 0, 2);
+      const bonus = Math.round(14 + grad * 8);              // 答对：初一 14 → 初三 30
+      const penalty = -Math.max(4, Math.round(bonus * 0.35)); // 答错：扣三成半
+
+      const finish = (ok) => {
+        if (ok) {
+          S.subj[q.sub] = clamp(num(S.subj[q.sub], 30) + bonus, 0, SUBJ_CAP);
+          modProp("心态", 3);
+          if (Math.random() < 0.35) modProp("悟性", 1);
+          say(L("quiz.right", TZ(q.sub), bonus), "good");
+          floatGain(L("quiz.rightFloat", TZ(q.sub)), true);
+        } else {
+          S.subj[q.sub] = clamp(num(S.subj[q.sub], 30) + penalty, 0, SUBJ_CAP);
+          modProp("心态", -2); modProp("压力", 2);
+          say(L("quiz.wrong", TZ(q.sub), Math.abs(penalty)), "bad");
+          floatGain(L("quiz.wrongFloat", TZ(q.sub)), false);
+        }
+        recalcScore();
+        S.actCount = (S.actCount || 0) + 1;
+        S.didQuizWeek = num(S.week, 0);
+        S.didStudyWeek = num(S.week, 0);     // 做题也算"碰过学习"，避免天赋退化
+        count("quiz");
+        renderHUD();
+      };
+
+      const meta = {kind: "free", badge: L("quiz.badge")};
+      const whyLine = q.why ? `<div style="margin-top:10px;color:var(--dim);font-size:.85rem">${L("quiz.why")} ${q.why}</div>` : "";
+
+      if (q.type === "choice") {
+        const opts = q.opts.map((o, i) => ({
+          t: o,
+          fn: () => {
+            const ok = (i === q.ansIndex);
+            finish(ok);
+            showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+              <div>${q.q}</div>
+              <div style="margin-top:8px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
+              <div style="margin-top:4px">${L("quiz.answer")} <b>${q.opts[q.ansIndex]}</b></div>
+              ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
+          }
+        }));
+        showModal(L("quiz.title", TZ(q.sub)), `<div style="line-height:2">${q.q}</div>
+          <div style="margin-top:6px;color:var(--dim);font-size:.82rem">${L("quiz.tip")}</div>`,
+          opts, null, false, false, meta);
+        return;
+      }
+
+      // 填空题：手写一个答案
+      const bodyHtml = `<div style="line-height:2">${q.q}</div>
+        <div style="margin-top:10px"><input id="quizInput" type="text" autocomplete="off"
+          placeholder="${L("quiz.placeholder")}"
+          style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:.95rem"></div>
+        <div style="margin-top:6px;color:var(--dim);font-size:.82rem">${L("quiz.fillTip")}</div>`;
+
+      showModal(L("quiz.title", TZ(q.sub)), bodyHtml, [{
+        t: L("quiz.submit"),
+        fn: () => {
+          const el = document.getElementById("quizInput");
+          const val = el ? el.value : "";
+          const ok = (typeof quizMatch === "function") ? quizMatch(val, q.ans) : false;
+          finish(ok);
+          showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+            <div>${q.q}</div>
+            <div style="margin-top:8px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
+            <div style="margin-top:4px">${L("quiz.answer")} <b>${q.ans}</b>${val ? `（${L("quiz.yours")} ${val}）` : ""}</div>
+            ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
+        }
+      }, {
+        t: L("quiz.giveup"),
+        fn: () => {
+          say(L("quiz.giveupLog", TZ(q.sub)), "sys");
+          finish(false);
+          showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+            <div>${q.q}</div>
+            <div style="margin-top:8px;color:var(--dim)">${L("quiz.gaveup")}</div>
+            <div style="margin-top:4px">${L("quiz.answer")} <b>${q.ans}</b></div>
+            ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
+        }
+      }], null, false, false, meta);
+
+      // 回车即提交：输入框里按 Enter 等同于点「交卷」
+      setTimeout(() => {
+        const el = document.getElementById("quizInput");
+        if (!el) return;
+        el.focus();
+        el.onkeydown = (e) => {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          const btn = document.querySelector("#modalOpts button");
+          if (btn && !btn.disabled) btn.click();
+        };
+      }, 60);
+    }
+
     function toast(t, isAch) {
       const d = document.createElement("div");
       d.className = "toast" + (isAch ? " ach-toast" : "");
@@ -6540,6 +8248,7 @@ function runEffectSpec(spec, S) {
     function toStart() {
       saveGame(false);
       if (typeof setBackground === "function") setBackground("main");
+      if (typeof clearMood === "function") clearMood();   // 主菜单不该带着红雾
       document.getElementById("gameScreen").classList.add("hidden");
       document.getElementById("startScreen").classList.remove("hidden");
       renderSlots();

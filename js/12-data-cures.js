@@ -87,6 +87,129 @@
         poem: "千磨万击还坚劲，任尔东西南北风。"},
     ];
 
+    /* ==================================================================
+     * 破茧的另一面：天赋退化
+     * ------------------------------------------------------------------
+     * 「破茧」不只是把负面天赋消掉 —— 放着不用，正面天赋也会悄悄走掉。
+     *
+     * 字段说明：
+     *   talent   会退化掉的天赋
+     *   stat     靠什么行为维持（study=学习 / sport=运动 / read=读书 / social=社交）
+     *   idle     连续几周没做这件事就开始退化
+     *   chance   达到条件后每周的退化概率
+     *   grant    退化之后留下的阴影（负面天赋，可留空）
+     *   title / text / poem  弹窗文案
+     *
+     * 想让某条永不退化，把 chance 改成 0 或直接删掉这一条。
+     * ================================================================== */
+
+    const TALENT_DECAY = [
+      {talent: "过目不忘", stat: "study", idle: 3, chance: 0.30, grant: "",
+        title: "背过的东西开始溜走",
+        text: "你翻开上周背过的那页，发现自己只记得第一行。\n不是记性变差了，是你太久没有认真记过什么。\n那些背得又快又准的日子，像是从来没发生过。",
+        poem: "学如逆水行舟，不进则退。"},
+      {talent: "融会贯通", stat: "study", idle: 4, chance: 0.25, grant: "",
+        title: "知识之间的线断了",
+        text: "老师把两章内容串起来讲，你发现自己接不上。\n那些本来连在一起的东西，又变成了各管各的一块块。\n贯通不是天赋，是天天练出来的手感。",
+        poem: "问渠那得清如许，为有源头活水来。"},
+      {talent: "数学脑", stat: "study", idle: 4, chance: 0.22, grant: "",
+        title: "数字不再听话了",
+        text: "你盯着那道题，思路卡在第二步。\n以前你几乎不用想，笔就自己往下走了。\n脑子是要用的，不用就会钝。",
+        poem: "刀不磨要生锈，人不学要落后。"},
+      {talent: "语感天成", stat: "study", idle: 4, chance: 0.22, grant: "",
+        title: "读到一半卡住了",
+        text: "那段话你读了三遍，还是没抓住它要说什么。\n语感这种东西，离开阅读一久就自己散了。\n像一盆没人浇的花。",
+        poem: "读书破万卷，下笔如有神；一日不读，笔涩三分。"},
+      {talent: "单词机器", stat: "study", idle: 3, chance: 0.28, grant: "",
+        title: "单词开始不认识了",
+        text: "那个明明背过无数遍的词，此刻看着很陌生。\n你翻到单词表最前面，发现已经很久没往下走了。\n机器停久了，也会生锈。",
+        poem: "一日曝之，十日寒之，未有能生者也。"},
+      {talent: "运筹帷幄", stat: "study", idle: 4, chance: 0.20, grant: "",
+        title: "算不动了",
+        text: "你在草稿纸上画了半天辅助线，画错了三次。\n以前这种题你扫一眼就有思路。\n算式不会等你，它只会离你越来越远。",
+        poem: "业精于勤，荒于嬉。"},
+      {talent: "博古通今", stat: "study", idle: 5, chance: 0.18, grant: "",
+        title: "记不清是哪一年了",
+        text: "老师说到一个年代，你脑子里只有模糊的一片。\n那些你曾经如数家珍的年份，正在一个个褪色。\n历史不会因为你忘了它就重来一次。",
+        poem: "以铜为镜，可以正衣冠；以史为镜，可以知兴替。"},
+      {talent: "格物致知", stat: "study", idle: 4, chance: 0.20, grant: "",
+        title: "原理讲不出来了",
+        text: "你知道答案，但说不清为什么。\n以前你总要追问一句「为什么会这样」，现在你只是把结论抄下来。\n好奇心也是需要喂的。",
+        poem: "纸上得来终觉浅，绝知此事要躬行。"},
+      {talent: "笔耕不辍", stat: "study", idle: 3, chance: 0.30, grant: "",
+        title: "笔停在半路上",
+        text: "你打开本子，写了两行，然后发起了呆。\n一天不写，两天不写，第三天就忘了为什么要写。\n坚持是最容易断掉的东西。",
+        poem: "一日一钱，千日千钱；绳锯木断，水滴石穿。"},
+      {talent: "卷王", stat: "study", idle: 5, chance: 0.20, grant: "",
+        title: "卷不动了",
+        text: "你本该是这个教室里最拼的那个人。\n但连着好几周，你都在放学铃响的第一时间收拾书包。\n卷王也会累，累久了就只是个普通人。",
+        poem: "靡不有初，鲜克有终。"},
+      {talent: "学神降世", stat: "study", idle: 6, chance: 0.15, grant: "",
+        title: "光环暗了下去",
+        text: "没有人宣布，也没有什么仪式。\n只是某天你发现自己不再是那个「一看就会」的人了。\n神从来不是天生的，是一天天坐出来的。",
+        poem: "天才是百分之一的灵感，加百分之九十九的汗水。"},
+      {talent: "运动健将", stat: "sport", idle: 6, chance: 0.15, grant: "",
+        title: "跑不动了",
+        text: "两百米下来你就开始喘。\n操场还是那个操场，但你的腿已经不记得节奏了。\n身体是最诚实的，你给它什么，它还你什么。",
+        poem: "流水不腐，户枢不蠹。"},
+      {talent: "钢筋铁骨", stat: "sport", idle: 8, chance: 0.12, grant: "",
+        title: "开始容易生病了",
+        text: "换季的时候你第一个倒下。\n以前你以为自己天生结实，后来才明白那不过是常年在动。\n停下来，身体就跟着停了。",
+        poem: "养身莫善于习动。"},
+    ];
+
+    /* 该行为最近一次发生在第几周（用于判定"多久没做了"） */
+
+    function lastDidWeek(stat) {
+      if (!S) return -999;
+      const map = {study: "didStudyWeek", sport: "didSportWeek", read: "didReadWeek", social: "didSocialWeek"};
+      const key = map[stat];
+      if (!key) return -999;
+      return (S[key] == null) ? -999 : num(S[key], -999);
+    }
+
+    /* 连续几周没做这件事 */
+    function idleWeeksOf(stat) {
+      const last = lastDidWeek(stat);
+      if (last < 0) return num(S.week, 0) + 1;      // 从没做过
+      return Math.max(0, num(S.week, 0) - last);
+    }
+
+    /* 检查是否有天赋该退化，有就弹窗（一次只处理一个，弹完再查下一个） */
+
+    function flushDecay(done) {
+      if (!S || S.over || !Array.isArray(TALENT_DECAY)) {done && done(); return;}
+
+      const hit = TALENT_DECAY.find(d =>
+        Talent.have(d.talent)
+        && idleWeeksOf(d.stat) >= num(d.idle, 99)
+        && Math.random() < num(d.chance, 0)
+      );
+      if (!hit) {done && done(); return;}
+
+      Talent.remove(hit.talent);
+      let got = "";
+      if (hit.grant && !Talent.have(hit.grant)) {
+        gainTalent(hit.grant, "退化·免费");
+        if (Talent.have(hit.grant)) got = `<div style="margin-top:10px;color:var(--red)">💧 你留下了阴影【${hit.grant}】</div>`;
+      }
+      say(`💧 退化：你失去了【${hit.talent}】。`, "talent");
+      toast(`💧 退化：${hit.talent} 已消失`, false);
+      checkAch();
+      renderHUD();
+
+      const body = `<div style="line-height:2">
+        <div style="color:var(--red);font-size:.9rem">已失去天赋：<b>${hit.talent}</b></div>
+        <div style="margin-top:10px;white-space:pre-wrap">${hit.text}</div>
+        ${got}
+        <div style="margin-top:12px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
+      </div>`;
+      showPopup({
+        kind: "free", badge: "💧 退化", title: hit.title, body: body,
+        options: [{t: L("modal.continue")}]
+      }, () => flushDecay(done));
+    }
+
     /* 累积「破茧」进度（只加数字，不弹窗） */
 
     function bumpCure(stat) {

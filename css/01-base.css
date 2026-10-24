@@ -45,6 +45,26 @@
       --bg-overlay: rgba(18, 10, 24, .82);
     }
 
+    /* ============================================================
+     * 屏幕自适应：根字号随视口宽度线性变化
+     * ------------------------------------------------------------
+     * 全站尺寸都用 rem，所以只改这一个数，按钮 / 卡片 / 间距
+     * 会整整齐齐地一起放大缩小 —— 不会出现"大屏上字小得像蚂蚁"
+     * 或"小笔记本上按钮顶出屏幕"的情况。
+     *   1024 宽 → 约 14.3px　1280 宽 → 约 15.1px　1920 宽 → 约 17px
+     * 想整体更大/更小，调下面这行即可。
+     * ============================================================ */
+    html {
+      font-size: clamp(13px, calc(11px + 0.36vw), 18px)
+    }
+
+    /* 矮屏（1366×768 这类笔记本）：字号再收一档，换垂直空间 */
+    @media(max-height:820px) {
+      html {
+        font-size: clamp(12.5px, calc(10.5px + 0.26vw), 15px)
+      }
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -57,13 +77,39 @@
       background-color: var(--bg);
       color: var(--txt);
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: .92rem;
       min-height: 100vh;
-      padding: 12px
+      padding: clamp(8px, 0.9vh, 14px)
     }
 
+    /* 内容宽度：小屏跟着缩，大屏最多铺到 1280px 而不是一条 960 的窄带 */
     .screen {
-      max-width: 960px;
+      width: min(1280px, 96vw);
       margin: 0 auto
+    }
+
+    /* ============================================================
+     * 游戏屏：整屏自适应，一屏装下所有东西
+     * ------------------------------------------------------------
+     * 用 flex 撑满视口高度，日志区吃掉剩余空间（flex:1），
+     * 行动面板保持自身高度。这样 768 高的笔记本和 1440 高的
+     * 大屏看到的都是"不用滚的完整界面"，只是日志区高矮不同。
+     * ============================================================ */
+    #gameScreen {
+      height: calc(100vh - 2 * clamp(8px, 0.9vh, 14px));
+      height: calc(100dvh - 2 * clamp(8px, 0.9vh, 14px));
+      display: flex;
+      flex-direction: column;
+      min-height: 0
+    }
+
+    /* 窄屏 / 矮屏：放弃"一屏装下"，回到自然滚动（不然内容会被压扁） */
+    @media(max-width:760px),
+    (max-height:560px) {
+      #gameScreen {
+        height: auto;
+        min-height: calc(100vh - 2 * clamp(8px, 0.9vh, 14px))
+      }
     }
 
     h1 {

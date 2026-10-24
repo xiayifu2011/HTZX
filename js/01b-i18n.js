@@ -88,9 +88,65 @@
         "prop.亲情": "亲情",
 
         /* ---------------- 本周行动 ---------------- */
+        /* ---------------- 属性档位（模糊化显示） ---------------- */
+        "level.vlow": "极低",
+        "level.low": "较低",
+        "level.mid": "中",
+        "level.high": "较高",
+        "level.vhigh": "极高",
+
+        "mood.stress": "压力快要撑不住了。",
+        "mood.dark": "世界好像褪色了。",
+        "mood.weak": "身体在发虚。",
+
+        /* ---------------- 运动锻炼 ---------------- */
+        "sport.log": "🏃 你去操场动了一身汗。",
+        "sport.float": "身体结实了一点",
+
+        /* ---------------- 做题 ---------------- */
+        "quiz.badge": "✏️ 本周行动 · 做题",
+        "quiz.title": "一道{0}题",
+        "quiz.tip": "答对该科有加成，答错会小幅倒扣。",
+        "quiz.placeholder": "在这里写答案",
+        "quiz.fillTip": "不用写单位，中英文标点都算对。",
+        "quiz.submit": "交卷",
+        "quiz.giveup": "放弃这道题",
+        "quiz.giveupLog": "你跳过了这道{0}题。",
+        "quiz.gaveup": "你空着交了上去。",
+        "quiz.resultTitle": "对答案",
+        "quiz.correct": "✔ 答对了。",
+        "quiz.incorrect": "✘ 答错了。",
+        "quiz.answer": "正确答案：",
+        "quiz.yours": "你写的：",
+        "quiz.why": "讲解：",
+        "quiz.right": "{0}答对了，本科目有长进。",
+        "quiz.wrong": "{0}做错了，这一块还是没吃透。",
+        "quiz.rightFloat": "{0} ▲",
+        "quiz.wrongFloat": "{0} ▼",
+        "quiz.none": "这个年级暂时没有合适的题，你改成了自己看书。",
+
+        /* ---------------- 亲情 / 家庭 ---------------- */
+        "fam.badge": "🏠 家庭 · 矛盾",
+        "fam.apologize": "低头认错",
+        "fam.shutup": "一句话不说",
+        "fam.hug": "主动去抱一下",
+        "fam.apologizeLog": "{0} 你说了句对不起，气氛缓了一些，但心里还是堵。",
+        "fam.shutupLog": "{0} 你什么都没说，这顿饭吃得格外久。",
+        "fam.hugLog": "你走过去抱了一下。僵了很久的肩膀，终于松了一点。",
+        "fam.conflictLog": "🏠 家里起了摩擦。",
+
+        /* ---------------- 遗憾离场 ---------------- */
+        "burn.badge": "🕯 压力 · 警告",
+        "burn.warn": "⚠ 压力已连续 {0} 周爆表，再撑 {1} 周就要撑不住了。",
+        "burn.warnTitle": "最后一周",
+        "burn.warnBody": "你已经连续好几周顶着压力硬扛了。\n再这样下去，身体会先替你做决定。\n这周试着休息一次、运动一次，或者找人说说。",
+        "burn.over": "🕯 压力连续三周爆表，你没能撑到中考。",
+
         "act.title": "选择行动",
         "act.titleN": "选择行动（第 {0}/{1} 次）",
         "act.study": "📖 努力学习",
+        "act.quiz": "✏️ 做题",
+        "act.sport": "🏃 运动锻炼",
         "act.rest": "😴 好好休息",
         "act.social": "👥 社交活动",
         "act.fun": "🎮 摸鱼娱乐",
@@ -184,9 +240,11 @@
 
         /* ---------------- 流程提示 ---------------- */
         "flow.weekHead": "—— 第 {0} 周 · {1}{2} · {3}月{4}{5} ——",
-        "flow.actionLog": "本周行动({0}/{1}):{2} → 学力结算后:{3}",
+        "flow.actionLog": "本周行动({0}/{1}):{2} → 学力已结算",
         "flow.clubLog": "🎪 周三社团课：{0}",
         "flow.study": "努力学习",
+        "flow.quiz": "做题",
+        "flow.sport": "运动锻炼",
         "flow.rest": "好好休息",
         "flow.social": "社交活动",
         "flow.fun": "摸鱼娱乐",
@@ -214,6 +272,20 @@
         "alw.hint": "当前亲情：{0}　·　亲情越高，父母越愿意给，也越少念叨",
         "alw.thanks": "谢谢爸妈",
         "alw.know": "知道了",
+        "alw.t1": "父母多塞了点",
+        "alw.t2": "痛快给了",
+        "alw.t3": "给了",
+        "alw.t4": "被念叨了一顿",
+        "alw.t5": "被拒绝了",
+        "alw.t6": "只给了很少一点",
+        "alw.l1": "你刚开口，{0}就掏出了钱包：「在学校别省着，该买的就买。」临走又多塞了十五块。",
+        "alw.l2": "{0}二话没说就转了钱，还问你最近学习累不累。",
+        "alw.l3": "{0}数了数钱递给你，顺口叮嘱了一句「别乱花」。",
+        "alw.l4": "「上周不是才给过吗？」{0}一边数落一边还是掏了钱。你觉得脸上有点发热。",
+        "alw.l5": "{0}皱着眉：「家里最近也不宽裕。」你张了张嘴，最后没再说什么。",
+        "alw.l6": "{0}翻遍口袋，只凑出几张零票。你说了声谢谢，心里不是滋味。",
+        "alw.refusedLog": "这次一分钱也没要到。",
+        "alw.costLog": "开口的那一刻，亲情 -{0}。有些话一出口就收不回来了。",
         "alw.log": "🏠 向父母要零花钱：{0}{1}",
         "alw.got": "，拿到 {0} 元",
         "alw.none": "，一分没拿到",
@@ -240,6 +312,7 @@
         "end.reasonHealth": "你因健康问题提前离场。",
         "end.reasonMind": "你因心理压力过重提前离场。",
         "end.reasonMoney": "你因家庭经济困难提前离场。",
+        "end.reasonStress": "你因压力连续爆表提前离场。",
 
         /* ---------------- 提示 ---------------- */
         "toast.saved": "💾 已保存",
@@ -307,9 +380,65 @@
         "prop.压力": "Stress",
         "prop.亲情": "Family",
 
+        /* ---------------- 属性档位（模糊化显示） ---------------- */
+        "level.vlow": "Very low",
+        "level.low": "Low",
+        "level.mid": "Fair",
+        "level.high": "High",
+        "level.vhigh": "Very high",
+
+        "mood.stress": "You are about to break.",
+        "mood.dark": "The world has lost its colour.",
+        "mood.weak": "Your body is failing.",
+
+        /* ---------------- 运动锻炼 ---------------- */
+        "sport.log": "🏃 You broke a sweat on the field.",
+        "sport.float": "Getting stronger",
+
+        /* ---------------- 做题 ---------------- */
+        "quiz.badge": "✏️ Action · Problem",
+        "quiz.title": "A {0} question",
+        "quiz.tip": "A correct answer boosts the subject; a wrong one costs you a little.",
+        "quiz.placeholder": "Type your answer",
+        "quiz.fillTip": "Units optional; punctuation is ignored.",
+        "quiz.submit": "Submit",
+        "quiz.giveup": "Skip it",
+        "quiz.giveupLog": "You skipped the {0} question.",
+        "quiz.gaveup": "You handed in a blank.",
+        "quiz.resultTitle": "Check the answer",
+        "quiz.correct": "✔ Correct.",
+        "quiz.incorrect": "✘ Wrong.",
+        "quiz.answer": "Answer: ",
+        "quiz.yours": "Yours: ",
+        "quiz.why": "Why: ",
+        "quiz.right": "{0} — correct. That subject moved forward.",
+        "quiz.wrong": "{0} — wrong. This part still slips.",
+        "quiz.rightFloat": "{0} ▲",
+        "quiz.wrongFloat": "{0} ▼",
+        "quiz.none": "No problem fits your grade yet — you ended up reading instead.",
+
+        /* ---------------- 亲情 / 家庭 ---------------- */
+        "fam.badge": "🏠 Family · Friction",
+        "fam.apologize": "Say sorry",
+        "fam.shutup": "Say nothing",
+        "fam.hug": "Go and hug them",
+        "fam.apologizeLog": "{0} You said sorry. It eased a little, but it still sits heavy.",
+        "fam.shutupLog": "{0} You said nothing. That meal took forever.",
+        "fam.hugLog": "You walked over and hugged them. Shoulders that had been tight for weeks finally loosened.",
+        "fam.conflictLog": "🏠 There was friction at home.",
+
+        /* ---------------- 遗憾离场 ---------------- */
+        "burn.badge": "🕯 Stress · Warning",
+        "burn.warn": "⚠ Stress has been maxed out for {0} week(s) — {1} more and you will break.",
+        "burn.warnTitle": "Last week",
+        "burn.warnBody": "You have been pushing through for weeks.\nKeep going and your body will decide for you.\nRest once, work out, or talk to someone this week.",
+        "burn.over": "🕯 Stress stayed maxed out for three weeks. You did not make it to the exam.",
+
         "act.title": "Choose an action",
         "act.titleN": "Choose an action ({0}/{1})",
         "act.study": "📖 Study hard",
+        "act.quiz": "✏️ Do a problem",
+        "act.sport": "🏃 Work out",
         "act.rest": "😴 Rest",
         "act.social": "👥 Socialize",
         "act.fun": "🎮 Slack off",
@@ -395,9 +524,11 @@
         "cc.begin": "🌅 {0}'s middle school life begins.",
 
         "flow.weekHead": "—— Week {0} · {1}{2} · {3}月{4}{5} ——",
-        "flow.actionLog": "Action ({0}/{1}): {2} → after study: {3}",
+        "flow.actionLog": "Action ({0}/{1}): {2} → settled",
         "flow.clubLog": "🎪 Wednesday club: {0}",
         "flow.study": "Study hard",
+        "flow.quiz": "Do a problem",
+        "flow.sport": "Work out",
         "flow.rest": "Rest",
         "flow.social": "Socialize",
         "flow.fun": "Slack off",
@@ -423,6 +554,20 @@
         "alw.hint": "Family bond: {0}　·　the closer you are, the more they give and the less they nag",
         "alw.thanks": "Thanks, Mom and Dad",
         "alw.know": "Okay",
+        "alw.t1": "They added a bit more",
+        "alw.t2": "Given gladly",
+        "alw.t3": "Given",
+        "alw.t4": "Given with a lecture",
+        "alw.t5": "Refused",
+        "alw.t6": "Only a little",
+        "alw.l1": "Before you finished asking, {0} had the wallet out: \"Don't scrimp at school.\" Then fifteen more.",
+        "alw.l2": "{0} transferred it without a word, then asked whether school has been tiring.",
+        "alw.l3": "{0} counted it out and handed it over, adding \"don't waste it\".",
+        "alw.l4": "\"Didn't I just give you some last week?\" {0} scolded, but paid anyway. Your face went hot.",
+        "alw.l5": "{0} frowned: \"Money is tight at home right now.\" You opened your mouth, then closed it.",
+        "alw.l6": "{0} emptied every pocket and scraped together a few notes. You said thanks, and it tasted strange.",
+        "alw.refusedLog": "You got nothing this time.",
+        "alw.costLog": "The moment you asked, family bond -{0}. Some words cannot be taken back.",
         "alw.log": "🏠 Ask parents for money: {0}{1}",
         "alw.got": ", got {0}",
         "alw.none": ", got nothing",
@@ -447,6 +592,7 @@
         "end.reasonHealth": "You left early because of your health.",
         "end.reasonMind": "You left early under too much pressure.",
         "end.reasonMoney": "You left early because your family could not afford it.",
+        "end.reasonStress": "You left early after weeks of unrelenting stress.",
 
         "toast.saved": "💾 Saved",
         "toast.theme": "🎨 Theme: {0}",
@@ -528,13 +674,16 @@
       if (typeof applyLangToDom === "function") applyLangToDom();
       if (typeof saveSettings === "function") saveSettings();
       if (!silent) toast(LANG === "en" ? L("toast.lang") : L("toast.langZh"));
+      // 主菜单是静态 HTML，标签要靠 renderStartExtras 重刷一遍
+      if (typeof renderStartExtras === "function") renderStartExtras();
+      // 行动按钮是动态生成的，切语言时原地换字（不能重建，会重置本周进度）
+      if (typeof relabelActions === "function") relabelActions();
       if (typeof renderHUD === "function" && S) renderHUD();
       return LANG;
     }
 
     function toggleLang() {
       setLang(LANG === "zh" ? "en" : "zh");
-      if (typeof renderStartExtras === "function") renderStartExtras();
       if (typeof ensureActionPanel === "function") {
         const p = document.getElementById("actionPanel");
         if (p && p.innerHTML !== "" && S && !S.over) {p.innerHTML = ""; ensureActionPanel();}

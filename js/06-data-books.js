@@ -128,6 +128,7 @@
           modProp("经济", -b.cost);
           b.eff(S);
           count("read");
+          S.didReadWeek = num(S.week, 0);
           read = true;
           say(L("book.read", TZ(b.n)), "good");
           checkAch(); renderHUD();

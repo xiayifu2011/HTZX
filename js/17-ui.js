@@ -92,13 +92,49 @@
 
     const STAT_COLOR = {心态: "#ffb4d1", 经济: "#d9b3ff", 健康: "#7ee0c0", 效率: "#b388ff", 悟性: "#c9a7ff", 社交: "#ffb86b", 压力: "#ff7aa2", 亲情: "#ffd08a"};
 
-    /* 学科栏展开/收起（默认收起，缩短界面高度） */
+    /* ==================================================================
+     * 属性面板
+    /* ==================================================================
+     * 属性面板
+     * ------------------------------------------------------------------
+     * v1.1 起只显示四项：心态 / 经济 / 健康 / 压力。
+     *   经济 —— 显示具体数值（钱本来就该数得清）
+     *   其余 —— 只显示「极低 / 较低 / 中 / 较高 / 极高」+ 五格刻度条
+     * 效率 / 悟性 / 社交 / 亲情 仍在后台实时计算，但面板上一律不出现。
+     * ================================================================== */
 
-    function toggleSubjPanel() {
-      const el = document.getElementById("subjPanel");
-      if (!el) return;
-      el.dataset.open = el.dataset.open ? "" : "1";
-      renderHUD();
+    function renderStatPanel() {
+      const list = (typeof PROP_HUD !== "undefined") ? PROP_HUD : Object.keys(PROP_RANGE);
+      let h = "<div class='statgrid'>";
+      for (const k of list) {
+        const v = fixProp(k, S.prop[k]); S.prop[k] = v;
+        h += `<div class="stat compact">${statRowHtml(k, v)}</div>`;
+      }
+      h += "</div>";
+      return h;
+    }
+
+    /* 单条属性：经济给数字，其余给档位 */
+    function statRowHtml(k, v) {
+      const name = propName(k);
+
+      // 经济：唯一显示数字的一项
+      if (k === "经济") {
+        const pct = clampNum(v / 30, 0, 100, 2);
+        return `<div class="stathead"><span>${name}</span><b class="num">${Math.round(v)}</b></div>
+          <div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k] || "var(--gold)"}"></i></div>`;
+      }
+
+      // 其余：档位文字 + 五格刻度
+      const lv = propLevel(v);
+      const text = propLevelText(k, v);
+      const tone = propPolarity(k) > 0 ? lv : (4 - lv);   // 压力反向配色
+      let segs = "";
+      for (let i = 0; i < 5; i++) {
+        segs += `<i class="${i <= lv ? "on" : ""}"></i>`;
+      }
+      return `<div class="stathead"><span>${name}</span><b class="lv t${tone}">${text}</b></div>
+        <div class="segbar t${tone}">${segs}</div>`;
     }
 
     function renderHUD() {
@@ -106,18 +142,8 @@
       document.getElementById("hudGrade").textContent = `${S.name}(${genderName(S.gender)}) · ${gradeName()}`;
       document.getElementById("hudWeekText").textContent = L("hud.week", S.week);
       document.getElementById("hudTerm").textContent = termName();
-      // 属性栏：只显示 PROP_HUD 里的项（亲情不在主界面显示）
-      let h = "<div class='statgrid'>";
-      for (const k of (typeof PROP_HUD !== "undefined" ? PROP_HUD : Object.keys(PROP_RANGE))) {
-        const v = fixProp(k, S.prop[k]); S.prop[k] = v;
-        const pct = k === "经济" ? clampNum(v / 30, 0, 100, 2) : clampNum(v / 1.5, 0, 100, 0);
-        h += `<div class="stat compact"><div style="display:flex;justify-content:space-between;gap:4px"><span>${propName(k)}</span><b>${Math.round(v)}</b></div><div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k]}"></i></div></div>`;
-      }
-      // 亲情：折叠进属性栏末尾一行小字，不占整行高度
-      const fam = fixProp("亲情", S.prop.亲情); S.prop.亲情 = fam;
-      h += `<div class="stat compact famrow"><div style="display:flex;justify-content:space-between;gap:4px"><span>${propName("亲情")}</span><b>${Math.round(fam)}</b></div><div class="bar"><i style="width:${clampNum(fam / 1.5, 0, 100, 0)}%;background:${STAT_COLOR.亲情}"></i></div></div>`;
-      h += "</div>";
-      document.getElementById("statPanel").innerHTML = h;
+      // 属性栏：只显示 PROP_HUD 的四项，且除经济外一律只给档位
+      document.getElementById("statPanel").innerHTML = renderStatPanel();
       document.getElementById("talentCount").textContent = Talent.owned.length;
       document.getElementById("talentPanel").innerHTML = Talent.owned.length ?
         [...Talent.owned].sort((a, b) => TALENTS[b].lv - TALENTS[a].lv).map(t => `<span class="badge c${TALENTS[t].lv}" title="${TZ(TALENTS[t].desc)}" onclick="openTalentInfo('${t}')">${TZ(t)} Lv.${TALENTS[t].lv}${cureProgress(t)}</span>`).join("") : `<span style='color:var(--dim)'>${L("hud.noTalent")}</span>`;
@@ -128,19 +154,6 @@
           const it = SHOP_ITEMS.find(x => x.id === k);
           return it ? `<span class="badge" onclick="useItem('${k}')">${TZ(it.n)} ×${v}</span>` : "";
         }).join("") : `<span style='color:var(--dim)'>${L("hud.noItem")}</span>`;
-      document.getElementById("scoreNow").textContent = Math.round(num(S.score, 0));
-      const subs = subjectsOf(S.term) || [];
-      // 学科栏默认折叠，点击展开；只在展开时才渲染每一行，界面更短
-      const subjOpen = !!document.getElementById("subjPanel").dataset.open;
-      const subjRows = subs.map(s => {
-        const v = clampNum(S.subj[s], 0, SUBJ_CAP, 0), rel = v / (clampNum(S.term, 0, 10) + 1);
-        const pct = clampNum(rel / 700 * 100, 0, 100, 2);
-        const color = rel >= 480 ? "var(--green)" : (rel >= 220 ? "var(--gold)" : "var(--red)");
-        return `<div class="subjrow"><span style="width:3em">${TZ(s)}</span><div class="bar"><i style="width:${pct}%;background:${color}"></i></div><b style="width:3em;text-align:right;color:${color}">${Math.round(v)}</b></div>`;
-      }).join("");
-      document.getElementById("subjPanel").innerHTML =
-        `<div class="subjtoggle" onclick="toggleSubjPanel()">${subjOpen ? "▾" : "▸"} ${L("hud.subjToggle", subs.length)}</div>` +
-        (subjOpen ? `<div class="subjbody">${subjRows}</div>` : "");
       document.getElementById("lastExam").textContent = S.lastExamScore || "—";
       const r = S.zhongkao >= 0 ? S.zhongkao : (S.lastExamScore || 0);
       document.getElementById("rankNow").textContent = r ? L("hud.rankVal", Math.max(1, Math.round(clampNum(100 - r, 1, 100)))) : "—";
@@ -148,9 +161,7 @@
       setText("talentLabel", L("hud.talent"));
       setText("talentHint", L("hud.talentHint"));
       setText("itemLabel", L("hud.item"));
-      setText("subjLabel", L("hud.subjects"));
       setText("scoreLabel", L("hud.score"));
-      setText("scoreTotalLabel", L("hud.scoreTotal"));
       setText("lastExamLabel", L("hud.lastExam"));
       setText("rankLabel", L("hud.rank"));
       setText("actLabel", L("hud.act"));
@@ -162,6 +173,10 @@
       setText("btnSave", L("hud.save"));
       setText("btnHome", L("hud.home"));
       setText("btnLang", L("hud.lang"));
+
+      // 氛围特效：压力红雾 / 心态灰暗 / 健康发虚 / 经济见底
+      if (typeof updateMood === "function") updateMood();
+      if (typeof moodWhisper === "function") moodWhisper();
 
       // 本周行动进度
       const aq = num(S.actQuota, 0), ac = clampNum(S.actCount, 0, aq || 0);
@@ -332,6 +347,124 @@
         def.lock, def.showClose, {kind: def.kind || "free", img: def.img, badge: def.badge});
     }
 
+    /* ==================================================================
+     * 做题（本周行动）
+     * ------------------------------------------------------------------
+     * 消耗一次行动，出一道「当前年级 + 当前科目」范围内的题。
+     * 答对：该科学力加成（随年级放大），心态小涨
+     * 答错：该科小幅倒扣，压力小涨 —— 做错题也是有代价的
+     * 题库见 js/05d-data-quiz.js 的 QUIZ_BANK。
+     * ================================================================== */
+
+    function openQuiz(done) {
+      const q = (typeof pickQuiz === "function") ? pickQuiz() : null;
+
+      // 该年级暂无题目：退化成一次普通学习，不浪费玩家的行动
+      if (!q) {
+        say(L("quiz.none"), "sys");
+        studySettle("quiz");
+        S.actCount = (S.actCount || 0) + 1;
+        S.didQuizWeek = num(S.week, 0);
+        count("quiz");
+        renderHUD();
+        if (typeof done === "function") done();
+        return;
+      }
+
+      const grad = clamp(Math.floor(clampNum(S.term, 0, 9, 0) / 2), 0, 2);
+      const bonus = Math.round(14 + grad * 8);              // 答对：初一 14 → 初三 30
+      const penalty = -Math.max(4, Math.round(bonus * 0.35)); // 答错：扣三成半
+
+      const finish = (ok) => {
+        if (ok) {
+          S.subj[q.sub] = clamp(num(S.subj[q.sub], 30) + bonus, 0, SUBJ_CAP);
+          modProp("心态", 3);
+          if (Math.random() < 0.35) modProp("悟性", 1);
+          say(L("quiz.right", TZ(q.sub), bonus), "good");
+          floatGain(L("quiz.rightFloat", TZ(q.sub)), true);
+        } else {
+          S.subj[q.sub] = clamp(num(S.subj[q.sub], 30) + penalty, 0, SUBJ_CAP);
+          modProp("心态", -2); modProp("压力", 2);
+          say(L("quiz.wrong", TZ(q.sub), Math.abs(penalty)), "bad");
+          floatGain(L("quiz.wrongFloat", TZ(q.sub)), false);
+        }
+        recalcScore();
+        S.actCount = (S.actCount || 0) + 1;
+        S.didQuizWeek = num(S.week, 0);
+        S.didStudyWeek = num(S.week, 0);     // 做题也算"碰过学习"，避免天赋退化
+        count("quiz");
+        renderHUD();
+      };
+
+      const meta = {kind: "free", badge: L("quiz.badge")};
+      const whyLine = q.why ? `<div style="margin-top:10px;color:var(--dim);font-size:.85rem">${L("quiz.why")} ${q.why}</div>` : "";
+
+      if (q.type === "choice") {
+        const opts = q.opts.map((o, i) => ({
+          t: o,
+          fn: () => {
+            const ok = (i === q.ansIndex);
+            finish(ok);
+            showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+              <div>${q.q}</div>
+              <div style="margin-top:8px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
+              <div style="margin-top:4px">${L("quiz.answer")} <b>${q.opts[q.ansIndex]}</b></div>
+              ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
+          }
+        }));
+        showModal(L("quiz.title", TZ(q.sub)), `<div style="line-height:2">${q.q}</div>
+          <div style="margin-top:6px;color:var(--dim);font-size:.82rem">${L("quiz.tip")}</div>`,
+          opts, null, false, false, meta);
+        return;
+      }
+
+      // 填空题：手写一个答案
+      const bodyHtml = `<div style="line-height:2">${q.q}</div>
+        <div style="margin-top:10px"><input id="quizInput" type="text" autocomplete="off"
+          placeholder="${L("quiz.placeholder")}"
+          style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:.95rem"></div>
+        <div style="margin-top:6px;color:var(--dim);font-size:.82rem">${L("quiz.fillTip")}</div>`;
+
+      showModal(L("quiz.title", TZ(q.sub)), bodyHtml, [{
+        t: L("quiz.submit"),
+        fn: () => {
+          const el = document.getElementById("quizInput");
+          const val = el ? el.value : "";
+          const ok = (typeof quizMatch === "function") ? quizMatch(val, q.ans) : false;
+          finish(ok);
+          showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+            <div>${q.q}</div>
+            <div style="margin-top:8px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
+            <div style="margin-top:4px">${L("quiz.answer")} <b>${q.ans}</b>${val ? `（${L("quiz.yours")} ${val}）` : ""}</div>
+            ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
+        }
+      }, {
+        t: L("quiz.giveup"),
+        fn: () => {
+          say(L("quiz.giveupLog", TZ(q.sub)), "sys");
+          finish(false);
+          showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+            <div>${q.q}</div>
+            <div style="margin-top:8px;color:var(--dim)">${L("quiz.gaveup")}</div>
+            <div style="margin-top:4px">${L("quiz.answer")} <b>${q.ans}</b></div>
+            ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
+        }
+      }], null, false, false, meta);
+
+      // 回车即提交：输入框里按 Enter 等同于点「交卷」
+      setTimeout(() => {
+        const el = document.getElementById("quizInput");
+        if (!el) return;
+        el.focus();
+        el.onkeydown = (e) => {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          const btn = document.querySelector("#modalOpts button");
+          if (btn && !btn.disabled) btn.click();
+        };
+      }, 60);
+    }
+
     function toast(t, isAch) {
       const d = document.createElement("div");
       d.className = "toast" + (isAch ? " ach-toast" : "");
@@ -352,6 +485,7 @@
     function toStart() {
       saveGame(false);
       if (typeof setBackground === "function") setBackground("main");
+      if (typeof clearMood === "function") clearMood();   // 主菜单不该带着红雾
       document.getElementById("gameScreen").classList.add("hidden");
       document.getElementById("startScreen").classList.remove("hidden");
       renderSlots();

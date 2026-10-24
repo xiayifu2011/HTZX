@@ -99,6 +99,8 @@
 
       const acts = [
         {k: "study", t: L("act.study")},
+        {k: "quiz", t: L("act.quiz")},
+        {k: "sport", t: L("act.sport")},
         {k: "rest", t: L("act.rest")},
         {k: "social", t: L("act.social")},
         {k: "fun", t: L("act.fun")},
@@ -115,6 +117,7 @@
       acts.forEach(a => {
         const b = document.createElement("button"); b.className = "btn";
         b.innerHTML = `<b>${a.t}</b>`;
+        b.dataset.actKey = "act." + a.k;      // 记住文案键，切语言时原地改字
         b.onclick = () => takeAction(a.k); grid.appendChild(b);
       });
       box.appendChild(grid);
@@ -134,21 +137,51 @@
       const grid = document.createElement("div");
       grid.className = "actgrid";
 
-      const mk = (t, sub, fn) => {
+      const mk = (t, sub, fn, key, subKey) => {
         const b = document.createElement("button");
         b.className = "btn";
         b.innerHTML = sub ? `<b>${t}</b><br><small>${sub}</small>` : `<b>${t}</b>`;
+        if (key) b.dataset.actKey = key;
+        if (subKey) b.dataset.actSubKey = subKey;
         b.onclick = fn;
         grid.appendChild(b);
       };
 
-      mk(`${c ? c.icon : "🎪"} ${L("act.club")}`, c ? TZ(c.n) : "", () => takeAction("club"));
-      mk(L("act.clubSkip"), L("act.clubSub"), () => takeAction("study"));
-      mk(L("act.clubRest"), L("act.restSub"), () => takeAction("rest"));
-      mk(L("act.clubSocial"), L("act.socialSub"), () => takeAction("social"));
+      mk(`${c ? c.icon : "🎪"} ${L("act.club")}`, c ? TZ(c.n) : "", () => takeAction("club"), "act.club");
+      mk(L("act.clubSkip"), L("act.clubSub"), () => takeAction("study"), "act.clubSkip", "act.clubSub");
+      mk(L("act.clubRest"), L("act.restSub"), () => takeAction("rest"), "act.clubRest", "act.restSub");
+      mk(L("act.clubSocial"), L("act.socialSub"), () => takeAction("social"), "act.clubSocial", "act.socialSub");
 
       box.appendChild(grid);
       renderHUD();
+    }
+
+    /* 切换语言后，把行动按钮上的字原地换成新语言
+     * （不能重新 offerActions —— 那会重置本周的行动进度） */
+
+    function relabelActions() {
+      const box = document.getElementById("actionPanel");
+      if (!box) return;
+      box.querySelectorAll("button[data-act-key]").forEach(b => {
+        const key = b.dataset.actKey;
+        const subKey = b.dataset.actSubKey;
+        const icon = (b.textContent.match(/^[^\u4e00-\u9fa5A-Za-z]*/) || [""])[0];
+        const t = L(key);
+        if (subKey) {
+          const small = b.querySelector("small");
+          const clubName = small ? small.textContent : "";
+          b.innerHTML = `<b>${t}</b><br><small>${L(subKey) || clubName}</small>`;
+        } else {
+          b.innerHTML = `<b>${t}</b>`;
+        }
+      });
+      // 标题行（含时段名与进度）整体重刷一次
+      const tag = box.querySelector(".tag-title");
+      if (tag && typeof slotName === "function") {
+        const slot = SLOT_MAP[S.slot] || SLOTS[0];
+        const allN = num(S.actQuota, 1), doneN = num(S.actCount, 0);
+        tag.innerHTML = `${slot.icon} ${slotName(slot)} · ${allN > 1 ? L("act.titleN", doneN + 1, allN) : L("act.title")}`;
+      }
     }
 
     /* 本周可以选几次行动（按学期取配置） */
@@ -183,6 +216,10 @@
     function takeAction(k) {
       document.getElementById("actionPanel").innerHTML = "";
       if (k === "read") {openBookCorner(() => afterAction(k)); return;}
+      // 「做题」：先弹一道题，答完才算这一周的行动结算完毕
+      if (k === "quiz") {openQuiz(() => afterAction(k)); return;}
+      // 「运动锻炼」：先结算身体收益，再按概率连锁运动类事件
+      if (k === "sport") {sportSettle(() => runSportChain(() => afterAction(k))); return;}
       // 「向父母要零花钱」不产生学力，走单独的结算（弹完再走事件链）
       if (k === "allowance") {allowanceSettle(() => runEventChain(() => afterAction(k))); return;}
       // 「去社团活动」：走社团专属事件（周三社团课）
@@ -202,6 +239,38 @@
       S.evCountWeek = 0;
       renderHUD();
       runEventChain(() => afterAction(k));
+    }
+
+    /* ==================================================================
+     * 运动锻炼的连锁事件
+     * ------------------------------------------------------------------
+     * 运动完之后，按配置概率从 SPORT_EVENTS 里抽 1~2 条运动类事件。
+     * 抽不到就安静收尾 —— 运动本身已经给了身体上的收益。
+     * ================================================================== */
+
+    function runSportChain(done) {
+      const cfg = (GAME_CONFIG && GAME_CONFIG.sport) || {};
+      const chances = [num(cfg.chainChance && cfg.chainChance[0], 0.7), num(cfg.chainChance && cfg.chainChance[1], 0.35)];
+      if (typeof pickSportEvent !== "function") {done(); return;}
+
+      let i = 0;
+      const step = () => {
+        if (S.over || i >= chances.length) {done(); return;}
+        if ((S.evWeekTotal || 0) >= GAME_CONFIG.maxEventsPerWeek) {done(); return;}
+        if (Math.random() >= chances[i]) {done(); return;}
+        const ev = pickSportEvent();
+        if (!ev) {done(); return;}
+        i++;
+        S.evCntWeek[ev.id] = true;
+        S.evCnt[ev.id] = (S.evCnt[ev.id] || 0) + 1;
+        if (!S.evLastWeek) S.evLastWeek = {};
+        S.evLastWeek[ev.id] = num(S.week, 0);
+        S.evWeekTotal = (S.evWeekTotal || 0) + 1;
+        S.evCountWeek = (S.evCountWeek || 0) + 1;
+        renderHUD();
+        showPopup(defOf(ev, "🏃 运动 · 连锁"), () => showEventResult(step));
+      };
+      step();
     }
 
     /* 周三社团课：保证出一个本社团的事件
@@ -238,7 +307,11 @@
           offerActions();
         } else afterWeek();
       };
-      flushCure(cont);
+      // 先消负面天赋（破茧），再检查有没有正面天赋因为久不练习而退化
+      flushCure(() => {
+        if (typeof flushDecay === "function") flushDecay(cont);
+        else cont();
+      });
     }
 
     /* 事件链：一次只弹一个；保底 1 个，之后按概率连锁，最多 maxChainEvents 个 */
@@ -463,15 +536,19 @@
 
     function defOf(ev, badge) {
       const slot = SLOT_MAP[S.slot] || SLOTS[0];
+      /* 单亲 / 留守家庭：事件里爸爸妈妈的称呼要统一，不能一会妈一会爸。
+       * 双亲家庭 famText 原样返回，不做任何改动。 */
+      const F = (typeof famText === "function") ? famText : (x => x);
+      const body = ev.c;
       return {
         kind: "event",
-        title: ev.t,
-        body: ev.c,
+        title: F(ev.t),
+        body: F(body),
         img: ev.img,
         badge: badge || "",
         slotNote: slot.icon + slot.name,
         options: ev.opts.filter(o => true).map(o => ({
-          t: o.t, sub: o.sub || "",
+          t: F(o.t), sub: F(o.sub || ""),
           disabled: !!(o.cond && !o.cond(S)),
           fn: () => {execOption(o);}
         }))
@@ -493,6 +570,62 @@
       }, next);
     }
 
+    /* ==================================================================
+     * 「遗憾离场」：压力连续爆表若干周
+     * ------------------------------------------------------------------
+     * v1.1 起不再"压力一到 100 就崩"，而是给玩家三周的自救窗口：
+     *   第 1 周 → 记一笔，日志里提醒
+     *   第 2 周 → 黄牌警告（弹窗）
+     *   第 3 周 → 遗憾离场
+     * 中间任何一周把压力压回阈值以下，计数立刻清零。
+     * ================================================================== */
+
+    function burnCfg() {
+      const b = (GAME_CONFIG && GAME_CONFIG.burnout) || {};
+      return {at: num(b.stressAt, 100), weeks: Math.max(0, num(b.weeks, 3))};
+    }
+
+    function checkBurnout(done) {
+      const c = burnCfg();
+      if (c.weeks <= 0 || !S || S.over) {done(); return;}
+      const hot = num(S.prop.压力, 0) >= c.at;
+
+      if (!hot) {S.stressStreak = 0; done(); return;}
+
+      S.stressStreak = num(S.stressStreak, 0) + 1;
+
+      if (S.stressStreak >= c.weeks) {
+        S.dead = "压力";
+        say(L("burn.over"), "bad");
+        gameOver();
+        return;
+      }
+
+      // 还没到：给一次明确的警告（最后一次警告用弹窗，别让玩家莫名其妙就结束）
+      const left = c.weeks - S.stressStreak;
+      say(L("burn.warn", S.stressStreak, left), "bad");
+      if (left <= 1) {
+        showPopup({
+          kind: "free",
+          badge: L("burn.badge"),
+          title: L("burn.warnTitle"),
+          body: `<div style="line-height:2.2">${L("burn.warnBody", left)}</div>`,
+          options: [{t: L("modal.continue")}]
+        }, done);
+      } else done();
+    }
+
+    /* ==================================================================
+     * 亲情过低 → 家庭矛盾
+     * ================================================================== */
+
+    function checkFamilyConflict(done) {
+      if (typeof shouldFamilyConflict !== "function" || typeof buildFamilyConflict !== "function") {done(); return;}
+      if (!shouldFamilyConflict()) {done(); return;}
+      say(L("fam.conflictLog"), "bad");
+      showPopup(buildFamilyConflict(), done);
+    }
+
     function afterWeek() {
       if (S.prop.健康 <= 0) {S.dead = "健康"; return gameOver();}
       if (S.prop.心态 <= 0) {S.dead = "心态"; return gameOver();}
@@ -510,7 +643,16 @@
       if (S.prop.心态 <= 0) {S.dead = "心态"; return gameOver();}
 
       renderHUD();
-      if (!S.over) {nextWeek();}
+
+      // 压力连续爆表 → 遗憾离场（判定要在进下一周之前）
+      checkBurnout(() => {
+        if (S.over) return;
+        // 亲情过低 → 家庭矛盾
+        checkFamilyConflict(() => {
+          if (S.over) return;
+          if (!S.over) {nextWeek();}
+        });
+      });
     }
 
     function checkAch() {
@@ -553,6 +695,7 @@
       const end = ENDINGS.find(e => e.c(S)) || ENDINGS[ENDINGS.length - 1];
       const sc = GAME_CONFIG.school;
       setBackground("end");            // 结局画面切到「立行号」列车背景
+      if (typeof clearMood === "function") clearMood();   // 结局不该再被红雾盖住
       renderHUD();
       const talentList = Talent.owned.length ? Talent.owned.map(t => `${TZ(t)}(Lv.${TALENTS[t].lv})`).join("、") : L("end.none");
       const achList = S.ach.length ? S.ach.map(id => TZ(ACHIEVEMENTS[id].n)).join("、") : L("end.none");
@@ -561,6 +704,7 @@
         if (S.dead === "健康") reasonLine = L("end.reasonHealth");
         else if (S.dead === "心态") reasonLine = L("end.reasonMind");
         else if (S.dead === "经济") reasonLine = L("end.reasonMoney");
+        else if (S.dead === "压力") reasonLine = L("end.reasonStress");
       }
       showModal(L("end.title"),
         `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${TZ(end.n)}</h2><p style="margin-top:12px;line-height:2">${TZ(end.t)}</p>

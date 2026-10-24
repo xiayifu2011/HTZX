@@ -1,0 +1,127 @@
+/* ============================================================
+ * 氛围层：屏幕情绪（压力红雾 / 心态灰暗 / 健康发虚 / 经济见底）
+ * ------------------------------------------------------------
+ * 这一层只负责"长什么样"，由 js/03b-mood.js 往 <html> 上挂 class 驱动。
+ * 强度写进 --mood-stress 等变量（1 轻 / 2 重），CSS 按强度调透明度。
+ *
+ * 想彻底关掉：js/02-config.js 里 GAME_CONFIG.mood.enabled = false。
+ * 想调强弱：改下面 --mood-* 的 calc 系数。
+ * ============================================================ */
+
+    /* ------------------------------------------------------------
+     * 压力：四周涌起红雾
+     * ------------------------------------------------------------
+     * 用一层 fixed 的径向渐变从四周向中间压进来，中间留空，
+     * 保证文字始终看得清 —— 红雾是"压迫感"，不是"挡视线"。
+     * 强度 2 时加一次缓慢的呼吸动画，像喘不上气。
+     */
+    html.mood-stress::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      pointer-events: none;
+      /* 椭圆半径要小于 100%，红雾才会真的压到四条边上；
+       * 中心 40% 以内保持全透明，文字永远在最清楚的位置。 */
+      background: radial-gradient(ellipse 78% 62% at 50% 50%,
+          transparent 40%,
+          rgba(200, 30, 45, calc(.13 * var(--mood-stress, 1))) 70%,
+          rgba(150, 10, 30, calc(.24 * var(--mood-stress, 1))) 100%);
+      animation: moodBreath 4.2s ease-in-out infinite;
+      transition: background .8s ease
+    }
+
+    html.mood-stress[style*="--mood-stress: 2"]::before {
+      animation: moodBreath 2.6s ease-in-out infinite
+    }
+
+    @keyframes moodBreath {
+
+      0%,
+      100% {
+        opacity: .78
+      }
+
+      50% {
+        opacity: 1
+      }
+    }
+
+    /* ------------------------------------------------------------
+     * 心态过低：整屏褪色
+     * ------------------------------------------------------------
+     * 直接给内容层降饱和 + 提亮对比，画面像褪了色的旧照片。
+     * 用 filter 而不是叠灰层，这样文字仍然清晰可读。
+     */
+    html.mood-dark #hud,
+    html.mood-dark .topline {
+      filter: saturate(calc(1 - .28 * var(--mood-dark, 1))) brightness(calc(1 - .12 * var(--mood-dark, 1)));
+      transition: filter 1.2s ease
+    }
+
+    /* 强档再压一层冷灰，让"提不起劲"更明显 */
+    html.mood-dark[style*="--mood-dark: 2"]::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 39;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(60, 62, 78, .12), rgba(30, 32, 44, .20));
+      mix-blend-mode: multiply;
+      transition: background 1.2s ease
+    }
+
+    /* ------------------------------------------------------------
+     * 健康过低：画面发虚
+     * ------------------------------------------------------------
+     * 轻微失焦 + 边缘发暗，像蹲久了站起来那一下。
+     * 模糊只给 0.6px，看得出"不对劲"但不影响阅读。
+     */
+    html.mood-weak #hud {
+      filter: blur(calc(.6px * var(--mood-weak, 1))) brightness(calc(1 - .08 * var(--mood-weak, 1)));
+      transition: filter 1.2s ease
+    }
+
+    html.mood-weak::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 38;
+      pointer-events: none;
+      background: radial-gradient(ellipse 78% 62% at 50% 50%,
+          transparent 42%,
+          rgba(20, 10, 10, calc(.26 * var(--mood-weak, 1))) 100%)
+    }
+
+    /* ------------------------------------------------------------
+     * 经济见底：边缘发冷（最轻一档，不喧宾夺主）
+     * ------------------------------------------------------------ */
+    html.mood-broke::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 37;
+      pointer-events: none;
+      background: radial-gradient(ellipse 78% 62% at 50% 50%,
+          transparent 46%,
+          rgba(40, 78, 100, .26) 100%)
+    }
+
+    /* ------------------------------------------------------------
+     * 兜底：特效层一律不吃点击，也不拦截滚动
+     * ------------------------------------------------------------ */
+    html[class*="mood-"]::before,
+    html[class*="mood-"]::after {
+      pointer-events: none
+    }
+
+    /* 尊重系统「减少动态效果」设置：只留静态色调，去掉呼吸动画 */
+    @media(prefers-reduced-motion:reduce) {
+      html.mood-stress::before {
+        animation: none
+      }
+
+      html.mood-weak #hud {
+        filter: brightness(calc(1 - .08 * var(--mood-weak, 1)))
+      }
+    }

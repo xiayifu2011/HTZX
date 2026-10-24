@@ -26,8 +26,66 @@
       v = Math.sqrt(Math.max(0, num(v, 0))) * 10;
       if (S.examCharm) v += 5;
       if (S.penCharm) v += 5;
-      v = v * num(diff.examHard, 1) + (Math.random() * 2 - 1) * num(diff.noise, 0);
+      v = v * num(diff.examHard, 1) * (typeof studyCfg === "function" ? studyCfg().examMul : 1)
+        + (Math.random() * 2 - 1) * num(diff.noise, 0);
       return v;
+    }
+
+    /* ==================================================================
+     * v1.1 学习难度旋钮
+     * ------------------------------------------------------------------
+     * 四个系数全部写在 GAME_CONFIG.study 里，老师觉得太难就往 1 调。
+     *   gainMul   收益变少  0.65 → 同样的"努力学习"，学力少涨三成半
+     *   decayMul  遗忘变快  1.60 → 一周不学，倒退得比以前明显
+     *   examMul   考试变难  0.90 → 同样的学力，卷面分少一成
+     *   stressMul 压力变大  1.50 → 学一次更累，高压对效率的惩罚也更重
+     * ================================================================== */
+    function studyCfg() {
+      const c = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.study) || {};
+      return {
+        gainMul: num(c.gainMul, 1),
+        decayMul: num(c.decayMul, 1),
+        examMul: num(c.examMul, 1),
+        stressMul: num(c.stressMul, 1),
+        stressPenalty: num(c.stressPenalty, 0.30),
+        learnBleed: num(c.learnBleed, 0)
+      };
+    }
+
+    /* ==================================================================
+     * 「运动锻炼」结算
+     * ------------------------------------------------------------------
+     * 消耗一次行动，换身体的底子：健康、效率、抗压。
+     * 学力几乎不涨（去操场了就没在书桌前），但有运动天赋的人收益更大。
+     * 之后由 runSportChain() 决定要不要连锁出运动事件。
+     * ================================================================== */
+
+    function sportSettle(onDone) {
+      const p = S.prop;
+      for (const k in PROP_RANGE) p[k] = fixProp(k, p[k]);
+
+      let hp = 6, eff = 4, stress = -8, mind = 4;
+      if (Talent.have("运动健将")) {hp += 4; eff += 3; stress -= 4;}
+      if (Talent.have("天行健")) {hp += 3; eff += 2;}
+      if (Talent.have("钢筋铁骨")) hp += 3;
+      if (Talent.have("体弱多病")) {hp = Math.round(hp * 0.5); stress += 3;}
+      if (Talent.have("大胃袋")) hp = Math.round(hp * 0.8);
+      if (p.健康 < 40) {hp = Math.round(hp * 0.6); stress += 4; mind -= 2;}   // 身体差，练不动
+
+      modProp("健康", hp);
+      modProp("效率", eff);
+      modProp("压力", stress);
+      modProp("心态", mind);
+
+      S.actCount = (S.actCount || 0) + 1;
+      S.evCntWeek = {};
+      S.evCountWeek = 0;
+      count("sport");                       // 推进「体弱多病」等破茧进度
+      S.didSportWeek = num(S.week, 0);      // 记一下，用于天赋退化判定
+      renderHUD();
+      say(L("sport.log"), "sys");
+      floatGain(L("sport.float"), true);
+      if (typeof onDone === "function") onDone();
     }
 
     function difficultyCurve(week, term) {
@@ -118,7 +176,7 @@
       if (Talent.have("实验狂人")) {subjBonus.物理 = (subjBonus.物理 || 0) + 15; subjBonus.化学 = 15;}
       if (Talent.have("史海钩沉")) {subjBonus.历史 = (subjBonus.历史 || 0) + 15; subjBonus.生物 = 15;}
       for (const k in subjBonus) {if (S.subj[k] !== undefined) S.subj[k] += subjBonus[k];}
-      if (Talent.have("家财万贯")) S.prop.经济 = 300 + rnd(100);
+      if (Talent.have("家财万贯")) S.prop.经济 = 150 + rnd(60);   // v1.1 削弱：原为 300+rnd(100)
       else if (Talent.have("家徒四壁")) S.prop.经济 = 30 + rnd(30);
       else if (Talent.have("小康之家")) S.prop.经济 = 150 + rnd(50);
       if (Talent.have("书香门第")) S.prop.悟性 += 10;
@@ -154,7 +212,10 @@
       p.心态 = clamp(p.心态, propFloor("心态"), 150);
 
       // 经济
-      if (Talent.have("家财万贯")) p.经济 += 150;
+      /* v1.1 削弱：家财万贯由每周 +150 降到 +45（和小康之家持平），
+       * 但富家子弟依然有"不会为钱发愁"的底气（见下面的额外补贴）。 */
+      if (Talent.have("家财万贯")) p.经济 += 45;
+      if (Talent.have("家财万贯") && p.经济 < 80) p.经济 = 80;    // 兜底：不至于真的没钱
       else {
         let v = rnd(41) - 20 - (Talent.have("家徒四壁") ? 10 : 0) - (Talent.have("大胃袋") ? 10 : 0) - (Talent.have("吃货") ? 5 : 0) + (Talent.have("偏食") ? 10 : 0);
         if (Talent.have("理财达人") && v > 0) v = Math.floor(v * 1.5); p.经济 += v;
@@ -202,9 +263,25 @@
       p.社交 = clamp(p.社交, 10, 150);
 
       // 压力
+      /* 压力
+       * ★ v1.1：原来是纯粹的随机漫步（rnd(31)-15 长期无回归），
+       *   三年下来压力迟早撞上 0 或 150 —— 配上"连续三周爆表就离场"的新规则，
+       *   等于掷骰子决定生死，玩家做什么都救不回来。
+       *   现在改成"向学业基线回归 + 随机扰动"：
+       *     基线随年级升高（初一 25 → 初三 50），压力自然往基线回落一点；
+       *     但连续学习每周净增约 +11，照样能把压力顶到爆表。
+       *   这样"压力爆表"就变成玩家自己选出来的结果，而不是随机数。 */
       if (Talent.have("不吃压力")) p.压力 = 50 + rnd(21) - 10;
-      else {p.压力 += rnd(31) - 15 + (Talent.have("玻璃心") ? 20 : 0) + (Talent.have("自律机器") ? 5 : 0) + (Talent.have("卷王") ? 10 : 0) - (Talent.have("佛系少年") ? 8 : 0);}
-      p.压力 = clamp(p.压力, 0, 150);
+      else {
+        const base = 25 + clampNum(S.term, 0, 5) * 5;
+        p.压力 += (base - num(p.压力, base)) * 0.18
+          + (rnd(21) - 10)
+          + (Talent.have("玻璃心") ? 20 : 0)
+          + (Talent.have("自律机器") ? 5 : 0)
+          + (Talent.have("卷王") ? 10 : 0)
+          - (Talent.have("佛系少年") ? 8 : 0);
+      }
+      p.压力 = clamp(p.压力, propFloor("压力"), 150);
 
       // 社团每周加成（入社后才生效）
       if (typeof applyClubPerk === "function") applyClubPerk();
@@ -214,17 +291,24 @@
       // 约每两周 -1（不是每周都掉，否则 150 周会掉光）；
       // 压力过高时额外 -1（情绪不好容易和家人起摩擦）。
       // 想让亲情掉得更慢/更快，改 0.45 这个概率即可。
-      const famDrop = (Math.random() < 0.45 ? 1 : 0) + (p.压力 > 110 ? 1 : 0);
-      p.亲情 = clamp(num(p.亲情, 80) - famDrop, 10, 150);
+      const fc = (typeof famCfg === "function") ? famCfg() : {weeklyDrop: 0.45, weeklyDropVal: 4};
+      const famDrop = (Math.random() < fc.weeklyDrop ? fc.weeklyDropVal : 0) + (p.压力 > 110 ? 2 : 0);
+      p.亲情 = clamp(num(p.亲情, 80) - famDrop, propFloor("亲情"), 150);
 
       // 周结算遗忘
+      // v1.1：decayMul 让遗忘变快，且"一周没学习"会额外流失 learnBleed。
       ensureSubj();
       const diff = difficultyCurve(S.week, S.term);
       const subs = subjectsOf(S.term);
+      const cfgS = studyCfg();
+      const idle = (S.didStudyWeek !== num(S.week, 0)) && (S.didQuizWeek !== num(S.week, 0));
+      const bleed = idle ? clampNum(cfgS.learnBleed, 0, 0.5) : 0;
       subs.forEach(sub => {
-        const decay = clampNum(diff.decay * 0.6, 0, 0.9);
+        const decay = clampNum(diff.decay * 0.6 * cfgS.decayMul + bleed, 0, 0.9);
         S.subj[sub] = clamp(num(S.subj[sub], 30) * (1 - decay), 0, SUBJ_CAP);
       });
+      if (idle && bleed > 0) S.idleWeeks = num(S.idleWeeks, 0) + 1;
+      else S.idleWeeks = 0;
       recalcScore();
 
       // 属性兜底：任何一项变成非法值都会在这里被修正
@@ -239,7 +323,7 @@
       const p = S.prop;
       for (const k in PROP_RANGE) p[k] = fixProp(k, p[k]);
       ensureSubj();
-      let base = num({study: 5.5, rest: 1.2, social: 1.5, fun: 0.4, allowance: 0}[action], 0);
+      let base = num({study: 5.5, quiz: 2.0, rest: 1.2, social: 1.5, fun: 0.4, allowance: 0}[action], 0);
       let rate = base * (0.5 + p.效率 / 200) * (0.5 + p.悟性 / 200) * (0.6 + p.心态 / 250);
       if (!isFinite(rate)) rate = base;
       if (Talent.have("过目不忘")) rate *= 1.2;
@@ -258,13 +342,13 @@
       if (Talent.have("网瘾") && action === "fun") rate *= 1.5;
       if (Talent.have("严重网瘾") && action === "fun") rate *= 2.0;
 
-      rate *= 1 - (p.压力 / 150) * 0.30;
+      rate *= 1 - (p.压力 / 150) * studyCfg().stressPenalty;   // 压力越大越学不进去
 
       rate *= 1 + S.studyBuff - S.studyDebuff;
       rate *= 1 + (Math.random() * 0.5 - 0.35);
 
       const diff = difficultyCurve(S.week, S.term);
-      rate *= diff.gainMul;
+      rate *= diff.gainMul * studyCfg().gainMul;   // v1.1：收益整体下调
 
       const subs = subjectsOf(S.term);
       let weekTotal = 0;
@@ -302,16 +386,21 @@
         S.subj[sub] = clamp(after, 0, SUBJ_CAP);
         const delta = S.subj[sub] - before;
         weekTotal += delta;
-        if (action === "study" && Math.abs(delta) > 2) gains.push(`${sub}${delta > 0 ? "+" : ""}${delta.toFixed(1)}`);
+        /* 学科数值只在考试事件里出现，这里只说"哪科动了"，不说动了多少 */
+        if (action === "study" && Math.abs(delta) > 2) gains.push(`${sub}${delta > 0 ? "▲" : "▼"}`);
       }
       recalcScore();
       if (action === "study" && gains.length) floatGain(gains.join(" "), true);
       if (S.buffWeeks > 0 && --S.buffWeeks === 0) S.studyBuff = 0;
       if (S.debuffWeeks > 0 && --S.debuffWeeks === 0) S.studyDebuff = 0;
-      if (action === "study") {count("study"); p.压力 = clamp(p.压力 + 4, 0, 150);}
+      if (action === "study") {
+        count("study");
+        S.didStudyWeek = num(S.week, 0);      // 记一下，用于「天赋退化」判定
+        p.压力 = clamp(p.压力 + 4 * studyCfg().stressMul, 0, 150);
+      }
       if (action === "rest") {count("rest"); p.压力 = clamp(p.压力 - 10, 0, 150); p.健康 = clamp(p.健康 + 5, 0, 150); p.效率 = clamp(p.效率 + 8, 10, 150);}
-      if (action === "social") {count("social"); p.社交 = clamp(p.社交 + 6, 0, 150); p.心态 = clamp(p.心态 + 4, 0, 150); p.效率 = clamp(p.效率 + 3, 10, 150);}
-      if (action === "fun") {p.心态 = clamp(p.心态 + (Talent.have("游戏宅") ? 16 : 8), 0, 150); p.压力 = clamp(p.压力 - 8, 0, 150);}
+      if (action === "social") {count("social"); S.didSocialWeek = num(S.week, 0); p.社交 = clamp(p.社交 + 6, 0, 150); p.心态 = clamp(p.心态 + 4, 0, 150); p.效率 = clamp(p.效率 + 3, 10, 150);}
+      if (action === "fun") {count("fun"); p.心态 = clamp(p.心态 + (Talent.have("游戏宅") ? 16 : 8), 0, 150); p.压力 = clamp(p.压力 - 8, 0, 150);}
       // 注：原来的「打零工」已改为「向父母要零花钱」，走 allowanceSettle()
     }
 
@@ -332,52 +421,60 @@
       let g = Math.round(12 + (fam - 20) * 0.36);
       if (Talent.have("理财达人")) g = Math.round(g * 1.25);
 
+      /* ★ v1.1：开口本身就是有代价的 —— 亲情越低，开口掉得越多。
+       * 亲情已经很僵的时候，多半直接要不到钱。 */
+      const famCfgV = (typeof famCfg === "function") ? famCfg() : {askCost: 6, askCostRich: 2, lowAt: 40};
+      const cost = (typeof askCostFam === "function") ? askCostFam() : 6;
+      const who = (typeof parentCall === "function") ? parentCall(familyMain()) : "妈妈";
+
       let title, line, cls;
       if (fam >= 120) {
         // 感情好：父母主动多给
         if (Math.random() < 0.35) {
           g += 15;
-          title = "父母多塞了点";
-          line = "你刚开口，妈妈就掏出了钱包：「在学校别省着，该买的就买。」临走又多塞了十五块。";
+          title = L("alw.t1");
+          line = L("alw.l1", who);
           cls = "good";
-          modProp("心态", 6); modProp("压力", -4); modProp("亲情", 2);
+          modProp("心态", 6); modProp("压力", -4); modProp("亲情", 2 - cost);
         } else {
-          title = "痛快给了";
-          line = "爸爸二话没说就转了钱，还问你最近学习累不累。";
+          title = L("alw.t2");
+          line = L("alw.l2", who);
           cls = "good";
-          modProp("心态", 4); modProp("压力", -3); modProp("亲情", 1);
+          modProp("心态", 4); modProp("压力", -3); modProp("亲情", 1 - cost);
         }
       } else if (fam >= 70) {
-        title = "给了";
-        line = "妈妈数了数钱递给你，顺口叮嘱了一句「别乱花」。";
+        title = L("alw.t3");
+        line = L("alw.l3", who);
         cls = "good";
-        modProp("心态", 2);
-      } else if (fam >= 40) {
-        // 感情一般：会被念叨
+        modProp("心态", 2); modProp("亲情", -cost);
+      } else if (fam >= famCfgV.lowAt) {
+        // 感情一般：会被念叨，钱也给得少
         g = Math.round(g * 0.7);
-        title = "被念叨了一顿";
-        line = "「上周不是才给过吗？」妈妈一边数落一边还是掏了钱。你觉得脸上有点发热。";
+        title = L("alw.t4");
+        line = L("alw.l4", who);
         cls = "";
-        modProp("心态", -4); modProp("压力", 3); modProp("亲情", -2);
+        modProp("心态", -4); modProp("压力", 3); modProp("亲情", -2 - cost);
       } else {
-        // 感情疏远：多半被拒
-        if (Math.random() < 0.5) {
+        // 感情疏远：多半被拒（亲情越低，被拒的概率越高）
+        const refuseP = clampNum(0.5 + (famCfgV.lowAt - fam) / famCfgV.lowAt * 0.35, 0.5, 0.9);
+        if (Math.random() < refuseP) {
           g = 0;
-          title = "被拒绝了";
-          line = "爸爸皱着眉：「家里最近也不宽裕。」你张了张嘴，最后没再说什么。";
+          title = L("alw.t5");
+          line = L("alw.l5", who);
           cls = "bad";
-          modProp("心态", -8); modProp("压力", 6); modProp("亲情", -3);
+          modProp("心态", -8); modProp("压力", 6); modProp("亲情", -3 - cost);
         } else {
           g = Math.round(g * 0.5);
-          title = "只给了很少一点";
-          line = "妈妈翻遍口袋，只凑出几张零票。你说了声谢谢，心里不是滋味。";
+          title = L("alw.t6");
+          line = L("alw.l6", who);
           cls = "bad";
-          modProp("心态", -5); modProp("压力", 4); modProp("亲情", -2);
+          modProp("心态", -5); modProp("压力", 4); modProp("亲情", -2 - cost);
         }
       }
 
       // 开口要钱本身有一点心理成本（亲情高时抵消）
       if (fam < 100) modProp("压力", 2);
+      if (g === 0) say(L("alw.refusedLog"), "bad");
 
       modProp("经济", g);
       S.actCount = (S.actCount || 0) + 1;
@@ -385,6 +482,7 @@
       S.evCountWeek = 0;
       renderHUD();
       say(L("alw.log", title, g > 0 ? L("alw.got", g) : L("alw.none")), cls || "sys");
+      if (cost > 0) say(L("alw.costLog", cost), "bad");
       /* 弹完这一个才继续走事件链 —— 否则两个弹窗会互相覆盖，
        * 玩家根本看不到父母说了什么。 */
       showPopup({

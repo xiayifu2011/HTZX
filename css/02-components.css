@@ -149,28 +149,43 @@
       display: none !important
     }
 
+    /* 主区：左栏宽度随视口变化（小屏 210 / 大屏 280），
+     * 并用 min-height:0 允许内部滚动 —— 否则 flex 子项会被内容撑破。 */
     #hud {
       display: grid;
-      grid-template-columns: 232px 1fr;
+      grid-template-columns: clamp(210px, 21vw, 280px) 1fr;
       gap: 10px;
-      align-items: start
+      align-items: stretch;
+      flex: 1 1 auto;
+      min-height: 0
     }
 
-    /* 左栏：状态卡片竖排，间距统一收紧 */
+    /* 左栏：状态卡片竖排，间距统一收紧；内容超高时自己滚 */
     .sidecol {
       display: grid;
-      gap: 8px
+      grid-template-rows: auto auto 1fr;
+      gap: 8px;
+      min-height: 0;
+      overflow-y: auto
     }
 
-    /* 右栏：日志 + 行动面板 */
+    /* 右栏：日志吃掉剩余高度，行动面板保持自身高度 */
     .maincol {
       display: grid;
-      gap: 8px
+      grid-template-rows: 1fr auto;
+      gap: 8px;
+      min-height: 0
     }
 
     @media(max-width:760px) {
       #hud {
-        grid-template-columns: 1fr
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr
+      }
+
+      .sidecol {
+        grid-template-rows: none;
+        overflow: visible
       }
     }
 
@@ -241,9 +256,12 @@
       text-shadow: 0 0 10px rgba(255, 184, 107, .7)
     }
 
-    /* 日志区限高：内部滚动，页面整体不会被日志撑长 */
+    /* 日志区：吃掉剩余高度，内部滚动，页面整体不会被日志撑长。
+     * min-height 保证矮屏上也不会被压成一条缝。 */
     .log {
-      height: 172px;
+      height: auto;
+      min-height: 120px;
+      max-height: 46vh;
       overflow-y: auto;
       background: #0b0818;
       border: 1px solid var(--line);
@@ -314,12 +332,12 @@
     .statgrid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1px 10px
+      gap: 4px 10px
     }
 
     .stat.compact {
       margin: 1px 0;
-      font-size: .76rem
+      font-size: .78rem
     }
 
     .stat.compact .bar {
@@ -327,11 +345,69 @@
       margin-top: 1px
     }
 
-    /* 亲情：占整行但只有半宽，视觉上更弱，因为它不是主属性 */
-    .stat.famrow {
-      grid-column: 1 / -1;
-      opacity: .75;
-      font-size: .7rem
+    /* 属性名 + 档位文字一行，档位靠右 */
+    .stathead {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 4px
+    }
+
+    .stathead .num {
+      color: var(--gold)
+    }
+
+    /* 档位文字：t0 最糟 → t4 最好（压力由 JS 反向传 tone，配色自动对调） */
+    .stathead .lv {
+      font-size: .74rem;
+      letter-spacing: .5px;
+      white-space: nowrap
+    }
+
+    .stathead .lv.t0,
+    .segbar.t0 i.on {
+      color: var(--red);
+      background: var(--red)
+    }
+
+    .stathead .lv.t1,
+    .segbar.t1 i.on {
+      color: #ffb86b;
+      background: #ffb86b
+    }
+
+    .stathead .lv.t2,
+    .segbar.t2 i.on {
+      color: var(--gold);
+      background: var(--gold)
+    }
+
+    .stathead .lv.t3,
+    .segbar.t3 i.on {
+      color: #b9e37a;
+      background: #b9e37a
+    }
+
+    .stathead .lv.t4,
+    .segbar.t4 i.on {
+      color: var(--green);
+      background: var(--green)
+    }
+
+    /* 五格刻度条：只暴露"第几档"，不暴露精确数值 */
+    .segbar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2px;
+      margin-top: 3px
+    }
+
+    .segbar i {
+      display: block;
+      height: 5px;
+      border-radius: 2px;
+      background: #11152e;
+      transition: background .5s ease
     }
 
     /* 行动按钮：单列竖排。每一行只占一行高，六行也不会把屏幕顶下去 */
@@ -365,7 +441,7 @@
 
     @media(max-width:760px) {
       .log {
-        height: 150px
+        max-height: 40vh
       }
     }
 
@@ -588,4 +664,29 @@
     body.scroll-hint .scrollfade.at-end::after {
       opacity: 0;
       transition: opacity .2s ease
+    }
+
+    /* ============================================================
+     * 矮屏（1366×768 这类笔记本）：收紧垂直节奏
+     * ------------------------------------------------------------
+     * 顶栏和卡片的内边距压一档，把省下的高度让给日志与行动面板。
+     * ============================================================ */
+    @media(max-height:820px) {
+      .topline {
+        gap: 4px;
+        margin-bottom: 6px
+      }
+
+      .topline .btn {
+        padding: 5px 10px;
+        margin: 2px
+      }
+
+      .card {
+        padding: 8px 10px
+      }
+
+      .actgrid .btn {
+        padding: 6px 10px
+      }
     }

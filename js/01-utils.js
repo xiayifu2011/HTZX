@@ -49,11 +49,56 @@
       亲情: [10, 150, 80]
     };
 
-    // 主界面属性栏要显示的项（顺序即显示顺序）
-    const PROP_HUD = ["心态", "经济", "健康", "效率", "悟性", "社交", "压力"];
+    /* ==================================================================
+     * 属性可见性（v1.1 起）
+     * ------------------------------------------------------------------
+     * PROP_HUD     面板上真正看得见的四项：心态 / 经济 / 健康 / 压力
+     * PROP_HIDDEN  后台实时计算、面板上一律不出现：效率 / 悟性 / 社交 / 亲情
+     * PROP_BLUR    HUD 里除「经济」之外都要模糊化：只给档位文字，不给数字
+     *
+     * 学科属性（语文 / 数学 ……）不再常驻面板，只在考试事件里显示。
+     * 想恢复完整数值面板：把 PROP_HUD 改成 Object.keys(PROP_RANGE)，
+     * 并把 PROP_BLUR 改成空数组即可。
+     * ================================================================== */
+    const PROP_HUD = ["心态", "经济", "健康", "压力"];
 
-    // 不在 HUD 显示、但参与数值计算的属性
-    const PROP_HIDDEN = ["亲情"];
+    const PROP_HIDDEN = ["效率", "悟性", "社交", "亲情"];
+
+    const PROP_BLUR = ["心态", "健康", "压力"];
+
+    /* ==================================================================
+     * 档位：把 0~150 的数值翻译成「极低 / 较低 / 中 / 较高 / 极高」
+     * ------------------------------------------------------------------
+     * 五档均分，档位宽度 30。面板上只显示档位文字 + 五格刻度条，
+     * 玩家看到的是"状态好不好"，不是精确的 87 还是 88。
+     * 想改档位文案改 js/01b-i18n.js 的 level.* ；想改宽度改这里的 STEP。
+     * ================================================================== */
+    const PROP_LEVEL_STEP = 30;
+
+    const PROP_LEVELS = [
+      {lv: 0, key: "level.vlow"},
+      {lv: 1, key: "level.low"},
+      {lv: 2, key: "level.mid"},
+      {lv: 3, key: "level.high"},
+      {lv: 4, key: "level.vhigh"}
+    ];
+
+    /* 数值落在第几档（0~4） */
+    function propLevel(v) {
+      const x = clamp(num(v, 0), 0, 150);
+      return clamp(Math.floor(x / PROP_LEVEL_STEP), 0, 4);
+    }
+
+    /* 属性的语义方向：+"越高越好" / -"越高越糟"
+     * 压力是唯一反向的 —— 档位文字照写「极高」，但颜色要反过来。 */
+    function propPolarity(k) {return k === "压力" ? -1 : 1;}
+
+    /* 档位文字（已过双语层） */
+    function propLevelText(k, v) {
+      const lv = propLevel(v);
+      const key = (PROP_LEVELS[lv] || PROP_LEVELS[2]).key;
+      return L(key);
+    }
 
     const SUBJ_CAP = 1500;   // 单科学力上限，防止长期累积后失控
 
@@ -113,15 +158,48 @@
       if (S.prop[k] === undefined || !isFinite(S.prop[k])) S.prop[k] = fixProp(k, undefined);
       v = num(v, 0);
       if (!v) return;
+      const before = S.prop[k];
       S.prop[k] = clamp(S.prop[k] + v, propFloor(k), PROP_RANGE[k] ? PROP_RANGE[k][1] : 150);
       if (S.prop[k] < (PROP_RANGE[k] ? PROP_RANGE[k][0] : 0)) S.prop[k] = PROP_RANGE[k] ? PROP_RANGE[k][0] : 0;
       if (Math.abs(v) >= 1) {
         const good = (k === "压力") ? (v < 0) : (v > 0);
-        floatGain(`${k} ${v > 0 ? "+" : ""}${Math.round(v)}`, good);
+        // 隐藏属性（效率 / 悟性 / 社交 / 亲情）：面板上看不到，
+        // 飘一个带数字的字只会暴露它们，改成不带数字的方向提示。
+        if (isHiddenProp(k)) {
+          if (floatHiddenWanted()) floatGain(`${propName(k)} ${v > 0 ? "▲" : "▼"}`, good);
+        } else if (isBlurProp(k) && !floatNumbersWanted()) {
+          // 模糊属性且关掉了数字飘字：只说升了还是降了
+          floatGain(`${propName(k)} ${v > 0 ? "▲" : "▼"}`, good);
+        } else {
+          floatGain(`${propName(k)} ${v > 0 ? "+" : ""}${Math.round(v)}`, good);
+        }
       }
     }
 
+    /* 该属性是否在面板上隐藏 */
+    function isHiddenProp(k) {
+      return (typeof PROP_HIDDEN !== "undefined") && PROP_HIDDEN.indexOf(k) >= 0;
+    }
+
+    /* 该属性是否要模糊化（只给档位，不给数字） */
+    function isBlurProp(k) {
+      return (typeof PROP_BLUR !== "undefined") && PROP_BLUR.indexOf(k) >= 0;
+    }
+
+    /* 飘字开关，见 GAME_CONFIG.ui */
+    function floatNumbersWanted() {
+      const u = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.ui) || {};
+      return u.floatNumbers !== false;
+    }
+
+    function floatHiddenWanted() {
+      const u = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.ui) || {};
+      return u.hiddenFloats === true;
+    }
+
     function say(txt, cls = "") {
+      /* 单亲 / 留守家庭：日志里爸爸妈妈的称呼也要统一（双亲家庭原样） */
+      if (typeof famText === "function" && typeof txt === "string") txt = famText(txt);
       S.logs.push({txt, cls}); const el = document.getElementById("log");
       const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = txt; el.appendChild(d); el.scrollTop = el.scrollHeight;
     }
