@@ -70,9 +70,14 @@ function md2html(src) {
     }
     paraBuf = [];
     // 上一段话没说完 → 接上去
+    // ★ 但整段是一个元素（如整行加粗 **玉溪市红塔中学**）时不能接 ——
+    //   它的结尾是 ">" 而不是标点，会被误判成"话没说完"，
+    //   结果和下一行拼在一起，那句话就重复出现了一遍。
     if (lastParaIdx >= 0) {
       const prev = out[lastParaIdx].replace(/^<p>/, "").replace(/<\/p>$/, "");
-      if (!ENDS.test(prev)) {
+      const prevText = prev.replace(/<[^>]+>/g, "");   // 去掉标签取纯文本
+      const endsWithTag = />$/.test(prev);             // 整段就是一个元素
+      if (!endsWithTag && !ENDS.test(prevText)) {
         const needSpace = /[A-Za-z0-9.,;:!?]$/.test(prev) && /^[A-Za-z0-9]/.test(t);
         pushHtml(`<p>${inline(prev + (needSpace ? " " : "") + t)}</p>`);
         return;

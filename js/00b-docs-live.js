@@ -69,7 +69,12 @@
         paraBuf = [];
         if (lastParaIdx >= 0) {
           const prev = out[lastParaIdx].replace(/^<p>/, "").replace(/<\/p>$/, "");
-          if (!ENDS.test(prev)) {
+          /* ★ 整段就是一个元素（如整行加粗 **玉溪市红塔中学**）时不能接 ——
+           *   它结尾是 ">" 而不是标点，会被误判成"话没说完"，
+           *   和下一行拼在一起那句话就重复了。 */
+          const prevText = prev.replace(/<[^>]+>/g, "");
+          const endsWithTag = />$/.test(prev);
+          if (!endsWithTag && !ENDS.test(prevText)) {
             const needSpace = /[A-Za-z0-9.,;:!?]$/.test(prev) && /^[A-Za-z0-9]/.test(t);
             pushHtml(`<p>${inline(prev + (needSpace ? " " : "") + t)}</p>`);
             return;
