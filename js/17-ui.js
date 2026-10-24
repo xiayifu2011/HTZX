@@ -271,7 +271,8 @@
 
       const media = document.getElementById("modalMedia");
       if (media) {
-        if (meta && meta.img) {
+        // 配图总开关关掉时，弹窗里也不显示任何图片
+        if (meta && meta.img && (typeof photosOn === "function" ? photosOn() : true)) {
           media.innerHTML = `<img src="${meta.img}" alt="" onerror="this.parentNode.style.display='none'">`;
           media.style.display = "";
         } else {media.innerHTML = ""; media.style.display = "none";}

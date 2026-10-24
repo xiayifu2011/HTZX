@@ -31,6 +31,13 @@
         clubSkip: S.clubSkip, clubTerm: S.clubTerm, clubSkipTerm: S.clubSkipTerm,
         // —— 事件调度 ——（手机标记、挂起事件、事件冷却都在这里）
         flags: S.flags, pending: S.pending, evLastWeek: S.evLastWeek, chainQueue: S.chainQueue,
+        // —— 开局设置（难度 + 学期范围）与 v1.1 新增的周标记 ——
+        setup: {planId: (GAME_CONFIG.start || {}).planId, difficulty: (GAME_CONFIG.start || {}).difficulty,
+          termFrom: (GAME_CONFIG.start || {}).termFrom, termTo: (GAME_CONFIG.start || {}).termTo},
+        didStudyWeek: S.didStudyWeek, didSportWeek: S.didSportWeek, didReadWeek: S.didReadWeek,
+        didSocialWeek: S.didSocialWeek, didQuizWeek: S.didQuizWeek,
+        idleWeeks: S.idleWeeks, stressStreak: S.stressStreak,
+        famConflictWeek: S.famConflictWeek, familyMain: S.familyMain,
         time: new Date().toLocaleString()
       };
       writeSaves(a);
@@ -44,7 +51,17 @@
       S = {week: d.week, term: d.term, name: d.name || "无名氏", gender: d.gender || "男", evCnt: d.evCnt || {}, daoDone: d.daoDone, subj: sanitizeSubj(d.subj), prop: sanitizeProp(d.prop), score: d.score, lastExamScore: d.lastExamScore, bestExam: d.bestExam, zhongkao: d.zhongkao, studyBuff: bf[0], buffWeeks: bf[1], studyDebuff: bf[2], debuffWeeks: bf[3], cnt: d.cnt, ach: d.ach, over: d.over, dead: d.dead, logs: [], items: d.items || {}, evCntWeek: d.evCntWeek || {}, evCountWeek: d.evCountWeek || 0, evWeekTotal: d.evWeekTotal || 0, actQuota: d.actQuota || 0, actCount: d.actCount || 0, cure: d.cure || {},
         slot: d.slot || "weekday", slotPlan: Array.isArray(d.slotPlan) ? d.slotPlan : ["weekday", "weekend"], slotIdx: clampNum(d.slotIdx, 0, 9),
         club: d.club || "", clubCount: num(d.clubCount, 0), clubTried: Array.isArray(d.clubTried) ? d.clubTried : [], clubSkip: !!d.clubSkip, clubTerm: num(d.clubTerm, -1), clubSkipTerm: num(d.clubSkipTerm, -1),
-        flags: d.flags || {}, pending: Array.isArray(d.pending) ? d.pending : [], evLastWeek: d.evLastWeek || {}, chainQueue: Array.isArray(d.chainQueue) ? d.chainQueue : []};
+        flags: d.flags || {}, pending: Array.isArray(d.pending) ? d.pending : [], evLastWeek: d.evLastWeek || {}, chainQueue: Array.isArray(d.chainQueue) ? d.chainQueue : [],
+        // —— v1.1 新增字段 ——
+        didStudyWeek: d.didStudyWeek, didSportWeek: d.didSportWeek, didReadWeek: d.didReadWeek,
+        didSocialWeek: d.didSocialWeek, didQuizWeek: d.didQuizWeek,
+        idleWeeks: num(d.idleWeeks, 0), stressStreak: num(d.stressStreak, 0),
+        famConflictWeek: d.famConflictWeek, familyMain: d.familyMain};
+
+      // 开局设置：读档后沿用存档时的难度与学期范围
+      if (d.setup && typeof applyStartSetup === "function") {
+        applyStartSetup(d.setup.planId, d.setup.difficulty);
+      }
       S.week = clampNum(S.week, 0, 999); S.term = clampNum(S.term, 0, TERMS);
       S.score = num(S.score, 0); S.lastExamScore = clampNum(S.lastExamScore, 0, 100);
       S.bestExam = clampNum(S.bestExam, 0, 100); S.zhongkao = num(S.zhongkao, -1);
@@ -71,13 +88,24 @@
             <label style="margin-left:16px"><input type="radio" name="inpGender" value="女"> ${L("cc.female")}</label>
      </div>
      <div style="color:var(--dim);font-size:.85rem;margin-top:8px">${L("cc.pick")}</div>
-     <div class="namegrid" id="nameGrid"></div>`;
+     <div class="namegrid" id="nameGrid"></div>
+     <div class="setup-block">
+       <div class="setup-label">${L("cc.planLabel")}</div>
+       <div class="setupgrid" id="planGrid"></div>
+       <div class="setup-label">${L("cc.diffLabel")}</div>
+       <div class="setupgrid" id="diffGrid"></div>
+       <div class="setup-hint">${L("cc.setupHint")}</div>
+     </div>`;
       const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
       const btn = document.createElement("button"); btn.className = "btn primary"; btn.textContent = L("cc.start");
       btn.onclick = () => {
         const nm = (document.getElementById("inpName").value || "").trim() || L("save.anon");
         const gd = document.querySelector("input[name=inpGender]:checked").value;
+        const body = document.getElementById("modalBody");
+        const planId = (body && body._pickPlan) ? body._pickPlan() : (GAME_CONFIG.TERM_PLAN && GAME_CONFIG.TERM_PLAN[0].id);
+        const diff = (body && body._pickDiff) ? body._pickDiff() : "story";
         closeModal();
+        applyStartSetup(planId, diff);
         newGame(nm, gd);
         if (typeof setBackground === "function") setBackground("main");
         document.getElementById("startScreen").classList.add("hidden");
@@ -88,6 +116,40 @@
       };
       ob.appendChild(btn);
       setTimeout(() => {
+        /* ---- 开局设置：学期范围 + 难度 ---- */
+        const plans = (GAME_CONFIG.TERM_PLAN || []).slice();
+        const diffs = ["story", "normal", "hard"];
+        let pickPlan = (GAME_CONFIG.start && GAME_CONFIG.start.planId) || plans[0].id;
+        let pickDiff = (GAME_CONFIG.start && GAME_CONFIG.start.difficulty) || "story";
+        if (!plans.some(x => x.id === pickPlan)) pickPlan = plans[0].id;
+
+        const drawPlan = () => {
+          const g = document.getElementById("planGrid"); if (!g) return;
+          g.innerHTML = "";
+          plans.forEach(p => {
+            const b = document.createElement("button");
+            b.className = "setupbtn" + (p.id === pickPlan ? " sel" : "");
+            b.innerHTML = `<b>${L("cc.plan." + p.id)}</b><small>${L("cc.plan." + p.id + "Sub")}</small>`;
+            b.onclick = () => {pickPlan = p.id; drawPlan();};
+            g.appendChild(b);
+          });
+        };
+        const drawDiff = () => {
+          const g = document.getElementById("diffGrid"); if (!g) return;
+          g.innerHTML = "";
+          diffs.forEach(d => {
+            const b = document.createElement("button");
+            b.className = "setupbtn" + (d === pickDiff ? " sel" : "");
+            b.innerHTML = `<b>${L("cc.diff." + d)}</b><small>${L("cc.diff." + d + "Sub")}</small>`;
+            b.onclick = () => {pickDiff = d; drawDiff();};
+            g.appendChild(b);
+          });
+        };
+        drawPlan(); drawDiff();
+        document.getElementById("modalBody")._pickPlan = () => pickPlan;
+        document.getElementById("modalBody")._pickDiff = () => pickDiff;
+        if (typeof setupScrollFade === "function") setupScrollFade(document.getElementById("modalBody"));
+
         const grid = document.getElementById("nameGrid");
         if (!grid) return;
         const maleNames = LANG === "en"

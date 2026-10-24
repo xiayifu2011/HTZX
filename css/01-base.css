@@ -89,6 +89,67 @@
     }
 
     /* ============================================================
+     * 主菜单在矮屏上收紧
+     * ------------------------------------------------------------
+     * 主菜单是长页面，允许滚动；但 1366×768 这类笔记本上
+     * 我们希望它尽量一屏装得下，少滚一点是一点。
+     * 这里把标题、卡片内边距、行高一并压一档，约能省 120~200px。
+     * ============================================================ */
+    @media(max-height:820px) {
+      #startScreen h1 {
+        font-size: 1.5rem;
+        margin: 2px 0
+      }
+
+      #startScreen .sub {
+        font-size: .8rem;
+        margin-bottom: 4px
+      }
+
+      #startScreen .card {
+        padding: 8px 10px;
+        margin-bottom: 6px
+      }
+
+      #startScreen .slots {
+        gap: 5px
+      }
+
+      #startScreen .docbtns {
+        gap: 5px
+      }
+
+      #startScreen .docbtns .btn {
+        padding: 5px 10px;
+        font-size: .82rem
+      }
+
+      #startScreen #aboutBody {
+        font-size: .8rem !important;
+        line-height: 1.6 !important
+      }
+
+      #startScreen .themelist {
+        gap: 5px
+      }
+    }
+
+    /* 极矮屏（≤680）：把「游戏说明」整段折叠，主菜单就能压进一屏 */
+    @media(max-height:680px) {
+      #startScreen #aboutBody {
+        display: none
+      }
+
+      #startScreen h1 {
+        font-size: 1.3rem
+      }
+
+      .school-brand {
+        display: none
+      }
+    }
+
+    /* ============================================================
      * 游戏屏：整屏自适应，一屏装下所有东西
      * ------------------------------------------------------------
      * 用 flex 撑满视口高度，日志区吃掉剩余空间（flex:1），

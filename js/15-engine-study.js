@@ -89,8 +89,15 @@
     }
 
     function difficultyCurve(week, term) {
-      const t = clampNum(week, 0, 1000) / 144;
-      const tt = Math.min(1, t);
+      /* 难度曲线按「本局进度」走，而不是绝对周数。
+       * 原来固定除以 144（三年局的周数），导致只玩初一 / 只玩初三的短局
+       * 全程都停在最容易的档位 —— 考出来接近满分，短局反而是最简单的。
+       * 现在按本局实际跨度换算：短局第 40 周 ≈ 长局第 120 周的难度。 */
+      const from = (typeof startTerm === "function") ? startTerm() : 0;
+      const to = (typeof endTerm === "function") ? endTerm() : 5;
+      const spanWeeks = Math.max(1, (to - from + 1)) * (num(WEEKS_PER_TERM, 24) + 1);
+      const t = clampNum(week, 0, 2000) / spanWeeks;
+      const tt = clampNum(t, 0, 1);
       const termT = Math.min(1, clampNum(term, 0, 10) / 5);
       const gainMul = 1.18 - 0.42 * Math.pow(tt, 1.35);
       const decay = 0.03 + 0.09 * Math.pow(tt, 1.6);
@@ -124,10 +131,20 @@
 
     function newGame(name, gender) {
       Talent.owned = [];
+      /* 玩家在创角界面选的起始学期（0=初一上 … 5=初三下）。
+       * 从中间年级开局时，各科要按那个年级应有的水平初始化，
+       * 否则"只玩初三"会变成留级重读 —— 学力太低，怎么考都是低分。 */
+      const t0 = (typeof startTerm === "function") ? startTerm() : 0;
+      const baseSubj = (GAME_CONFIG.start && num(GAME_CONFIG.start.base, 0) > 0)
+        ? num(GAME_CONFIG.start.base, 30) : 30 + t0 * 28;
+      const baseWu = (GAME_CONFIG.start && num(GAME_CONFIG.start.wu, 0) > 0)
+        ? num(GAME_CONFIG.start.wu, 10) : 10 + t0 * 22;
+
       S = {
-        week: 0, term: 0, name: name || "无名氏", gender: gender || "男",
+        week: 0, term: t0, name: name || "无名氏", gender: gender || "男",
         evCnt: {},
-        prop: {心态: 100 + rnd(31) - 15, 经济: 100 + rnd(31) - 15, 健康: 100 + rnd(31) - 15, 效率: 100 + rnd(31) - 15, 悟性: 10 + rnd(15), 社交: 100 + rnd(31) - 15, 压力: 10},
+        /* 从高年级开局时，悟性也要跟着起步（见 TERM_PLAN 里的 wu） */
+        prop: {心态: 100 + rnd(31) - 15, 经济: 100 + rnd(31) - 15, 健康: 100 + rnd(31) - 15, 效率: 100 + rnd(31) - 15, 悟性: baseWu + rnd(15), 社交: 100 + rnd(31) - 15, 压力: 10},
         score: 0, lastExamScore: 0, bestExam: 0, zhongkao: -1,
         studyBuff: 0, buffWeeks: 0, studyDebuff: 0, debuffWeeks: 0,
         cnt: {}, ach: [], over: false, dead: null, logs: [],
@@ -157,11 +174,13 @@
         evLastWeek: {},       // 每个事件上次出现在第几周（用于 minGap 均匀分布）
         chainQueue: [],       // 排队等着的后续事件
       };
-      subjectsOf(0).forEach(s => S.subj[s] = 30 + rnd(20));
+      subjectsOf(t0).forEach(s => S.subj[s] = baseSubj + rnd(20));
       S.prop = sanitizeProp(S.prop);
       S.subj = sanitizeSubj(S.subj);
       rollStartTalents();
       applyStartTalentBonuses();
+      /* 中考在哪个学期结束（见 GAME_CONFIG.start.termTo） */
+      S.endTerm = (typeof endTerm === "function") ? endTerm() : 5;
       recalcScore();
     }
 

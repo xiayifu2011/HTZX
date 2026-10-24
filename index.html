@@ -48,9 +48,9 @@
     <div class="card" style="text-align:center">
       <div class="tag-title" style="margin-bottom:8px" id="moreLabel">了解更多</div>
       <div class="docbtns">
-        <button class="btn" id="btnGuide" onclick="openDoc('guide')">📘 新手介绍</button>
-        <button class="btn" id="btnChangelog" onclick="openDoc('changelog')">🆕 更新日志</button>
-        <button class="btn" id="btnCredits" onclick="openDoc('credits')">🙏 鸣谢列表</button>
+        <button class="btn" id="btnGuide" onclick="openDocLive('guide')">📘 新手介绍</button>
+        <button class="btn" id="btnChangelog" onclick="openDocLive('changelog')">🆕 更新日志</button>
+        <button class="btn" id="btnCredits" onclick="openDocLive('credits')">🙏 鸣谢列表</button>
       </div>
     </div>
 
@@ -125,6 +125,8 @@
        ============================================================ -->
   <!-- 工具层：数值、属性、日志 -->
   <script src="js/00-docs.js"></script>
+  <!-- 文档实时更新：改完 docs/*.md 立刻能在游戏里看到 -->
+  <script src="js/00b-docs-live.js"></script>
   <script src="js/01-utils.js"></script>
   <!-- 双语层：中文 / English -->
   <script src="js/01b-i18n.js"></script>

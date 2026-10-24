@@ -54,6 +54,7 @@ const DATA_FILES = [
   "03-data-talents.js", "04-data-subjects.js", "05-data-shop.js",
   "06-data-books.js", "07-data-events.js", "08-data-events-school.js",
   "10-data-achievements.js", "11-data-endings.js", "12-data-cures.js",
+  "05c-data-sport.js", "05d-data-quiz.js",
 ];
 
 /* 社团表依赖 TALENTS，单独开一个沙盒跑 */
@@ -269,6 +270,76 @@ for (const c of CURES) {
   if (typeof c.need !== "number") errors.push(`破茧「${c.talent}」的 need 不是数字`);
   if (c.grant && !T[c.grant]) errors.push(`破茧「${c.talent}」赠送的天赋「${c.grant}」不存在`);
   if (!c.text) warns.push(`破茧「${c.talent}」没有鼓励文案`);
+}
+
+// ---------- 5b. 运动事件链检查 ----------
+const SPORT = get("SPORT_EVENTS", []);
+if (SPORT.length) {
+  console.log(`共载入 ${SPORT.length} 条运动事件`);
+  const sportIds = new Set();
+  for (const e of SPORT) {
+    if (!e.id) {errors.push("有一条运动事件没有 id"); continue;}
+    if (!/^sp_/.test(e.id)) errors.push(`运动事件「${e.id}」的 id 必须以 sp_ 开头（否则会混进普通事件池）`);
+    if (sportIds.has(e.id)) errors.push(`运动事件 id 重复：${e.id}`);
+    sportIds.add(e.id);
+    if (!e.opts || !e.opts.length) errors.push(`运动事件「${e.id}」没有选项`);
+    (e.opts || []).forEach((o, i) => {
+      if (!o.t) errors.push(`运动事件「${e.id}」第 ${i + 1} 个选项没有文字`);
+      const specs = [];
+      if (o.run) specs.push(o.run);
+      if (Array.isArray(o.branch)) for (const b of o.branch) if (b.run) specs.push(b.run);
+      for (const spec of specs) {
+        const runs = Array.isArray(spec) ? spec : (typeof spec === "string" ? [spec] : null);
+        if (!runs) continue;
+        for (const cmd of runs) {
+          if (typeof cmd !== "string") continue;
+          cmdCount++;
+          checkCmd(cmd, `运动事件「${e.id}」`);
+        }
+      }
+    });
+  }
+}
+
+// ---------- 5c. 做题题库检查 ----------
+const BANK = get("QUIZ_BANK", null);
+if (BANK) {
+  let n = 0;
+  const SUBJ_OK_SET = new Set(SUBJECTS);
+  for (const [sub, list] of Object.entries(BANK)) {
+    if (!SUBJ_OK_SET.has(sub)) errors.push(`题库里有不存在的科目「${sub}」`);
+    (list || []).forEach((q, i) => {
+      n++;
+      const where = `题库 ${sub} 第 ${i + 1} 题`;
+      if (!q.q) errors.push(`${where} 没有题干`);
+      if (q.type === "fill") {
+        if (q.ans == null || String(q.ans).trim() === "") errors.push(`${where} 是填空题但没有答案`);
+      } else {
+        if (!Array.isArray(q.opts) || q.opts.length < 2) errors.push(`${where} 是选择题但选项少于 2 个`);
+        else if (q.opts.indexOf(String(q.ans)) < 0) errors.push(`${where} 的正确答案「${q.ans}」不在选项里 —— 玩家永远答不对`);
+      }
+      if (q.g != null && !(q.g >= 0 && q.g <= 2)) errors.push(`${where} 的年级 g=${q.g} 不合法（只能是 0/1/2）`);
+    });
+  }
+  console.log(`共载入 ${n} 道题目`);
+}
+
+// ---------- 5d. 天赋退化表检查 ----------
+const DECAY = get("TALENT_DECAY", []);
+if (DECAY.length) {
+  console.log(`共载入 ${DECAY.length} 条天赋退化`);
+  const STAT_OK = ["study", "sport", "read", "social", "quiz"];
+  for (const d of DECAY) {
+    if (!T[d.talent]) errors.push(`退化条目「${d.talent}」在天赋表里不存在`);
+    if (STAT_OK.indexOf(d.stat) < 0) errors.push(`退化「${d.talent}」的 stat="${d.stat}" 不认识（只能是 ${STAT_OK.join(" / ")}）`);
+    if (!(d.idle > 0)) errors.push(`退化「${d.talent}」的 idle（几周不做才退化）必须是正数`);
+    if (!(d.chance > 0 && d.chance <= 1)) errors.push(`退化「${d.talent}」的 chance 必须在 0~1 之间`);
+    if (d.grant && !T[d.grant]) errors.push(`退化「${d.talent}」留下的阴影「${d.grant}」不存在`);
+    if (!d.text) warns.push(`退化「${d.talent}」没有文案`);
+  }
+  // 退化表里不能出现负面天赋（负面天赋靠"破茧"消除，不是靠退化）
+  const BAD = get("BAD_TALENTS", []);
+  for (const d of DECAY) if (BAD.indexOf(d.talent) >= 0) errors.push(`「${d.talent}」是负面天赋，不该出现在退化表里（它应该走「破茧」消除）`);
 }
 
 // ---------- 6. 结局检查 ----------

@@ -89,6 +89,33 @@
         brokeAt: 20      // 经济 ≤ 此值：边缘发冷
       },
 
+      /* ==============================================================
+       * 开局设置：难度 + 玩哪几个学期
+       * --------------------------------------------------------------
+       * 这里是「默认值」，玩家在创角界面上选完之后会覆盖它，
+       * 并连同存档一起记住（见 js/18-save.js）。
+       * TERM_PLAN 里的每一项 = 一个可选的时间跨度：
+       *   from / to  起始学期 / 结束学期（0=初一上 … 5=初三下）
+       *   base       开局各科的初始学力（跳过的年级要补上，否则初三开局等于留级）
+       * ============================================================== */
+      start: {
+        difficulty: "story",
+        termFrom: 0,
+        termTo: 5
+      },
+
+      /* 可选的时间跨度（创角界面按这个顺序显示）
+       * base = 开局各科的初始学力，wu = 开局悟性。
+       * ★ 这两个数是拿"完整局玩到该学期的实际水平"标定的，
+       *   目的是让"只玩初三"的起跑线 ≈ 认真玩到初三的人，
+       *   而不是白捡一个高分、也不是被当成留级生。想调就改这两个数。 */
+      TERM_PLAN: [
+        {id: "full", from: 0, to: 5, base: 30, wu: 10},
+        {id: "from2", from: 2, to: 5, base: 86, wu: 54},
+        {id: "only3", from: 4, to: 5, base: 142, wu: 98},
+        {id: "only1", from: 0, to: 1, base: 30, wu: 10}
+      ],
+
       difficulty: "story",
       storyFloor: 15,        // story 模式下 健康 / 心态 的最低保底线
       /* story 模式下 亲情 的最低保底线。
@@ -172,6 +199,17 @@
       // 这里只保留"默认用哪一套"和"背景不透明度"两个开关。
       // 说明：学校目前没有官方校徽，因此不使用校徽图标，只用校名与校训。
       themeId: "hongta",      // 默认主题 id，见 js/02c-themes.js 的 THEME_SKINS
+
+      /* ==============================================================
+       * 实拍/插画配图总开关
+       * --------------------------------------------------------------
+       * false = 不用任何 assets/ 里的图片，只显示每套主题自带的 CSS 渐变。
+       *         学校那几张校园插画暂时不用时，把它设成 false 即可，
+       *         界面不会白屏 —— 七套主题每一套都自带渐变底色。
+       * true  = 恢复使用 assets/ 里的背景图（把图片放回去就行）。
+       * ============================================================== */
+      usePhotos: false,
+
       theme: {
         // 主背景：白天上课期间用这张（留空则只用主题的 CSS 渐变背景）
         bgImage: "assets/bg.jpg",
@@ -198,6 +236,11 @@
         root.style.setProperty("--bg-image", t.bgImage ? `url("${t.bgImage}")` : "none");
         root.style.setProperty("--bg-opacity", String(t.bgOpacity == null ? .26 : t.bgOpacity));
       }
+      // 配图总开关：关掉就强制回落到渐变，即使主题里写了图
+      if (typeof photosOn === "function" && !photosOn()) {
+        root.style.setProperty("--bg-image", "none");
+        root.style.setProperty("--bg-opacity", "0");
+      }
 
       // 滚动条：按配置给 body 挂上开关 class
       const ui = GAME_CONFIG.ui || {};
@@ -218,9 +261,56 @@
         `${GAME_CONFIG.school.motto} —— 登上「${GAME_CONFIG.school.train}」，${GAME_CONFIG.school.slogan}`;
     }
 
+    /* ==================================================================
+     * 开局设置：把玩家选的「学期范围 + 难度」落到全局
+     * ------------------------------------------------------------------
+     * 由创角界面调用（js/18-save.js），结果写进 GAME_CONFIG.start，
+     * 并跟随存档一起保存 —— 读档后沿用同一套设置。
+     * ================================================================== */
+
+    function applyStartSetup(planId, difficulty) {
+      const plans = GAME_CONFIG.TERM_PLAN || [];
+      const p = plans.find(x => x.id === planId) || plans[0] || {id: "full", from: 0, to: 5, base: 30};
+      const st = GAME_CONFIG.start || (GAME_CONFIG.start = {});
+      st.planId = p.id;
+      st.termFrom = clampNum(p.from, 0, 5);
+      st.termTo = clampNum(Math.max(p.to, p.from), 0, 5);
+      st.base = clampNum(p.base, 10, 900);
+      st.wu = clampNum(p.wu, 10, 150);
+      if (difficulty === "story" || difficulty === "normal" || difficulty === "hard") {
+        st.difficulty = difficulty;
+        GAME_CONFIG.difficulty = difficulty;
+      }
+      return st;
+    }
+
+    /* 本局在第几个学期结束（中考） */
+    function endTerm() {
+      const st = GAME_CONFIG.start || {};
+      return clampNum(st.termTo, 0, TERMS - 1);
+    }
+
+    /* 本局从第几个学期开始 */
+    function startTerm() {
+      const st = GAME_CONFIG.start || {};
+      return clampNum(st.termFrom, 0, TERMS - 1);
+    }
+
+    /* 是否启用 assets/ 里的实拍配图（false = 只用主题的 CSS 渐变） */
+    function photosOn() {
+      const c = (typeof GAME_CONFIG !== "undefined") ? GAME_CONFIG : {};
+      return c.usePhotos !== false;
+    }
+
     /* 切换背景图：season 取 "main" | "alt" | "end" */
     function setBackground(season) {
       const root = document.documentElement;
+      // 配图总开关关掉时，一律不挂图片 —— 用主题自己的渐变底
+      if (typeof photosOn === "function" && !photosOn()) {
+        root.style.setProperty("--bg-image", "none");
+        root.style.setProperty("--bg-opacity", "0");
+        return;
+      }
       // 优先用当前主题自己的背景图；主题没配图就回落到 GAME_CONFIG
       let v = (typeof themeBg === "function") ? themeBg(season) : "";
       const t = GAME_CONFIG.theme || {};

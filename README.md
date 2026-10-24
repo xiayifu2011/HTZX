@@ -41,6 +41,10 @@
 **所有文件名都是英文**，这样在任何电脑、任何解压软件下都不会出现乱码。
 （Windows 自带的解压工具对中文文件名支持不好，会显示成乱码。）
 
+v1.1 起：启动脚本（`.bat`）的内容也改成了纯 ASCII 英文输出，
+根目录下不会再出现「鍚姩娓告垙.bat」这类乱码文件。
+`history/` 里保留着早期 C++ 版本的存档，文件名仍是中文，不影响游戏本体。
+
 | 文件名 | 作用 |
 |---|---|
 | `start-game.bat` | 双击启动游戏（Windows） |
@@ -150,11 +154,12 @@ theme: {
 
 ### 关于图片
 
-- 主题色：**清华紫 #660874**
+- 主题色：**清华紫 #660874**（另有群星 / 草原 / 晨曦 / 深海 / 素墨 / 花灯 六套可切换）
 - **学校目前没有官方校徽，游戏不使用校徽图标**，只用校名与校训文字
-- 背景图 3 张，均为校园实景的**扁平矢量插画风格艺术化重绘**
-  —— 不含真实人物、不出现校服与肖像
-- 更换背景：把图片放进 `assets/`，改 `js/02-config.js` 里的文件名即可
+- **v1.1 起暂不使用校园插画配图**，界面改用七套主题自带的渐变底色，不会白屏。
+  想恢复：把 `js/02-config.js` 里的 `usePhotos` 改回 `true`，图片放回 `assets/` 即可。
+  恢复时请注意：背景应为校园实景的**扁平矢量插画风格艺术化重绘**，
+  不含真实人物、不出现校服与肖像
 
 ---
 
@@ -162,9 +167,19 @@ theme: {
 
 | 想改什么 | 改哪里 |
 |---|---|
+| 学习难度（收益/遗忘/考试/压力） | `js/02-config.js` → `study`（四个系数，全改回 1 就是旧版） |
+| 屏幕情绪特效（红雾 / 灰暗） | `js/02-config.js` → `mood`（`enabled: false` 全关） |
+| 属性档位文案 | `js/01b-i18n.js` → `level.vlow / low / mid / high / vhigh` |
+| 哪些属性可见 / 模糊 | `js/01-utils.js` → `PROP_HUD` / `PROP_HIDDEN` / `PROP_BLUR` |
+| 运动锻炼的事件 | `js/05c-data-sport.js`（id 以 `sp_` 开头，只有运动能抽到） |
+| 做题题库 | `js/05d-data-quiz.js` → `QUIZ_BANK`（按科目 + 年级加题） |
+| 天赋退化（久不练习会失去） | `js/12-data-cures.js` → `TALENT_DECAY` |
+| 开局可选的时间跨度 | `js/02-config.js` → `TERM_PLAN` |
+| 亲情逻辑与家长称呼 | `js/03c-family.js` |
+| 主题配色与文案 | `js/02c-themes.js` → `THEME_SKINS` |
 | 手机违规的惩罚力度 | `js/07-data-events.js` → `phone`、`phone_check` |
 | 向父母要零花钱的金额 | `js/15-engine-study.js` → `allowanceSettle()` |
-| 亲情回落速度 | `js/15-engine-study.js` → 周结算里的 `famDrop`（现为 0.45 概率） |
+| 亲情回落速度 | `js/02-config.js` → `family.weeklyDrop`（现为 0.35 概率、每次 -2） |
 | 体艺节出现在第几周 | `js/09-data-fixed.js` → `SPORTS_FEST_WEEK`（现为 8） |
 | 读书角能抽到哪些天赋 | `js/06-data-books.js` → `BAD_TALENTS`、`pickGoodTalent()` |
 | 界面紧凑程度 | `css/02-components.css` → 「界面瘦身」那一段 |

@@ -48,7 +48,10 @@
       if (S && !fixedEventOf(S.term, wit0)) S.actQuota = num(S.slotPlan && S.slotPlan.length, actionQuota());
       renderHUD();
       if (S.over) return;
-      if (S.week > 0 && weekInTerm() === 0 && S.term >= TERMS) {return zhongkao();}
+      /* 中考：跑完玩家选的那几个学期就考（默认跑满六年制 → 6 个学期）。
+       * 只玩初一 / 只玩初三时，endTerm() 会提前收口。 */
+      const last = (typeof endTerm === "function") ? endTerm() : (TERMS - 1);
+      if (S.week > 0 && weekInTerm() === 0 && S.term > last) {return zhongkao();}
       const wit = weekInTerm();
       const wi = weekInfo(S.week, S.term);
       say(L("flow.weekHead", S.week, gradeName(), termName(), wi.month, wi.seasonIcon, wi.season), "week-head");
@@ -669,6 +672,10 @@
 
     function zhongkao() {
       count("zhongkao");
+      /* 中考考哪几科，按「本局最后一个学期」算，而不是当前已经越界的 S.term。
+       * 否则只玩初一的局，会拿初三的科目表去考（科目凭空多出物理化学）。 */
+      const last = (typeof endTerm === "function") ? endTerm() : clampNum(S.term, 0, TERMS - 1);
+      if (S.term !== last) S.term = last;
       const p = S.prop, subs = subjectsOf(S.term) || [];
       for (const k in PROP_RANGE) p[k] = fixProp(k, p[k]);
       ensureSubj();

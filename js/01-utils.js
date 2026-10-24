@@ -216,7 +216,10 @@
       const d = document.createElement("div");
       d.className = "floatgain";
       d.style.color = good === false ? "var(--red)" : (good === true ? "var(--green)" : "var(--gold)");
-      d.style.left = `calc(50% + ${(floatIdx++ % 5 - 2) * 60}px)`;
+      const fi = floatIdx++;
+      // 横向 5 个一循环（±120px 内），每满 5 条再整体下移一行，避免叠字
+      d.style.left = `calc(50% + ${(fi % 5 - 2) * 60}px)`;
+      d.style.top = `calc(55% + ${Math.floor(fi / 5) % 4 * 26}px)`;
       d.textContent = txt;
       document.body.appendChild(d);
       setTimeout(() => d.remove(), 1600);
