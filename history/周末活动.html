@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>周末活动 · 中考模拟器</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+body{
+    background:#121417;
+    color:#e2e5e9;
+    font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width:720px;
+    margin:60px auto;
+    padding:0 24px;
+    line-height:1.75;
+    position: relative;
+    overflow-x:hidden;
+}
+#bgCanvas{
+    position: fixed;
+    left:0;
+    top:0;
+    width:100vw;
+    height:100vh;
+    z-index:-1;
+    opacity:0.22;
+    pointer-events: none;
+}
+h1{
+    font-size:2.2rem;
+    margin-bottom:6px;
+}
+.subtitle{
+    color:#9ca3af;
+    margin-bottom:28px;
+    font-size:1.05rem;
+}
+.week-info{
+    display:inline-block;
+    background:#4c1d95;
+    color:#ddd6fe;
+    font-size:0.85rem;
+    padding:3px 14px;
+    border-radius:30px;
+    margin-bottom:24px;
+    border:1px solid #8b5cf6;
+    letter-spacing:1px;
+}
+.btn-block{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-bottom:32px;
+}
+button.btn{
+    display:block;
+    padding:14px 18px;
+    background:#8b5cf6;
+    color:white;
+    text-decoration:none;
+    border:none;
+    border-radius:8px;
+    text-align:left;
+    font-size:1.1rem;
+    font-family:inherit;
+    transition:0.15s;
+    cursor:pointer;
+    user-select:none;
+}
+button.btn:hover{
+    background:#7c3aed;
+    transform:scale(1.02);
+}
+button.btn.secondary{
+    background:#272a30;
+    color:#e5e7eb;
+    text-align:center;
+}
+button.btn.secondary:hover{
+    background:#33373f;
+}
+.result{
+    background:rgba(139,92,246,0.08);
+    border-left:4px solid #8b5cf6;
+    border-radius:0 10px 10px 0;
+    padding:16px 20px;
+    margin-bottom:28px;
+    color:#d1d5db;
+    min-height:64px;
+    font-size:1.05rem;
+}
+.footer{
+    margin-top:60px;
+    color:#6b7280;
+    font-size:0.9rem;
+}
+.footer a{
+    color:#a78bfa;
+    text-decoration:none;
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<h1>周末活动</h1>
+<div class="subtitle">Weekend Activities</div>
+
+<div class="week-info" id="weekInfo">第 1 周</div>
+
+<div class="result" id="result">选择这周末要做的事情吧。</div>
+
+<div class="btn-block" id="choices">
+    <button class="btn" onclick="choose(1)">1. 预习新课内容</button>
+    <button class="btn" onclick="choose(2)">2. 复习已学内容</button>
+    <button class="btn" onclick="choose(3)">3. 阅读课外书</button>
+    <button class="btn" onclick="choose(4)">4. 与朋友出去玩</button>
+    <button class="btn" onclick="choose(5)">5. 打球</button>
+    <button class="btn" onclick="choose(6)">6. 打游戏</button>
+    <button class="btn" onclick="choose(7)">7. 睡觉</button>
+</div>
+
+<div class="btn-block">
+    <button class="btn secondary" onclick="location.href='index.html'">返回主菜单</button>
+</div>
+
+<div class="footer">
+中考模拟器 · 学生视角<br>
+<span style="font-size:0.8rem; opacity:0.6;">初中三年，从初一开始。</span>
+</div>
+
+<script>
+// ====================== 01字符串流动背景 ======================
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+
+let w, h;
+let columns;
+let drops = [];
+let speeds = [];
+const fontSize = 16;
+
+function resizeCanvas(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+    columns = Math.floor(w / fontSize);
+    
+    drops = Array(columns).fill(0).map(() => Math.random() * -100);
+    speeds = Array(columns).fill(0).map(() => 0.5 + Math.random() * 1.2);
+}
+
+function drawMatrix(){
+    ctx.fillStyle = 'rgba(18,20,23,0.07)';
+    ctx.fillRect(0,0,w,h);
+    
+    ctx.font = fontSize + 'px "Fira Code", "Cascadia Code", monospace';
+    ctx.textBaseline = 'top';
+    
+    for(let i = 0; i < columns; i++){
+        const char = Math.random() > 0.5 ? '1' : '0';
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+        
+        const brightness = 0.6 + (Math.sin(i * 0.5 + Date.now() * 0.002) * 0.2);
+        ctx.fillStyle = `rgba(167, 139, 250, ${brightness})`;
+        
+        if (Math.random() > 0.98) {
+            ctx.fillStyle = '#c4b5fd';
+        }
+        
+        ctx.fillText(char, x, y);
+        
+        if(y > h && Math.random() > 0.975){
+            drops[i] = Math.random() * -20;
+            speeds[i] = 0.5 + Math.random() * 1.2;
+        } else {
+            drops[i] += speeds[i] * 0.8;
+        }
+    }
+}
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+let lastTime = 0;
+const interval = 45;
+
+function animate(currentTime) {
+    if (!lastTime) lastTime = currentTime;
+    const delta = currentTime - lastTime;
+    
+    if (delta >= interval) {
+        drawMatrix();
+        lastTime = currentTime;
+    }
+    requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// ===================== 周末活动逻辑 =====================
+let week = parseInt(localStorage.getItem('zhongkao_week') || '1');
+if(week > 3) week = 1;
+
+const weekInfo = document.getElementById('weekInfo');
+const result = document.getElementById('result');
+const choices = document.getElementById('choices');
+
+const activities = {
+    1:{text:'你预习了新课内容，感觉心里踏实了不少。', mood:+5,  score:+8},
+    2:{text:'你复习了已学内容，知识更牢固了。',       mood:+3,  score:+6},
+    3:{text:'你读了一本课外书，眼界开阔了一些。',     mood:+4,  score:+5},
+    4:{text:'你和朋友出去玩，心情变得很好。',         mood:+10, score:0},
+    5:{text:'你打了一场球，身体舒畅。',               mood:+8,  score:+2},
+    6:{text:'你打了一会儿游戏，放松了一下。',         mood:+6,  score:-2},
+    7:{text:'你睡了个懒觉，精神恢复了不少。',         mood:+7,  score:0}
+};
+
+function updateWeek(){
+    weekInfo.textContent = '第 ' + week + ' 周';
+}
+
+function choose(n){
+    const act = activities[n];
+    if(!act) return;
+
+    result.textContent = act.text;
+
+    // 保存进度
+    const save = JSON.parse(localStorage.getItem('zhongkao_sim_save') || '{}');
+    save.week = week;
+    save.mood = (save.mood || 85) + act.mood;
+    save.score = (save.score || 0) + act.score;
+    save.timestamp = Date.now();
+    localStorage.setItem('zhongkao_sim_save', JSON.stringify(save));
+
+    // 进入下一周
+    week++;
+    if(week > 3){
+        weekInfo.textContent = '三周结束';
+        result.textContent = act.text + ' 三周过去了，该回主菜单了。';
+        choices.innerHTML =
+            '<button class="btn secondary" onclick="location.href=\'index.html\'">返回主菜单</button>';
+        localStorage.setItem('zhongkao_week', '1');
+        return;
+    }
+
+    localStorage.setItem('zhongkao_week', week);
+    setTimeout(updateWeek, 500);
+}
+
+updateWeek();
+
+window.addEventListener('load', () => {
+    console.log('📚 周末活动页已加载，当前周：' + week);
+});
+</script>
+
+</body>
+</html>
