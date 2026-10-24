@@ -121,31 +121,31 @@
       let closedByCancel = false;
 
       const opts = picked.map(b => ({
-        t: b.n, sub: `花费 ${b.cost}`,
+        t: TZ(b.n), sub: L("book.cost", b.cost),
         disabled: () => S.prop.经济 < b.cost,
         fn: () => {
-          if (S.prop.经济 < b.cost) {say("经济不足，买不起这本书。", "bad"); return;}
+          if (S.prop.经济 < b.cost) {say(L("book.poor"), "bad"); return;}
           modProp("经济", -b.cost);
           b.eff(S);
           count("read");
           read = true;
-          say(`📖 你读了${b.n}。`, "good");
+          say(L("book.read", TZ(b.n)), "good");
           checkAch(); renderHUD();
-          showModal("班级图书角", `<div style='line-height:2'>${b.lore || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
-            t: "合上书", fn: () => { }
-          }], () => {if (onDone) onDone();}, false, false, {kind: "free", badge: "📚 本周行动 · 图书角", img: b.img});
+          showModal(L("book.title"), `<div style='line-height:2'>${TZ(b.lore) || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
+            t: L("book.close"), fn: () => { }
+          }], () => {if (onDone) onDone();}, false, false, {kind: "free", badge: L("book.badge"), img: b.img});
         }
       }));
-      opts.push({t: "取消", fn: () => {closedByCancel = true;}});
+      opts.push({t: L("modal.cancel"), fn: () => {closedByCancel = true;}});
 
-      showModal("班级图书角", `<div>教室后墙的图书角摆着同学们捐的书，窗边那格落满阳光。你抽出一本——<br><span style="color:var(--dim);font-size:.85rem">当前经济：${Math.round(S.prop.经济)}</span></div>`, opts, () => {
+      showModal(L("book.title"), `<div>${L("book.body")}<br><span style="color:var(--dim);font-size:.85rem">${L("book.money", Math.round(S.prop.经济))}</span></div>`, opts, () => {
         if (closedByCancel || !read) {
-          say("你把书放回原处，转身回到座位。", "sys");
+          say(L("book.putBack"), "sys");
           setTimeout(ensureActionPanel, 0);
           return;
         }
         if (onDone) onDone();
-      }, false, true, {kind: "free", badge: "📚 本周行动 · 图书角"});
+      }, false, true, {kind: "free", badge: L("book.badge")});
     }
 
     /* ==================================================================

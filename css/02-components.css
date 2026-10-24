@@ -27,7 +27,7 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(192, 138, 232, .2), transparent);
+      background: linear-gradient(90deg, transparent, rgba(var(--glow2), .2), transparent);
       transition: left .4s ease
     }
 
@@ -41,12 +41,12 @@
       inset: 0;
       border-radius: inherit;
       pointer-events: none;
-      box-shadow: 0 0 0 0 rgba(156, 77, 204, 0);
+      box-shadow: 0 0 0 0 rgba(var(--glow), 0);
       transition: box-shadow .22s ease
     }
 
     .btn:not(:disabled):hover::after {
-      box-shadow: 0 0 0 2px rgba(156, 77, 204, .5), 0 8px 22px rgba(156, 77, 204, .32)
+      box-shadow: 0 0 0 2px rgba(var(--glow), .5), 0 8px 22px rgba(var(--glow), .32)
     }
 
     .btn:not(:disabled):hover {
@@ -131,7 +131,7 @@
 
     .slot:hover {
       border-color: var(--purple);
-      box-shadow: 0 4px 16px rgba(156, 77, 204, .2)
+      box-shadow: 0 4px 16px rgba(var(--glow), .2)
     }
 
     .slot .info {
@@ -206,7 +206,7 @@
     }
 
     .badge:hover {
-      box-shadow: 0 0 12px rgba(156, 77, 204, .5);
+      box-shadow: 0 0 12px rgba(var(--glow), .5);
       border-color: var(--purple);
       filter: brightness(1.2)
     }
@@ -233,7 +233,7 @@
 
     .c6 {
       color: var(--gold-soft);
-      text-shadow: 0 0 8px rgba(192, 138, 232, .6)
+      text-shadow: 0 0 8px rgba(var(--glow2), .6)
     }
 
     .c7 {
@@ -393,7 +393,7 @@
     }
 
     .clubpill {
-      background: linear-gradient(135deg, rgba(102, 8, 116, .5), var(--panel2));
+      background: linear-gradient(135deg, rgba(var(--brand-rgb), .5), var(--panel2));
       border-color: var(--purple);
       color: var(--txt)
     }

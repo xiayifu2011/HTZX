@@ -7,8 +7,8 @@
 
     .premium-bg {
       background:
-        radial-gradient(circle at 15% 20%, rgba(156, 77, 204, .12), transparent 40%),
-        radial-gradient(circle at 85% 80%, rgba(192, 138, 232, .1), transparent 40%),
+        radial-gradient(circle at 15% 20%, rgba(var(--glow), .12), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(var(--glow2), .1), transparent 40%),
         var(--panel)
     }
 
@@ -18,7 +18,7 @@
       right: 0;
       width: 120px;
       height: 120px;
-      background: radial-gradient(circle at 100% 0%, rgba(156, 77, 204, .15), transparent 70%);
+      background: radial-gradient(circle at 100% 0%, rgba(var(--glow), .15), transparent 70%);
       pointer-events: none;
       border-radius: 0 16px 0 100%
     }
@@ -40,11 +40,11 @@
 
       0%,
       100% {
-        text-shadow: 0 0 6px rgba(192, 138, 232, .5)
+        text-shadow: 0 0 6px rgba(var(--glow2), .5)
       }
 
       50% {
-        text-shadow: 0 0 16px rgba(192, 138, 232, .9), 0 0 24px rgba(255, 209, 102, .5)
+        text-shadow: 0 0 16px rgba(var(--glow2), .9), 0 0 24px rgba(255, 209, 102, .5)
       }
     }
 
@@ -60,12 +60,12 @@
 
     .talentitem.c6 {
       border-color: var(--gold);
-      box-shadow: 0 0 12px rgba(192, 138, 232, .3)
+      box-shadow: 0 0 12px rgba(var(--glow2), .3)
     }
 
     .talentitem.c7 {
       border-color: var(--gold);
-      box-shadow: 0 0 18px rgba(255, 209, 102, .5), inset 0 0 12px rgba(192, 138, 232, .1)
+      box-shadow: 0 0 18px rgba(255, 209, 102, .5), inset 0 0 12px rgba(var(--glow2), .1)
     }
 
     .toast.ach-toast {
@@ -80,8 +80,9 @@
       position: fixed;
       inset: 0;
       z-index: -2;
-      background-image: var(--bg-image, none);
-      background-size: cover;
+      /* 两层：主题图片在上，主题渐变垫底（图片缺失时自动露出渐变） */
+      background-image: var(--bg-image, none), var(--bg-grad, none);
+      background-size: cover, cover;
       background-position: center;
       background-repeat: no-repeat;
       opacity: var(--bg-opacity, 0);
@@ -217,10 +218,119 @@
 
     .evpill .dot.on {
       background: var(--gold);
-      box-shadow: 0 0 6px rgba(192, 138, 232, .8)
+      box-shadow: 0 0 6px rgba(var(--glow2), .8)
     }
 
     .btn.busy-lock {
       opacity: .35;
       cursor: not-allowed
+    }
+
+    /* ============================================================
+     * 主题切换器（主菜单卡片 + 游戏内弹窗通用）
+     * ------------------------------------------------------------
+     * 每一个小格子就是一套主题：一颗配色圆点 + 主题名 + 一句文案。
+     * ============================================================ */
+
+    .themelist {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+      margin-top: 8px
+    }
+
+    .themepicker {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px
+    }
+
+    .themechip {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      color: var(--txt);
+      font-family: inherit;
+      font-size: .84rem;
+      line-height: 1.4
+    }
+
+    .themechip:hover {
+      border-color: var(--purple);
+      transform: translateY(-1px)
+    }
+
+    .themechip .tcdot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      vertical-align: -1px;
+      margin-right: 6px;
+      background: linear-gradient(135deg, var(--c1, #8a2b9c), var(--c2, #c08ae8));
+      box-shadow: 0 0 8px rgba(255, 255, 255, .18)
+    }
+
+    .themechip .tcname {
+      font-weight: bold;
+      color: var(--txt)
+    }
+
+    .themechip .tctag {
+      display: block;
+      margin-top: 2px;
+      color: var(--dim);
+      font-size: .74rem;
+      letter-spacing: .5px
+    }
+
+    .themechip.on {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px rgba(var(--glow), .35), 0 4px 14px rgba(var(--glow), .22)
+    }
+
+    .themechip.on .tcname {
+      color: var(--gold-soft)
+    }
+
+    /* ============================================================
+     * 设置行 · 语言按钮 · 顶栏按钮组
+     * ============================================================ */
+
+    .setrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .setlabel {
+      font-size: .9rem;
+      color: var(--gold-soft);
+      letter-spacing: 2px;
+      font-weight: bold
+    }
+
+    .langbtn {
+      margin: 0;
+      padding: 5px 14px;
+      font-size: .8rem
+    }
+
+    .topbtns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center
+    }
+
+    .nowrap {
+      white-space: nowrap
     }

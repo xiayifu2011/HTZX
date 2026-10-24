@@ -35,7 +35,7 @@
       max-width: 480px;
       width: 92%;
       padding: 14px 16px;
-      box-shadow: 0 0 60px rgba(156, 77, 204, .25);
+      box-shadow: 0 0 60px rgba(var(--glow), .25);
       max-height: 86vh;
       display: flex;
       flex-direction: column;
@@ -402,7 +402,7 @@
 
     .namebtn:hover {
       border-color: var(--purple);
-      box-shadow: 0 0 0 2px rgba(156, 77, 204, .35)
+      box-shadow: 0 0 0 2px rgba(var(--glow), .35)
     }
 
     .namebtn.sel {
@@ -428,7 +428,7 @@
 
     .talentitem:hover {
       border-color: var(--purple);
-      box-shadow: 0 0 0 2px rgba(156, 77, 204, .3), 0 4px 14px rgba(156, 77, 204, .2)
+      box-shadow: 0 0 0 2px rgba(var(--glow), .3), 0 4px 14px rgba(var(--glow), .2)
     }
 
     .talentitem.lock {

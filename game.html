@@ -43,6 +43,18 @@
       --green: #7ee0c0;
       --red: #ff7aa2;
       --blue: #a86ddb;
+
+      /* 发光色的 rgb 三元组：写成 rgb 才能在 rgba() 里调透明度。
+         这三组由 js/02c-themes.js 按主题覆盖，不要在这里改。 */
+      --glow: 156, 77, 204;
+      --glow2: 192, 138, 232;
+      --brand-rgb: 102, 8, 116;
+
+      /* 没有背景图时用的纯 CSS 渐变（主题自带） */
+      --bg-grad: none;
+      --bg-image: none;
+      --bg-opacity: 0.26;
+      --bg-overlay: rgba(18, 10, 24, .82);
     }
 
     * {
@@ -52,7 +64,9 @@
     }
 
     body {
-      background: radial-gradient(1200px 800px at 20% 0%, #2a1040, #120a18 60%);
+      /* 主题渐变 + 兜底深色，两者叠着用，主题没配渐变也不会白屏 */
+      background: var(--bg-grad, none), var(--bg);
+      background-color: var(--bg);
       color: var(--txt);
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
       min-height: 100vh;
@@ -120,7 +134,7 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(192, 138, 232, .2), transparent);
+      background: linear-gradient(90deg, transparent, rgba(var(--glow2), .2), transparent);
       transition: left .4s ease
     }
 
@@ -134,12 +148,12 @@
       inset: 0;
       border-radius: inherit;
       pointer-events: none;
-      box-shadow: 0 0 0 0 rgba(156, 77, 204, 0);
+      box-shadow: 0 0 0 0 rgba(var(--glow), 0);
       transition: box-shadow .22s ease
     }
 
     .btn:not(:disabled):hover::after {
-      box-shadow: 0 0 0 2px rgba(156, 77, 204, .5), 0 8px 22px rgba(156, 77, 204, .32)
+      box-shadow: 0 0 0 2px rgba(var(--glow), .5), 0 8px 22px rgba(var(--glow), .32)
     }
 
     .btn:not(:disabled):hover {
@@ -224,7 +238,7 @@
 
     .slot:hover {
       border-color: var(--purple);
-      box-shadow: 0 4px 16px rgba(156, 77, 204, .2)
+      box-shadow: 0 4px 16px rgba(var(--glow), .2)
     }
 
     .slot .info {
@@ -299,7 +313,7 @@
     }
 
     .badge:hover {
-      box-shadow: 0 0 12px rgba(156, 77, 204, .5);
+      box-shadow: 0 0 12px rgba(var(--glow), .5);
       border-color: var(--purple);
       filter: brightness(1.2)
     }
@@ -326,7 +340,7 @@
 
     .c6 {
       color: var(--gold-soft);
-      text-shadow: 0 0 8px rgba(192, 138, 232, .6)
+      text-shadow: 0 0 8px rgba(var(--glow2), .6)
     }
 
     .c7 {
@@ -486,7 +500,7 @@
     }
 
     .clubpill {
-      background: linear-gradient(135deg, rgba(102, 8, 116, .5), var(--panel2));
+      background: linear-gradient(135deg, rgba(var(--brand-rgb), .5), var(--panel2));
       border-color: var(--purple);
       color: var(--txt)
     }
@@ -722,7 +736,7 @@
       max-width: 480px;
       width: 92%;
       padding: 14px 16px;
-      box-shadow: 0 0 60px rgba(156, 77, 204, .25);
+      box-shadow: 0 0 60px rgba(var(--glow), .25);
       max-height: 86vh;
       display: flex;
       flex-direction: column;
@@ -1089,7 +1103,7 @@
 
     .namebtn:hover {
       border-color: var(--purple);
-      box-shadow: 0 0 0 2px rgba(156, 77, 204, .35)
+      box-shadow: 0 0 0 2px rgba(var(--glow), .35)
     }
 
     .namebtn.sel {
@@ -1115,7 +1129,7 @@
 
     .talentitem:hover {
       border-color: var(--purple);
-      box-shadow: 0 0 0 2px rgba(156, 77, 204, .3), 0 4px 14px rgba(156, 77, 204, .2)
+      box-shadow: 0 0 0 2px rgba(var(--glow), .3), 0 4px 14px rgba(var(--glow), .2)
     }
 
     .talentitem.lock {
@@ -1197,8 +1211,8 @@
 
     .premium-bg {
       background:
-        radial-gradient(circle at 15% 20%, rgba(156, 77, 204, .12), transparent 40%),
-        radial-gradient(circle at 85% 80%, rgba(192, 138, 232, .1), transparent 40%),
+        radial-gradient(circle at 15% 20%, rgba(var(--glow), .12), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(var(--glow2), .1), transparent 40%),
         var(--panel)
     }
 
@@ -1208,7 +1222,7 @@
       right: 0;
       width: 120px;
       height: 120px;
-      background: radial-gradient(circle at 100% 0%, rgba(156, 77, 204, .15), transparent 70%);
+      background: radial-gradient(circle at 100% 0%, rgba(var(--glow), .15), transparent 70%);
       pointer-events: none;
       border-radius: 0 16px 0 100%
     }
@@ -1230,11 +1244,11 @@
 
       0%,
       100% {
-        text-shadow: 0 0 6px rgba(192, 138, 232, .5)
+        text-shadow: 0 0 6px rgba(var(--glow2), .5)
       }
 
       50% {
-        text-shadow: 0 0 16px rgba(192, 138, 232, .9), 0 0 24px rgba(255, 209, 102, .5)
+        text-shadow: 0 0 16px rgba(var(--glow2), .9), 0 0 24px rgba(255, 209, 102, .5)
       }
     }
 
@@ -1250,12 +1264,12 @@
 
     .talentitem.c6 {
       border-color: var(--gold);
-      box-shadow: 0 0 12px rgba(192, 138, 232, .3)
+      box-shadow: 0 0 12px rgba(var(--glow2), .3)
     }
 
     .talentitem.c7 {
       border-color: var(--gold);
-      box-shadow: 0 0 18px rgba(255, 209, 102, .5), inset 0 0 12px rgba(192, 138, 232, .1)
+      box-shadow: 0 0 18px rgba(255, 209, 102, .5), inset 0 0 12px rgba(var(--glow2), .1)
     }
 
     .toast.ach-toast {
@@ -1270,8 +1284,9 @@
       position: fixed;
       inset: 0;
       z-index: -2;
-      background-image: var(--bg-image, none);
-      background-size: cover;
+      /* 两层：主题图片在上，主题渐变垫底（图片缺失时自动露出渐变） */
+      background-image: var(--bg-image, none), var(--bg-grad, none);
+      background-size: cover, cover;
       background-position: center;
       background-repeat: no-repeat;
       opacity: var(--bg-opacity, 0);
@@ -1407,12 +1422,121 @@
 
     .evpill .dot.on {
       background: var(--gold);
-      box-shadow: 0 0 6px rgba(192, 138, 232, .8)
+      box-shadow: 0 0 6px rgba(var(--glow2), .8)
     }
 
     .btn.busy-lock {
       opacity: .35;
       cursor: not-allowed
+    }
+
+    /* ============================================================
+     * 主题切换器（主菜单卡片 + 游戏内弹窗通用）
+     * ------------------------------------------------------------
+     * 每一个小格子就是一套主题：一颗配色圆点 + 主题名 + 一句文案。
+     * ============================================================ */
+
+    .themelist {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+      margin-top: 8px
+    }
+
+    .themepicker {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px
+    }
+
+    .themechip {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      color: var(--txt);
+      font-family: inherit;
+      font-size: .84rem;
+      line-height: 1.4
+    }
+
+    .themechip:hover {
+      border-color: var(--purple);
+      transform: translateY(-1px)
+    }
+
+    .themechip .tcdot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      vertical-align: -1px;
+      margin-right: 6px;
+      background: linear-gradient(135deg, var(--c1, #8a2b9c), var(--c2, #c08ae8));
+      box-shadow: 0 0 8px rgba(255, 255, 255, .18)
+    }
+
+    .themechip .tcname {
+      font-weight: bold;
+      color: var(--txt)
+    }
+
+    .themechip .tctag {
+      display: block;
+      margin-top: 2px;
+      color: var(--dim);
+      font-size: .74rem;
+      letter-spacing: .5px
+    }
+
+    .themechip.on {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px rgba(var(--glow), .35), 0 4px 14px rgba(var(--glow), .22)
+    }
+
+    .themechip.on .tcname {
+      color: var(--gold-soft)
+    }
+
+    /* ============================================================
+     * 设置行 · 语言按钮 · 顶栏按钮组
+     * ============================================================ */
+
+    .setrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .setlabel {
+      font-size: .9rem;
+      color: var(--gold-soft);
+      letter-spacing: 2px;
+      font-weight: bold
+    }
+
+    .langbtn {
+      margin: 0;
+      padding: 5px 14px;
+      font-size: .8rem
+    }
+
+    .topbtns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center
+    }
+
+    .nowrap {
+      white-space: nowrap
     }
 
 </style>
@@ -1425,49 +1549,60 @@
      ============================================================ -->
   <div id="startScreen" class="screen">
     <div class="school-brand" id="schoolBrand"></div>
-    <h1>中考人生模拟器</h1>
+    <h1 data-i18n="app.title">中考人生模拟器</h1>
     <p class="sub" id="subMotto">人生在立，行达天下 —— 登上立行号，每一步都算数</p>
+
     <div class="card premium-bg" style="position:relative;overflow:hidden">
       <div class="ink-decoration"></div>
-      <div class="tag-title">存档槽位</div>
+      <div class="tag-title" id="slotsLabel">存档槽位</div>
       <div class="slots" id="slotList"></div>
     </div>
+
+    <!-- ============================================================
+         设置：主题色 + 语言（两套切换都立刻生效，并写进本地设置）
+         ============================================================ -->
+    <div class="card" id="settingsCard">
+      <div class="setrow">
+        <span class="setlabel" id="themeLabel">主题色</span>
+        <button class="btn langbtn" id="langBtn" onclick="toggleLang()">English</button>
+      </div>
+      <div class="themelist" id="themeList"></div>
+      <div style="color:var(--dim);font-size:.76rem;margin-top:6px" id="themeHint"></div>
+      <div style="color:var(--dim);font-size:.76rem;margin-top:2px" id="langHint"></div>
+    </div>
+
     <div class="card" style="text-align:center">
-      <div class="tag-title" style="margin-bottom:8px">了解更多</div>
+      <div class="tag-title" style="margin-bottom:8px" id="moreLabel">了解更多</div>
       <div class="docbtns">
-        <button class="btn" onclick="openDoc('guide')">📘 新手介绍</button>
-        <button class="btn" onclick="openDoc('changelog')">🆕 更新日志</button>
-        <button class="btn" onclick="openDoc('credits')">🙏 鸣谢列表</button>
+        <button class="btn" id="btnGuide" onclick="openDoc('guide')">📘 新手介绍</button>
+        <button class="btn" id="btnChangelog" onclick="openDoc('changelog')">🆕 更新日志</button>
+        <button class="btn" id="btnCredits" onclick="openDoc('credits')">🙏 鸣谢列表</button>
       </div>
     </div>
+
     <div class="card" style="text-align:center">
-      <div class="tag-title" style="margin-bottom:8px">游戏说明</div>
-      <p style="color:var(--dim);font-size:.9rem;line-height:2">
-        你将经历初一至初三共 <b style="color:var(--gold)">150 周</b>,直至中考。<br>
-        <b style="color:var(--purple)">天赋不会在一开始赠送</b> —— 它们藏在一次次选择里。<br>
-        每周可做 <b style="color:var(--gold)">1~2 次本周行动</b>,每次行动后都会跟一个 <b style="color:var(--gold)">⚡ 事件弹窗</b>,偶尔还会连锁出后续事件。<br>
-        <b style="color:var(--green)">🎒 小卖铺 / 读书角 / 天赋图鉴 / 成就</b> 属于自由操作,<b>不占用行动次数</b>。<br>
-        一些负面天赋是可以<b style="color:var(--green)">「破茧」消除</b>的 —— 坚持学习、坚持休息,阴影总会散去。<br>
-        <span style="color:var(--dim);font-size:.85rem">「人生在立，行达天下」—— 登上立行号，这三年走的每一步，都算数。</span>
-      </p>
+      <div class="tag-title" style="margin-bottom:8px" id="aboutLabel">游戏说明</div>
+      <p style="color:var(--dim);font-size:.9rem;line-height:2" id="aboutBody"></p>
     </div>
   </div>
 
   <div id="gameScreen" class="screen hidden">
     <header class="topline">
-      <div class="weekpill"><b id="hudGrade">初一</b> · 第 <b id="hudWeek">0</b> 周 · <span id="hudTerm"></span></div>
-      <div class="evpill" id="actPill">🎯 本周行动 <b id="actNow">0</b>/<b id="actMax">0</b></div>
-      <div class="evpill" id="evPill">⚡ 事件
+      <div class="weekpill"><b id="hudGrade">初一</b> · <span id="hudWeekText">第 0 周</span> · <span id="hudTerm"></span></div>
+      <div class="evpill" id="actPill">🎯 <span class="nowrap" id="actLabel">本周行动</span> <b id="actNow">0</b>/<b id="actMax">0</b></div>
+      <div class="evpill" id="evPill">⚡ <span class="nowrap" id="evLabel">事件</span>
         <span class="dots" id="evDots"></span>
       </div>
       <div class="timepill" id="timePill">📅 <span id="hudTime">—</span></div>
       <div class="clubpill hidden" id="clubPill">🎪 <span id="hudClub">—</span></div>
-      <div>
+      <div class="topbtns">
         <button class="btn" id="btnShop" onclick="openShop()">🏪 小卖铺</button>
         <button class="btn" id="btnTalentBook" onclick="openTalentBook()">📖 天赋图鉴</button>
         <button class="btn" id="btnAch" onclick="openAch()">🏆 成就</button>
-        <button class="btn" onclick="saveGame(true)">💾 保存</button>
-        <button class="btn" onclick="toStart()">🏠 主菜单</button>
+        <button class="btn" id="btnTheme" onclick="openThemePicker()">🎨 主题</button>
+        <button class="btn" id="btnLang" onclick="toggleLang()">🌐 中/EN</button>
+        <button class="btn" id="btnSave" onclick="saveGame(true)">💾 保存</button>
+        <button class="btn" id="btnHome" onclick="toStart()">🏠 主菜单</button>
       </div>
     </header>
     <div id="hud">
@@ -1475,20 +1610,20 @@
       <div class="sidecol">
         <div class="card" id="statPanel"></div>
         <div class="card">
-          <div class="tag-title">天赋(<span id="talentCount">0</span>) <span
-              style="color:var(--dim);font-size:.7rem">点击看详情</span></div>
+          <div class="tag-title"><span id="talentLabel">天赋</span>(<span id="talentCount">0</span>) <span
+              style="color:var(--dim);font-size:.7rem" id="talentHint">点击看详情</span></div>
           <div id="talentPanel" style="margin-top:4px;line-height:1.7"></div>
-          <div class="tag-title" style="margin-top:6px">道具(<span id="itemCount">0</span>)</div>
+          <div class="tag-title" style="margin-top:6px"><span id="itemLabel">道具</span>(<span id="itemCount">0</span>)</div>
           <div id="itemPanel" style="margin-top:4px;line-height:1.7"></div>
         </div>
         <div class="card">
-          <div class="tag-title">各科(本年级)</div>
+          <div class="tag-title" id="subjLabel">各科(本年级)</div>
           <div id="subjPanel" style="margin-top:4px"></div>
-          <div class="tag-title" style="margin-top:6px">成绩</div>
+          <div class="tag-title" style="margin-top:6px" id="scoreLabel">成绩</div>
           <div style="margin-top:4px;line-height:1.7;font-size:.85rem">
-            综合学力:<b id="scoreNow" style="color:var(--gold)">0</b><br>
-            最近考试:<b id="lastExam" style="color:var(--blue)">—</b><br>
-            年级排名(估):<b id="rankNow" style="color:var(--green)">—</b>
+            <span id="scoreTotalLabel">综合学力</span>:<b id="scoreNow" style="color:var(--gold)">0</b><br>
+            <span id="lastExamLabel">最近考试</span>:<b id="lastExam" style="color:var(--blue)">—</b><br>
+            <span id="rankLabel">年级排名(估)</span>:<b id="rankNow" style="color:var(--green)">—</b>
           </div>
         </div>
       </div>
@@ -1518,25 +1653,20 @@
   <!-- 工具层：数值、属性、日志 -->
   <script>
 /* ==== 00-docs.js ==== */
-/* ==================================================================
- * 自动生成 · 请勿手工编辑
- * ------------------------------------------------------------------
- * 这个文件由 tools/sync-docs.js 从 docs/*.md 生成。
- * 要改内容请改 docs/guide.md / changelog.md / credits.md，
- * 然后运行 node tools/sync-docs.js（或双击 tools/同步文档.bat）。
- * ============================================================ */
+/* 自动生成 · 请勿手工编辑
+ * 由 tools/sync-docs.html 从 docs/*.md 生成
+ * ============================================ */
 
 const GAME_DOCS = {
   guide: {title: "新手介绍", html: "<h2>新手介绍</h2>\n\n<p>欢迎来到<b>中考人生模拟器 · 红塔中学版</b>。</p>\n\n<p>你将扮演一名<b>红塔少年</b>，从初一上学期走到初三中考，</p>\n<p>一共 <b>150 周</b>，约三年的时间。这不是一场考试，是一段生活。</p>\n\n<blockquote>校训「<b>人生在立，行达天下</b>」　|　登上「<b>立行号</b>」，每一步都算数。</blockquote>\n\n<hr class=\"mdhr\">\n\n<h3>一、基本玩法</h3>\n\n<p>每周你会做 <b>1~2 次行动</b>，一周分两个时段：</p>\n\n<table class=\"mdtable\">\n<tr><th>时段</th><th>说明</th></tr>\n<tr><td>🏫 <b>周中</b></td><td>住校的日子。早读、上课、晚自习、熄灯</td></tr>\n<tr><td>🏠 <b>周末</b></td><td>回家或自由安排的两天</td></tr>\n</table>\n\n<p>时段是<b>按先后顺序</b>推进的：一定是先在学校的周中，再是回家的周末。</p>\n<p>不会先回家、再回到宿舍。</p>\n\n<p>行动有六种：</p>\n\n<ul>\n<li>📖 努力学习 —— 涨学力，是中考分数的来源</li>\n<li>😴 好好休息 —— 回健康、降压力</li>\n<li>👥 社交活动 —— 涨社交、结识朋友</li>\n<li>🎮 摸鱼娱乐 —— 放松，但会掉效率</li>\n<li>🏠 向父母要零花钱 —— 拿到经济，金额看<b>亲情</b></li>\n<li>📚 图书角 —— 读书，只给正面的东西</li>\n</ul>\n\n<p><b>每次行动之后，一定会跟一个事件弹窗</b>，偶尔还会连锁出后续。</p>\n\n<hr class=\"mdhr\">\n\n<h3>二、七项属性</h3>\n\n<table class=\"mdtable\">\n<tr><th>属性</th><th>作用</th></tr>\n<tr><td>心态</td><td>太低会崩溃，影响学习收益</td></tr>\n<tr><td>经济</td><td>买书、买道具、吃饭</td></tr>\n<tr><td>健康</td><td>太低会生病、甚至提前离场</td></tr>\n<tr><td>效率</td><td>直接影响学习收益倍率</td></tr>\n<tr><td>悟性</td><td>影响考试分数，也是解锁天赋的\"货币\"</td></tr>\n<tr><td>社交</td><td>影响人际关系类事件</td></tr>\n<tr><td>压力</td><td>太高会扣心态、扣效率</td></tr>\n</table>\n\n<p>还有一项 <b>亲情</b>，不占主属性栏，只在家庭事件和向父母要钱时生效。</p>\n<p>亲情越高，父母越愿意给钱，也越少念叨。</p>\n\n<hr class=\"mdhr\">\n\n<h3>三、天赋不是开局送的</h3>\n\n<p>开局你一无所有。天赋会在一次次选择里<b>长出来</b>：</p>\n\n<ul>\n<li>坚持学习 → 可能获得「专注」「卷王」</li>\n<li>坚持休息 → 可能获得「晨型人」</li>\n<li>读书 → 只给正面的天赋</li>\n<li>社团活动 → 长期参与可能有所收获</li>\n</ul>\n\n<p><b>负面天赋也能消除</b>，这叫「破茧」：</p>\n\n<ul>\n<li>厌学 → 坚持学习 12 次后消失</li>\n<li>网瘾 → 好好休息 10 次后消失</li>\n<li>拖延症 → 坚持学习 16 次后消失，还会送你「自律机器」</li>\n</ul>\n\n<p>天赋面板上会显示进度，比如「厌学 Lv.2 🌱5/12」。</p>\n\n<hr class=\"mdhr\">\n\n<h3>四、关于手机（重要）</h3>\n\n<p>红塔中学对手机<b>零容忍</b>。</p>\n\n<p>如果你在周末选择<b>把手机带去学校</b>，那么接下来几周里：</p>\n\n<ul>\n<li>可能遇到<b>宿舍突击检查</b></li>\n<li>可能遇到<b>熄灯后的诱惑</b></li>\n</ul>\n\n<p>被抓到的后果很重：没收、请家长、取消评优、学习状态下降数周。</p>\n\n<p><b>选择不带，是最聪明的做法。</b> 自律会拿到「自律机器」天赋和学习加成。</p>\n\n<hr class=\"mdhr\">\n\n<h3>五、社团</h3>\n\n<p>社团活动<b>只在周三下午</b>发生，其他时候不会有。</p>\n<p>（唯一例外是花灯社的剧院研学，那是走出校园的活动。）</p>\n\n<p><b>抢社团</b>在每学年<b>上学期第 3~5 周</b>的周末开放：</p>\n<p>初一上、初二上、初三上各一次机会。</p>\n\n<p>红塔中学的社团是<b>抢</b>的——名额有限，手慢无。</p>\n<p>而且<b>窗口只弹一次</b>：抢不上，这一年就没有社团。</p>\n\n<table class=\"mdtable\">\n<tr><th>难度</th><th>社团</th></tr>\n<tr><td>最难抢（约 35%）</td><td>🏀 篮球社、🤸 啦啦操社</td></tr>\n<tr><td>较难（约 45%）</td><td>🏮 花灯社、🎭 话剧社、💻 编程社</td></tr>\n<tr><td>一般（约 60%）</td><td>🖌 国画社、🎨 黏土社、🎵 合唱团、🎙 朗诵社、🔊 英语播音配音社、📷 摄影社、🏓 乒乓球社</td></tr>\n<tr><td>最好抢（约 75%）</td><td>♟ 围棋社</td></tr>\n</table>\n\n<p>入社后，<b>每周三的社团课</b>会有社团的事。</p>\n<p>长期参加（累计 6 次）还可能有所收获。</p>\n\n<p>每学年上学期可以<b>重选社团</b>，但重选会清零累计次数——</p>\n<p>三年待在同一个社团，和每年换一个，是两种玩法。</p>\n\n<hr class=\"mdhr\">\n\n<h3>六、时间与季节</h3>\n\n<p>游戏里有真实的校历时间：<b>9 月开学 → 次年 1 月</b>，<b>2 月开学 → 6 月</b>。</p>\n<p>分春 🌸 / 夏 🌞 / 秋 🍂 / 冬 ❄️ 四季。</p>\n\n<p>有些事件只在特定季节出现：</p>\n\n<ul>\n<li>秋天才有落叶的林荫道</li>\n<li>夏天才有吊扇与蝉鸣</li>\n<li>冬天才有天没亮的早读</li>\n</ul>\n\n<p>顶栏的 📅 会显示当前的月份和季节。</p>\n\n<hr class=\"mdhr\">\n\n<h3>七、小提示</h3>\n\n<ul>\n<li><b>小卖铺、天赋图鉴、成就、道具</b>都属于自由操作，<b>不消耗行动次数</b></li>\n<li>每周行动机会有限，但<b>学科栏可以点开看详情</b></li>\n<li>压力爆表会扣心态，别忘了休息</li>\n<li>中考分数不是唯一结局，还有艺考、体校、职高等多种去向</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<p><b>祝你在红塔中学的三年，走得踏实。</b></p>\n"},
   changelog: {title: "更新日志", html: "<h2>更新日志</h2>\n\n<h3>v1.0 · 正式版（发布版）</h3>\n\n<p>这是第一个完整版本。界面、数值、文案、体检脚本全部过了一遍，</p>\n<p>可以作为社团成果提交审核、在全校展示。</p>\n\n<p><b>界面：更紧凑，少滚滚轮</b></p>\n\n<ul>\n<li>弹窗内边距、行间距整体收紧（正文行高 1.8 → 1.55），字少不再空一大片</li>\n<li>行动面板改为<b>单列竖排</b>，六个选项一眼看全</li>\n<li>主界面左栏合并：天赋 + 道具并成一张卡，各科 + 成绩并成一张卡</li>\n<li>按钮、卡片、日志区、成就格、Markdown 文档的间距统一压缩</li>\n</ul>\n\n<p><b>修掉一批会影响体验的问题</b></p>\n\n<ul>\n<li>读档后社团会消失 —— 社团、手机标记、事件冷却原本根本没存进存档，已补齐</li>\n<li>「向父母要零花钱」时，父母的台词弹窗会被后面的随机事件直接盖掉，已改成说完再继续</li>\n<li>剧情模式（story）下仍可能因经济归零而「辍学打工」提前结束 ——</li>\n</ul>\n<p>  与该难度「不会中途暴毙」的承诺不符，已加经济保底线</p>\n<ul>\n<li>学力衰减在一周内被计算了两次（每次行动一次 + 周结算一次），</li>\n</ul>\n<p>  导致初三时衰减量超过学习量、学力一路跌回个位数，已去掉重复计算</p>\n<ul>\n<li>体检脚本新增：社团奖励天赋校验、时段/季节合法性校验、</li>\n</ul>\n<p>  「写了却永远拿不到」的死成就检测、条件分支里的指令错别字检查</p>\n\n<p><b>结局与成就</b></p>\n\n<ul>\n<li>「少年班」「平凡而幸福」两条结局排在了分数结局后面，条件再符合也轮不到，已重排</li>\n<li>「冠军之心」「锦鲤本鲤」「竞赛之星」「青春悸动」「干饭之魂」五个成就</li>\n</ul>\n<p>  没有任何地方会为它们计数，已接上计数并补充事件</p>\n<ul>\n<li>「六边形战士」把「压力」也算成一条边（压力高是坏事），已改为只算六项主属性</li>\n<li>补上社团表里缺失的奖励天赋【匠心】【逻辑鬼才】（天赋数 80 → 82）</li>\n</ul>\n\n<p><b>内容与文案</b></p>\n\n<ul>\n<li>每条随机事件都标注了时段（周中 / 周三社团课 / 周末），</li>\n</ul>\n<p>  不会再出现「住校却半夜接手机」「周末还在教室随堂小测」这类时间错误</p>\n<ul>\n<li>新增事件：校门口的小吃摊、课桌里的纸条、陪妈妈去赶集、周日的作业、</li>\n</ul>\n<p>  周末的一顿饭、爬一次红塔山、体艺节前的排练、黑板右上角（初三）、百日誓师</p>\n<ul>\n<li>「社团招新周」与固定日程的社团展演重复，改为「社团开放日」（未入社时才出现）</li>\n<li>「体育艺术文化节」与固定日程撞车，改为节前的排练</li>\n<li>天赋诗句去重 16 处（多处引用同一句诗），并为新增天赋补了诗句</li>\n<li>大量事件、书目、道具文案改写，增强文学性与玉溪本地气息</li>\n</ul>\n\n<p><b>数值</b></p>\n\n<ul>\n<li>中考公式里学力的权重过低（0.7），学力几乎不影响分数，</li>\n</ul>\n<p>  天天摸鱼和天天学习考出的分差不多。已提到 1.3，并把权重做成</p>\n<p>  <code>js/02-config.js</code> 里可调的 <code>exam.subjWeight</code></p>\n<ul>\n<li>参考值（剧情模式）：均衡游玩 ≈ 87 分，偏重学习 ≈ 88 分，长期摸鱼 ≈ 73 分</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.10 · 真实社团版本</h3>\n\n<p><b>社团改为学校实际名单（13 个）</b></p>\n\n<ul>\n<li>国画、黏土、花灯、合唱、朗诵、话剧、英语播音配音、篮球、啦啦操、乒乓球、围棋、摄影、编程</li>\n<li>移除此前没有依据的 7 个社团</li>\n</ul>\n\n<p><b>社团活动只在周三</b></p>\n\n<ul>\n<li>时段顺序改为：周中 → <b>周三社团课</b> → 周末</li>\n<li>社团事件全部限定在周三社团课，其他时候不会出现</li>\n<li>唯一例外：花灯社的剧院研学（走出校园）安排在周末</li>\n<li>没加入社团时不排「周三社团课」这个时段</li>\n<li>周三社团课的行动选项与平时不同（去社团 / 写作业 / 休息 / 找同学）</li>\n</ul>\n\n<p><b>抢社团改为每学年上学期一次</b></p>\n\n<ul>\n<li>窗口：初一上、初二上、初三上的<b>第 3~5 周</b></li>\n<li>整个窗口只弹一次，抢不上这一年就没有社团</li>\n<li>每学年上学期可重选，重选清零累计次数</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.9 · 时间与社团版本</h3>\n\n<p><b>新增</b></p>\n\n<ul>\n<li>校历时间系统：月份、季节（春夏秋冬），顶栏实时显示</li>\n<li>一周分「周中 / 周末」两个时段，按时间先后顺序推进</li>\n<li>时段数量<b>动态调整</b>：上周攒下的后续事件会让对应时段自动延长</li>\n<li>社团系统：红塔中学 16 个社团</li>\n<li>初一上第 1~3 周周末<b>抢社团</b>，热门社团手慢无</li>\n<li>入社后社团事件均匀分布在学期中</li>\n<li>长期参与（6 次）可能获得天赋</li>\n<li>每个社团有每周微小加成</li>\n<li>事件分布开关 <code>dist</code>：</li>\n<li><code>uniform</code> 均匀分布（距上次越久概率越高）</li>\n<li><code>decay</code> 出现后衰减</li>\n<li><code>front</code> 前期多 / <code>back</code> 后期多</li>\n<li>事件时段字段 <code>slot</code>、季节字段 <code>season</code>、月份字段 <code>months</code></li>\n<li>事件最小间隔 <code>minGap</code>，避免扎堆</li>\n<li>选项<b>条件分支</b> <code>branch</code>：同一选项按数值走向不同结果</li>\n<li>后续事件挂起 <code>raise</code>：不立刻触发，而是在几周内提高概率</li>\n<li>标记系统 <code>flag</code>：例如\"有没有把手机带到学校\"</li>\n<li>手机事件链：返校前选择 → 带手机才可能被查到 → 被抓有后果</li>\n<li>四季观景事件：春（操场边先绿了）、夏（吊扇与蝉鸣）、冬（早读时天还没亮）</li>\n<li>主菜单三个按钮：新手介绍 / 更新日志 / 鸣谢列表（内容在 docs/*.md 里改）</li>\n</ul>\n\n<p><b>调整</b></p>\n\n<ul>\n<li>宿舍熄灯事件去掉手机选项，改为「和室友聊到很晚」（手机玩法独立成链）</li>\n<li>秋日林荫道改为只在秋季出现</li>\n<li>事件选择引擎重写，支持时段、季节、分布、间隔、挂起</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.8 · 红塔中学定制版</h3>\n\n<ul>\n<li>填入校训「人生在立，行达天下」、立行文化四立、立行号意象</li>\n<li>主题色改为清华紫 #660874</li>\n<li>15 条红塔中学专属事件（花灯、聂耳、寄宿生活、家校团建等）</li>\n<li>3 张扁平插画风背景（校园全景 / 林荫道 / 立行号列车）</li>\n<li>不使用校徽，只用校名与校训文字</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.7 · 内容调整</h3>\n\n<ul>\n<li>移除图书馆（学校没有），改为班级图书角</li>\n<li>手机违规惩罚大幅加重</li>\n<li>体育艺术节改为一年一次（上学期第 8 周）</li>\n<li>「打零工」改为「向父母要零花钱」，新增亲情属性</li>\n<li>新增 5 条家庭事件</li>\n<li>读书只给正面天赋，无天赋可给时改为给悟性</li>\n<li>界面瘦身：属性栏双列、行动按钮两列、学科栏可折叠、日志区限高</li>\n<li>天赋图鉴改为紧凑卡片，关闭按钮跟随滚动</li>\n<li>修复多事件弹窗互相覆盖导致卡死的 Bug</li>\n<li>数值边界处理，杜绝 NaN</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.6 · 开源拆分</h3>\n\n<ul>\n<li>单文件拆分为 40 个文件的项目结构</li>\n<li>引擎层 / 内容层 / 配置层分离</li>\n<li>事件效果支持中文指令写法</li>\n<li>内容体检脚本、单文件打包脚本</li>\n<li>三份文档：文件大纲、内容教程、审核清单</li>\n</ul>\n"},
-  credits: {title: "鸣谢列表", html: "<h2>鸣谢列表</h2>\n\n<h3>立项与开发</h3>\n\n<p><b>玉溪市红塔中学（玉溪一中附属中学）社团开发项目</b></p>\n\n<p>由学校社团学生自主开发，用于全校展示与教学实践。</p>\n\n<h3>指导</h3>\n\n<ul>\n<li>感谢学校老师对游戏内容的审核与指导</li>\n<li>感谢社团指导老师的组织协调</li>\n</ul>\n\n<h3>素材来源</h3>\n\n<ul>\n<li>校训「人生在立，行达天下」、立行文化四立 —— 学校公开宣传材料</li>\n<li>「立行号」列车意象、「每一步都算数」 —— 学校迎新物料</li>\n<li>体育艺术文化节主题「行者」 —— 学校第二届体艺节</li>\n<li>玉溪花灯戏、聂耳与国歌 —— 玉溪本土非遗与红色文化</li>\n<li>社团名录、寄宿制生活细节 —— 学校公开报道</li>\n</ul>\n\n<h3>关于图片</h3>\n\n<ul>\n<li>背景图为校园实景的<b>扁平矢量插画风格艺术化重绘</b></li>\n<li>不含真实人物肖像、不含校服与学生照片</li>\n<li><b>学校目前没有官方校徽，游戏不使用校徽图标</b>，只用校名与校训文字</li>\n</ul>\n\n<h3>技术</h3>\n\n<ul>\n<li>纯原生 JavaScript / HTML / CSS，无任何第三方库</li>\n<li>无联网请求，数据保存在本机浏览器</li>\n<li>无广告、无付费、无个人信息采集</li>\n</ul>\n\n<h3>特别感谢</h3>\n\n<p>感谢每一位试玩并给出意见的同学。</p>\n<p>这个游戏能被玩完、被讨论、被吐槽，就是它存在的意义。</p>\n"}
+  credits: {title: "鸣谢列表", html: "<h2>鸣谢列表</h2>\n\n<h3>团队核心</h3>\n<p>红塔中学（学生团队）</p>\n\n<ul>\n<li>2027届8班 夏毅夫 核心代码构建，github仓库提供者</li>\n<li>2027届5班 林钰航 代码边界测试，开发工具提供者</li>\n<li>2027届5班 尹鹏肖 结局数值判断与发展方向提供者</li>\n<li>2027届5班 蔡家骏 中文指令与玩家开放式内容编辑灵感提供者</li>\n</ul>\n\n<p>红塔中学（老师）</p>\n<ul>\n<li>邓瑞老师 自治社团项目的支持者与核心审核员</li>\n<li>王家平校长与学校的诸位老师 该项目的舞台提供与支持者</li>\n</ul>\n\n<p>校外人员</p>\n<ul>\n<li>deepseek 免费开源的才是真正的代码精神！</li>\n<li>杨方烨 编程大佬，该项目初期的指引者</li>\n<li>文艺清 游戏边界BUG的超强寻找者</li>\n</ul>\n\n\n<p>...欢迎更多人参与我们的项目，如果你发现了BUG或提供了新的idea，和维护者说，这里给你单开一行</p>\n\n<h3>立项与开发</h3>\n\n<p><b>玉溪市红塔中学（玉溪一中附属中学）社团开发项目</b></p>\n\n<p>由学校社团学生自主开发，用于全校展示与教学实践。</p>\n\n<h3>指导</h3>\n\n<ul>\n<li>感谢学校老师对游戏内容的审核与指导</li>\n<li>感谢社团指导的组织协调</li>\n</ul>\n\n<h3>素材来源</h3>\n\n<ul>\n<li>校训「人生在立，行达天下」、立行文化四立 —— 学校公开宣传材料</li>\n<li>「立行号」列车意象、「每一步都算数」 —— 学校迎新物料</li>\n<li>体育艺术文化节主题「行者」 —— 学校第二届体艺节</li>\n<li>玉溪花灯戏、聂耳与国歌 —— 玉溪本土非遗与红色文化</li>\n<li>社团名录、寄宿制生活细节 —— 学校公开报道</li>\n</ul>\n\n<h3>关于图片</h3>\n\n<ul>\n<li>背景图为校园实景的<b>扁平矢量插画风格艺术化重绘</b></li>\n<li>不含真实人物肖像、不含校服与学生照片</li>\n<li><b>学校目前没有官方校徽，游戏不使用校徽图标</b>，只用校名与校训文字</li>\n</ul>\n\n<h3>技术</h3>\n<ul>\n<li>纯原生 JavaScript / HTML / CSS，无任何第三方库</li>\n<li>无联网请求，数据保存在本机浏览器</li>\n<li>无广告、无付费、无个人信息采集</li>\n</ul>\n<h3>特别感谢</h3>\n<p>感谢每一位试玩并给出意见的同学。</p>\n<p>这个游戏能被玩完、被讨论、被吐槽，就是它存在的意义。</p>\n"}
 };
 
-/* 打开一个文档弹窗 */
 function openDoc(key) {
   const d = (typeof GAME_DOCS !== "undefined") && GAME_DOCS[key];
-  if (!d) {if (typeof toast === "function") toast("文档还没生成，请先运行 tools/sync-docs.js"); return;}
-  showModal(d.title, '<div class="markdown">' + d.html + "</div>",
+  if (!d) {if (typeof toast === "function") toast("文档还没生成"); return;}
+  showModal(d.title, '<div class=\"markdown\">' + d.html + '</div>',
     [{t: "关闭", fn: function () {}}], null, false, true, {kind: "doc"});
 }
 
@@ -1690,6 +1820,602 @@ function openDoc(key) {
     }
 
 </script>
+  <!-- 双语层：中文 / English -->
+  <script>
+/* ==== 01b-i18n.js ==== */
+/* ==================================================================
+ * 工具层 · 双语（中文 / English）
+ * ==================================================================
+ * 用法：
+ *   L("ui.save")              → 当前语言的文案
+ *   L("hud.week", 12)         → 带参数，文案里写 {0} {1}
+ *   T({zh:"学习", en:"Study"}) → 双语对象取值（直接传字符串也能用）
+ *   TZ("学习")                → 只在英文模式下显示原文（中文内容用）
+ *
+ * 维护约定：
+ *   1. 新增界面文案时，zh / en 两边都写；en 没写会自动回退到中文。
+ *   2. 旧事件 / 天赋 / 书目文案仍是中文，会逐批补译（不是 bug）。
+ *   3. 不要在 key 里放变量，一律用 {0} 占位 + L(key, v0)。
+ *
+ * 维护等级：工具层（加文案时改）
+ * ============================================================ */
+
+    const LANGS = [
+      {id: "zh", label: "中文", short: "中"},
+      {id: "en", label: "English", short: "EN"}
+    ];
+
+    let LANG = "zh";
+
+    /* ==================================================================
+     * 文案表
+     * ============================================================ */
+    const I18N = {
+
+      /* ---------------- 主菜单 ---------------- */
+      zh: {
+        "app.title": "中考人生模拟器",
+        "app.suffix": "版",
+
+        "menu.slots": "存档槽位",
+        "menu.more": "了解更多",
+        "menu.guide": "📘 新手介绍",
+        "menu.changelog": "🆕 更新日志",
+        "menu.credits": "🙏 鸣谢列表",
+        "menu.about": "游戏说明",
+        "menu.theme": "主题色",
+        "menu.lang": "语言",
+        "menu.settings": "设置",
+        "menu.themeHint": "点一下就换，立刻生效，会记住你的选择",
+        "menu.langHint": "界面与新增内容双语；旧事件文案仍在补译中",
+
+        "about.body":
+          `你将经历初一至初三共 <b style="color:var(--gold)">150 周</b>，直至中考。<br>
+           <b style="color:var(--purple)">天赋不会在一开始赠送</b> —— 它们藏在一次次选择里。<br>
+           每周可做 <b style="color:var(--gold)">1~2 次本周行动</b>，每次行动后都会跟一个 <b style="color:var(--gold)">⚡ 事件弹窗</b>，偶尔还会连锁出后续事件。<br>
+           <b style="color:var(--green)">🎒 小卖铺 / 读书角 / 天赋图鉴 / 成就</b> 属于自由操作，<b>不占用行动次数</b>。<br>
+           一些负面天赋是可以<b style="color:var(--green)">「破茧」消除</b>的 —— 坚持学习、坚持休息，阴影总会散去。<br>
+           <span style="color:var(--dim);font-size:.85rem">「人生在立，行达天下」—— 登上立行号，这三年走的每一步，都算数。</span>`,
+
+        /* ---------------- 顶栏 / HUD ---------------- */
+        "hud.week": "第 {0} 周",
+        "hud.act": "本周行动",
+        "hud.ev": "事件",
+        "hud.shop": "🏪 小卖铺",
+        "hud.talentBook": "📖 天赋图鉴",
+        "hud.ach": "🏆 成就",
+        "hud.save": "💾 保存",
+        "hud.home": "🏠 主菜单",
+        "hud.theme": "🎨 主题",
+        "hud.lang": "🌐 中/EN",
+
+        "hud.talent": "天赋",
+        "hud.talentHint": "点击看详情",
+        "hud.item": "道具",
+        "hud.subjects": "各科(本年级)",
+        "hud.score": "成绩",
+        "hud.scoreTotal": "综合学力",
+        "hud.lastExam": "最近考试",
+        "hud.rank": "年级排名(估)",
+        "hud.rankVal": "前 {0}%",
+        "hud.noTalent": "尚无天赋 —— 在选择中觉醒",
+        "hud.noItem": "暂无道具 —— 可去小卖铺购买",
+        "hud.subjToggle": "各科详情（{0} 科）",
+
+        /* ---------------- 属性 ---------------- */
+        "prop.心态": "心态",
+        "prop.经济": "经济",
+        "prop.健康": "健康",
+        "prop.效率": "效率",
+        "prop.悟性": "悟性",
+        "prop.社交": "社交",
+        "prop.压力": "压力",
+        "prop.亲情": "亲情",
+
+        /* ---------------- 本周行动 ---------------- */
+        "act.title": "选择行动",
+        "act.titleN": "选择行动（第 {0}/{1} 次）",
+        "act.study": "📖 努力学习",
+        "act.rest": "😴 好好休息",
+        "act.social": "👥 社交活动",
+        "act.fun": "🎮 摸鱼娱乐",
+        "act.allowance": "🏠 向父母要零花钱",
+        "act.read": "📚 图书角",
+        "act.club": "🎪 去社团活动",
+        "act.clubSkip": "📖 留在教室写作业",
+        "act.clubRest": "😴 回宿舍休息",
+        "act.clubSocial": "👥 找同学玩",
+        "act.clubSub": "推掉这周社团",
+        "act.restSub": "这周不想动",
+        "act.socialSub": "不上社团课",
+
+        /* ---------------- 弹窗通用 ---------------- */
+        "modal.close": "关闭",
+        "modal.continue": "继续",
+        "modal.ok": "好",
+        "modal.cancel": "取消",
+
+        "badge.event": "⚡ 事件 {0}/{1}",
+        "badge.fixed": "📅 固定事件",
+        "badge.free": "🎒 自由操作 · 不消耗本周行动",
+        "badge.ending": "🏁 结局",
+        "ev.result": "事件结局",
+        "ev.resultBadge": "⚡ 事件 {0}/{1} · 结果",
+
+        /* ---------------- 天赋 ---------------- */
+        "talent.detail": "天赋详情",
+        "talent.effect": "效果",
+        "talent.status": "状态",
+        "talent.owned": "已拥有",
+        "talent.locked": "未拥有",
+        "talent.conflict": "矛盾项",
+        "talent.none": "无",
+        "talent.book": "天赋图鉴",
+        "talent.bookHint": "已解锁 {0} / {1}　·　点任意天赋可看详情",
+
+        /* ---------------- 小卖铺 / 道具 ---------------- */
+        "shop.title": "小卖铺",
+        "shop.body": "你走进校门口的小卖铺，货架上摆满了各种物件。",
+        "shop.money": "当前经济：{0}",
+        "shop.price": "价格 {0}",
+        "shop.leave": "离开",
+        "shop.buy": "🏪 你购买了【{0}】。",
+        "shop.poor": "经济不足，买不起。",
+        "item.use": "道具使用",
+        "item.used": "🎒 你使用了【{0}】——{1}",
+        "item.effect": "【{0}】的效果已经生效：",
+
+        /* ---------------- 图书角 ---------------- */
+        "book.title": "班级图书角",
+        "book.body": "教室后墙的图书角摆着同学们捐的书，窗边那格落满阳光。你抽出一本——",
+        "book.money": "当前经济：{0}",
+        "book.cost": "花费 {0}",
+        "book.read": "📖 你读了{0}。",
+        "book.poor": "经济不足，买不起这本书。",
+        "book.close": "合上书",
+        "book.putBack": "你把书放回原处，转身回到座位。",
+        "book.badge": "📚 本周行动 · 图书角",
+
+        /* ---------------- 成就 ---------------- */
+        "ach.title": "成就系统",
+
+        /* ---------------- 存档 ---------------- */
+        "save.slot": "存档 {0}",
+        "save.empty": "空",
+        "save.resume": "继续",
+        "save.restart": "重开",
+        "save.delete": "删除",
+        "save.new": "新开存档",
+        "save.over": "已完结",
+        "save.info": "中考:{0} · 成就 {1} · {2}",
+        "save.confirmOver": "覆盖该存档?",
+        "save.confirmDel": "确定删除该存档?",
+        "save.saved": "💾 已保存",
+        "save.loaded": "💾 存档读取成功，继续你的初中生活！",
+        "save.anon": "无名氏",
+        "save.male": "男",
+        "save.female": "女",
+
+        /* ---------------- 创建角色 ---------------- */
+        "cc.title": "创建角色",
+        "cc.name": "姓名",
+        "cc.namePh": "输入你的名字",
+        "cc.gender": "性别",
+        "cc.male": "男",
+        "cc.female": "女",
+        "cc.pick": "或从下方随机名字中选一个：",
+        "cc.start": "开始初中生活",
+        "cc.begin": "🌅 {0} 的初中生涯，开始了。",
+
+        /* ---------------- 流程提示 ---------------- */
+        "flow.weekHead": "—— 第 {0} 周 · {1}{2} · {3}月{4}{5} ——",
+        "flow.actionLog": "本周行动({0}/{1}):{2} → 学力结算后:{3}",
+        "flow.clubLog": "🎪 周三社团课：{0}",
+        "flow.study": "努力学习",
+        "flow.rest": "好好休息",
+        "flow.social": "社交活动",
+        "flow.fun": "摸鱼娱乐",
+        "flow.allowance": "向父母要零花钱",
+        "flow.read": "图书角",
+        "flow.club": "社团活动",
+        "flow.stressBurst": "压力爆表!心态 -{0}",
+        "flow.healthWarn": "⚠️ 身体在报警，下周该休息了。",
+        "flow.mindWarn": "⚠️ 你最近情绪很低落，注意调节。",
+        "flow.zhongkao": "🎓 中考放榜!你的均分:{0}/100",
+
+        /* ---------------- 考试 ---------------- */
+        "exam.sheet": "{0} · 成绩单",
+        "exam.avg": "均分",
+        "exam.full": "满分 100",
+        "exam.fullMarks": "🎉 满分科目:{0}",
+        "exam.accept": "收下成绩单",
+        "exam.log": "📝【{0}】总分 {1}/{2}，均分 {3}",
+        "exam.top": "名列前茅！全年级都听说了你的名字。",
+        "exam.bad": "考砸了……心态 -8，压力 +10",
+
+        /* ---------------- 向父母要钱 ---------------- */
+        "alw.title": "向父母要零花钱",
+        "alw.badge": "🏠 本周行动 · 家庭",
+        "alw.hint": "当前亲情：{0}　·　亲情越高，父母越愿意给，也越少念叨",
+        "alw.thanks": "谢谢爸妈",
+        "alw.know": "知道了",
+        "alw.log": "🏠 向父母要零花钱：{0}{1}",
+        "alw.got": "，拿到 {0} 元",
+        "alw.none": "，一分没拿到",
+
+        /* ---------------- 时段 / 学期 / 年级 ---------------- */
+        "slot.weekday": "周中",
+        "slot.clubday": "周三社团课",
+        "slot.weekend": "周末",
+        "term.up": "上学期",
+        "term.down": "下学期",
+        "grade.1": "初一",
+        "grade.2": "初二",
+        "grade.3": "初三",
+
+        /* ---------------- 结局 ---------------- */
+        "end.title": "初中落幕",
+        "end.back": "回到主菜单",
+        "end.restart": "重新开始",
+        "end.talents": "天赋",
+        "end.ach": "成就",
+        "end.none": "无",
+        "end.stat": "历时 {0} 周 · 中考 {1} 分 · 天赋 {2} 个 · 成就 {3}/{4}",
+        "end.arrival": "{0} 到站了。这三年走过的每一步，都算数。",
+        "end.reasonHealth": "你因健康问题提前离场。",
+        "end.reasonMind": "你因心理压力过重提前离场。",
+        "end.reasonMoney": "你因家庭经济困难提前离场。",
+
+        /* ---------------- 提示 ---------------- */
+        "toast.saved": "💾 已保存",
+        "toast.theme": "🎨 主题：{0}",
+        "toast.lang": "🌐 English",
+        "toast.langZh": "🌐 已切换为中文",
+        "doc.missing": "文档还没生成",
+      },
+
+      /* ================================================================== */
+      en: {
+        "app.title": "Life Simulator",
+        "app.suffix": "Edition",
+
+        "menu.slots": "Save Slots",
+        "menu.more": "Learn More",
+        "menu.guide": "📘 Guide",
+        "menu.changelog": "🆕 Changelog",
+        "menu.credits": "🙏 Credits",
+        "menu.about": "About",
+        "menu.theme": "Theme",
+        "menu.lang": "Language",
+        "menu.settings": "Settings",
+        "menu.themeHint": "Tap to switch — applies instantly and remembers your pick",
+        "menu.langHint": "UI and new content are bilingual; older event text is still being translated",
+
+        "about.body":
+          `You will live through <b style="color:var(--gold)">150 weeks</b>, from Grade 7 to the high-school entrance exam.<br>
+           <b style="color:var(--purple)">Talents are never handed out at the start</b> — they grow out of your choices.<br>
+           Each week you take <b style="color:var(--gold)">1~2 actions</b>, and every action is followed by an <b style="color:var(--gold)">⚡ event popup</b>, sometimes chained.<br>
+           <b style="color:var(--green)">🎒 Shop / Book Corner / Talent Codex / Achievements</b> are free actions and <b>cost no action slot</b>.<br>
+           Some negative talents can be <b style="color:var(--green)">broken out of</b> — keep studying, keep resting, and the shadow lifts.<br>
+           <span style="color:var(--dim);font-size:.85rem">"Stand firm, go far." — aboard the train, every step counts.</span>`,
+
+        "hud.week": "Week {0}",
+        "hud.act": "Actions",
+        "hud.ev": "Events",
+        "hud.shop": "🏪 Shop",
+        "hud.talentBook": "📖 Talent Codex",
+        "hud.ach": "🏆 Achievements",
+        "hud.save": "💾 Save",
+        "hud.home": "🏠 Menu",
+        "hud.theme": "🎨 Theme",
+        "hud.lang": "🌐 中/EN",
+
+        "hud.talent": "Talents",
+        "hud.talentHint": "tap for details",
+        "hud.item": "Items",
+        "hud.subjects": "Subjects (this grade)",
+        "hud.score": "Scores",
+        "hud.scoreTotal": "Overall",
+        "hud.lastExam": "Last exam",
+        "hud.rank": "Grade rank (est.)",
+        "hud.rankVal": "Top {0}%",
+        "hud.noTalent": "No talents yet — they awaken through choices",
+        "hud.noItem": "No items — try the shop",
+        "hud.subjToggle": "Subject detail ({0})",
+
+        "prop.心态": "Mind",
+        "prop.经济": "Money",
+        "prop.健康": "Health",
+        "prop.效率": "Focus",
+        "prop.悟性": "Insight",
+        "prop.社交": "Social",
+        "prop.压力": "Stress",
+        "prop.亲情": "Family",
+
+        "act.title": "Choose an action",
+        "act.titleN": "Choose an action ({0}/{1})",
+        "act.study": "📖 Study hard",
+        "act.rest": "😴 Rest",
+        "act.social": "👥 Socialize",
+        "act.fun": "🎮 Slack off",
+        "act.allowance": "🏠 Ask parents for money",
+        "act.read": "📚 Book corner",
+        "act.club": "🎪 Go to club",
+        "act.clubSkip": "📖 Stay and do homework",
+        "act.clubRest": "😴 Back to the dorm",
+        "act.clubSocial": "👥 Hang out instead",
+        "act.clubSub": "skip club this week",
+        "act.restSub": "not in the mood",
+        "act.socialSub": "no club today",
+
+        "modal.close": "Close",
+        "modal.continue": "Continue",
+        "modal.ok": "OK",
+        "modal.cancel": "Cancel",
+
+        "badge.event": "⚡ Event {0}/{1}",
+        "badge.fixed": "📅 Scheduled",
+        "badge.free": "🎒 Free · costs no action",
+        "badge.ending": "🏁 Ending",
+        "ev.result": "Result",
+        "ev.resultBadge": "⚡ Event {0}/{1} · Result",
+
+        "talent.detail": "Talent",
+        "talent.effect": "Effect",
+        "talent.status": "Status",
+        "talent.owned": "Owned",
+        "talent.locked": "Not owned",
+        "talent.conflict": "Conflicts",
+        "talent.none": "None",
+        "talent.book": "Talent Codex",
+        "talent.bookHint": "Unlocked {0} / {1}　·　tap any talent for details",
+
+        "shop.title": "Shop",
+        "shop.body": "You step into the shop by the school gate. The shelves are packed.",
+        "shop.money": "Money: {0}",
+        "shop.price": "Price {0}",
+        "shop.leave": "Leave",
+        "shop.buy": "🏪 You bought [{0}].",
+        "shop.poor": "Not enough money.",
+        "item.use": "Item used",
+        "item.used": "🎒 You used [{0}] — {1}",
+        "item.effect": "[{0}] takes effect:",
+
+        "book.title": "Classroom Book Corner",
+        "book.body": "Books donated by classmates line the back wall. Sunlight falls on one shelf. You pull out a book —",
+        "book.money": "Money: {0}",
+        "book.cost": "Cost {0}",
+        "book.read": "📖 You read {0}.",
+        "book.poor": "Not enough money for this book.",
+        "book.close": "Close the book",
+        "book.putBack": "You put the book back and return to your seat.",
+        "book.badge": "📚 Action · Book Corner",
+
+        "ach.title": "Achievements",
+
+        "save.slot": "Slot {0}",
+        "save.empty": "empty",
+        "save.resume": "Continue",
+        "save.restart": "Restart",
+        "save.delete": "Delete",
+        "save.new": "New game",
+        "save.over": "finished",
+        "save.info": "Exam:{0} · Achievements {1} · {2}",
+        "save.confirmOver": "Overwrite this save?",
+        "save.confirmDel": "Delete this save?",
+        "save.saved": "💾 Saved",
+        "save.loaded": "💾 Save loaded — your middle school life continues!",
+        "save.anon": "Nameless",
+        "save.male": "Male",
+        "save.female": "Female",
+
+        "cc.title": "Create Character",
+        "cc.name": "Name",
+        "cc.namePh": "Enter your name",
+        "cc.gender": "Gender",
+        "cc.male": "Male",
+        "cc.female": "Female",
+        "cc.pick": "Or pick one of these:",
+        "cc.start": "Begin",
+        "cc.begin": "🌅 {0}'s middle school life begins.",
+
+        "flow.weekHead": "—— Week {0} · {1}{2} · {3}月{4}{5} ——",
+        "flow.actionLog": "Action ({0}/{1}): {2} → after study: {3}",
+        "flow.clubLog": "🎪 Wednesday club: {0}",
+        "flow.study": "Study hard",
+        "flow.rest": "Rest",
+        "flow.social": "Socialize",
+        "flow.fun": "Slack off",
+        "flow.allowance": "Ask parents for money",
+        "flow.read": "Book corner",
+        "flow.club": "Club",
+        "flow.stressBurst": "Stress overload! Mind -{0}",
+        "flow.healthWarn": "⚠️ Your body is waving a red flag. Rest next week.",
+        "flow.mindWarn": "⚠️ You've been down lately. Take care of yourself.",
+        "flow.zhongkao": "🎓 Results are out! Your average: {0}/100",
+
+        "exam.sheet": "{0} · Report Card",
+        "exam.avg": "Average",
+        "exam.full": "out of 100",
+        "exam.fullMarks": "🎉 Perfect scores: {0}",
+        "exam.accept": "Take the report card",
+        "exam.log": "📝 [{0}] total {1}/{2}, average {3}",
+        "exam.top": "Top of the grade! Everyone knows your name now.",
+        "exam.bad": "You bombed it… Mind -8, Stress +10",
+
+        "alw.title": "Ask Parents for Money",
+        "alw.badge": "🏠 Action · Family",
+        "alw.hint": "Family bond: {0}　·　the closer you are, the more they give and the less they nag",
+        "alw.thanks": "Thanks, Mom and Dad",
+        "alw.know": "Okay",
+        "alw.log": "🏠 Ask parents for money: {0}{1}",
+        "alw.got": ", got {0}",
+        "alw.none": ", got nothing",
+
+        "slot.weekday": "Weekdays",
+        "slot.clubday": "Wed club",
+        "slot.weekend": "Weekend",
+        "term.up": "1st term",
+        "term.down": "2nd term",
+        "grade.1": "Grade 7",
+        "grade.2": "Grade 8",
+        "grade.3": "Grade 9",
+
+        "end.title": "Junior High Ends",
+        "end.back": "Back to menu",
+        "end.restart": "Play again",
+        "end.talents": "Talents",
+        "end.ach": "Achievements",
+        "end.none": "none",
+        "end.stat": "{0} weeks · Exam {1} · Talents {2} · Achievements {3}/{4}",
+        "end.arrival": "{0} has arrived. Every step of these three years counted.",
+        "end.reasonHealth": "You left early because of your health.",
+        "end.reasonMind": "You left early under too much pressure.",
+        "end.reasonMoney": "You left early because your family could not afford it.",
+
+        "toast.saved": "💾 Saved",
+        "toast.theme": "🎨 Theme: {0}",
+        "toast.lang": "🌐 English",
+        "toast.langZh": "🌐 Switched to Chinese",
+        "doc.missing": "Document not generated yet",
+      }
+    };
+
+    /* ==================================================================
+     * 取值
+     * ============================================================ */
+
+    /* 主入口：L("key", a, b) → 把文案里的 {0} {1} 依次替换 */
+    function L(key) {
+      const args = Array.prototype.slice.call(arguments, 1);
+      let s = null;
+      if (LANG !== "zh" && I18N[LANG] && I18N[LANG][key] != null) s = I18N[LANG][key];
+      if (s == null && I18N.zh && I18N.zh[key] != null) s = I18N.zh[key];
+      if (s == null) return key;
+      for (let i = 0; i < args.length; i++) {
+        s = s.split("{" + i + "}").join(args[i] == null ? "" : args[i]);
+      }
+      return s;
+    }
+
+    /* 双语对象取值：T({zh:"…", en:"…"}) 或 T("纯字符串") */
+    function T(v) {
+      if (v == null) return "";
+      if (typeof v === "string") return v;
+      if (typeof v !== "object") return String(v);
+      if (LANG !== "zh" && v[LANG] != null) return v[LANG];
+      return v.zh != null ? v.zh : (v.en != null ? v.en : "");
+    }
+
+    /* 中文专有名词：英文模式下保留中文（旧内容还没译，先原样显示） */
+    function TZ(s) {return s == null ? "" : String(s);}
+
+    /* 属性显示名 */
+    function propName(k) {
+      const s = L("prop." + k);
+      return s === ("prop." + k) ? k : s;
+    }
+
+    /* 往某个 id 的元素里塞文本，元素不存在就安静跳过 */
+    function setText(id, txt) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = txt;
+      return el;
+    }
+
+    /* 时段显示名：SLOTS 里的 {id,name} → 当前语言 */
+    function slotName(slot) {
+      if (!slot) return "";
+      const s = L("slot." + slot.id);
+      return s === ("slot." + slot.id) ? (slot.name || slot.id) : s;
+    }
+
+    /* 性别显示名：数据里存的还是 男 / 女，只在显示时翻译 */
+    function genderName(g) {
+      if (g === "女" || g === "Female") return L("cc.female");
+      if (g === "男" || g === "Male") return L("cc.male");
+      return g || "";
+    }
+
+    /* 行动显示名：study / rest / social … → 当前语言 */
+    function actionName(k) {
+      const s = L("flow." + k);
+      return s === ("flow." + k) ? k : s;
+    }
+
+    /* ==================================================================
+     * 切换语言
+     * ============================================================ */
+    function setLang(id, silent) {
+      const ok = LANGS.some(l => l.id === id);
+      LANG = ok ? id : "zh";
+      try {localStorage.setItem("htzx_lang", LANG);} catch (e) { }
+      if (typeof applyLangToDom === "function") applyLangToDom();
+      if (typeof saveSettings === "function") saveSettings();
+      if (!silent) toast(LANG === "en" ? L("toast.lang") : L("toast.langZh"));
+      if (typeof renderHUD === "function" && S) renderHUD();
+      return LANG;
+    }
+
+    function toggleLang() {
+      setLang(LANG === "zh" ? "en" : "zh");
+      if (typeof renderStartExtras === "function") renderStartExtras();
+      if (typeof ensureActionPanel === "function") {
+        const p = document.getElementById("actionPanel");
+        if (p && p.innerHTML !== "" && S && !S.over) {p.innerHTML = ""; ensureActionPanel();}
+      }
+    }
+
+    /* ==================================================================
+     * 把文案刷到页面上
+     * ------------------------------------------------------------------
+     * 元素上写 data-i18n="key" 就是改文字，
+     * 写 data-i18n-html="key" 支持内联标签，
+     * 写 data-i18n-ph="key" 改 placeholder，
+     * 写 data-i18n-title="key" 改 title。
+     * ============================================================ */
+    function applyLangToDom() {
+      document.documentElement.lang = LANG === "en" ? "en" : "zh-CN";
+      const root = document.body;
+      if (!root) return;
+      const list = root.querySelectorAll("[data-i18n],[data-i18n-html],[data-i18n-ph],[data-i18n-title]");
+      for (let i = 0; i < list.length; i++) {
+        const el = list[i];
+        const k = el.getAttribute("data-i18n");
+        if (k) el.textContent = L(k);
+        const kh = el.getAttribute("data-i18n-html");
+        if (kh) el.innerHTML = L(kh);
+        const kp = el.getAttribute("data-i18n-ph");
+        if (kp) el.setAttribute("placeholder", L(kp));
+        const kt = el.getAttribute("data-i18n-title");
+        if (kt) el.setAttribute("title", L(kt));
+      }
+      const t = document.getElementById("appTitle");
+      if (t) t.textContent = L("app.title");
+      if (typeof refreshDocTitle === "function") refreshDocTitle();
+    }
+
+    function refreshDocTitle() {
+      const sc = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.school) ? GAME_CONFIG.school : {};
+      document.title = L("app.title") + " · " + (sc.name || "");
+    }
+
+    /* ==================================================================
+     * 文档弹窗：英文模式下提示"仍在补译"
+     * ------------------------------------------------------------------
+     * 覆盖 js/00-docs.js 里的同名函数（本文件在它之后加载）。
+     * ================================================================== */
+    function openDoc(key) {
+      const d = (typeof GAME_DOCS !== "undefined") && GAME_DOCS[key];
+      if (!d) {if (typeof toast === "function") toast(L("doc.missing")); return;}
+      const note = (LANG !== "zh")
+        ? `<p style="color:var(--dim);font-size:.78rem;margin-top:8px">This document is still in Chinese — translation in progress.</p>`
+        : "";
+      showModal(d.title, '<div class="markdown">' + d.html + '</div>' + note,
+        [{t: L("modal.close"), fn: function () { }}], null, false, true, {kind: "doc"});
+    }
+
+</script>
   <!-- 配置层：学校特色与玩法参数 -->
   <script>
 /* ==== 02-config.js ==== */
@@ -1787,10 +2513,12 @@ function openDoc(key) {
       },
 
       // —— 主题皮肤 ——
-      // 背景图放在 assets/ 文件夹里，在这里填文件名即可，不用改任何代码。
+      // 默认主题（清华紫）与另外六套主题都定义在 js/02c-themes.js。
+      // 这里只保留"默认用哪一套"和"背景不透明度"两个开关。
       // 说明：学校目前没有官方校徽，因此不使用校徽图标，只用校名与校训。
+      themeId: "hongta",      // 默认主题 id，见 js/02c-themes.js 的 THEME_SKINS
       theme: {
-        // 主背景：白天上课期间用这张
+        // 主背景：白天上课期间用这张（留空则只用主题的 CSS 渐变背景）
         bgImage: "assets/bg.jpg",
         // 备用背景：清晨 / 假期 / 特殊阶段（设为空字符串则不启用）
         bgImageAlt: "assets/bg2.jpg",
@@ -1798,7 +2526,7 @@ function openDoc(key) {
         bgImageEnd: "assets/bg_end.jpg",
         bgOpacity: 0.26,      // 背景图不透明度 0~1，太高会盖住文字
 
-        accent: "#660874",    // 主色：清华紫
+        accent: "#660874",    // 主色：清华紫（切换主题时会被覆盖）
         accent2: "#9c4dcc",   // 辅助亮紫（高亮、按钮边框）
         accentGold: "#c9a227" // 点缀金（徽章、进度条）
       }
@@ -1806,13 +2534,15 @@ function openDoc(key) {
 
     function applyTheme() {
       const t = GAME_CONFIG.theme || {}, root = document.documentElement;
-      if (t.bgImage) {
-        root.style.setProperty("--bg-image", `url("${t.bgImage}")`);
+
+      // 配色与背景全部交给主题层（js/02c-themes.js）
+      // 不传 id：沿用 loadSettings() 已经读出来的那套，避免覆盖玩家的选择
+      if (typeof applyThemeSkin === "function") {
+        applyThemeSkin();
+      } else {
+        root.style.setProperty("--bg-image", t.bgImage ? `url("${t.bgImage}")` : "none");
         root.style.setProperty("--bg-opacity", String(t.bgOpacity == null ? .26 : t.bgOpacity));
       }
-      if (t.accent) root.style.setProperty("--purple", t.accent);
-      if (t.accent2) root.style.setProperty("--purple2", t.accent2);
-      if (t.accentGold) root.style.setProperty("--gold", t.accentGold);
 
       // 滚动条：按配置给 body 挂上开关 class
       const ui = GAME_CONFIG.ui || {};
@@ -1835,19 +2565,353 @@ function openDoc(key) {
 
     /* 切换背景图：season 取 "main" | "alt" | "end" */
     function setBackground(season) {
-      const t = GAME_CONFIG.theme || {}, root = document.documentElement;
-      const map = {main: t.bgImage, alt: t.bgImageAlt, end: t.bgImageEnd};
-      const v = map[season] || t.bgImage;
-      if (!v) return;
-      root.style.setProperty("--bg-image", `url("${v}")`);
+      const root = document.documentElement;
+      // 优先用当前主题自己的背景图；主题没配图就回落到 GAME_CONFIG
+      let v = (typeof themeBg === "function") ? themeBg(season) : "";
+      const t = GAME_CONFIG.theme || {};
+      if (!v) v = {main: t.bgImage, alt: t.bgImageAlt, end: t.bgImageEnd}[season] || t.bgImage;
+      const base = (typeof currentTheme === "function")
+        ? currentTheme().bgOpacity : (t.bgOpacity == null ? .26 : t.bgOpacity);
+      root.style.setProperty("--bg-image", v ? `url("${v}")` : "none");
       root.style.setProperty("--bg-opacity", String(
-        season === "end" ? Math.min(0.45, (t.bgOpacity || .26) + 0.14) : (t.bgOpacity == null ? .26 : t.bgOpacity)
+        season === "end" ? Math.min(0.45, (base || .26) + 0.14) : (base == null ? .26 : base)
       ));
     }
 
     /* ==================================================================
      * 天赋表
      * ================================================================== */
+
+</script>
+  <!-- 主题层：多套配色与主菜单切换 -->
+  <script>
+/* ==== 02c-themes.js ==== */
+/* ==================================================================
+ * 配置层 · 主题皮肤
+ * ==================================================================
+ * 每套主题 = 一组 CSS 变量 + 背景 + 一句文案。
+ * 默认主题是学校的清华紫，其余主题供玩家在主菜单自由切换。
+ *
+ * 想加新主题：在 THEME_SKINS 里照抄一份，改 id / name / tagline / vars。
+ * vars 必须写全，缺了会沿用上一套主题的颜色。
+ *
+ * 变量含义：
+ *   --brand / --brand-deep / --brand-lite  按钮底色三档
+ *   --purple / --purple2                   强调文字与高亮（不一定是紫色）
+ *   --gold / --gold-soft                   点缀金
+ *   --bg / --panel / --panel2 / --line     背景与卡片
+ *   --txt / --dim                          正文与次要文字
+ *   --green / --red / --blue               语义色（增益 / 减益 / 系统）
+ *   --glow / --glow2 / --brand-rgb         发光色的 rgb 三元组
+ *   --bg-overlay                           背景图之上的压暗层
+ *   --bg-opacity                           背景图不透明度
+ *
+ * 维护等级：配置层（随便改）
+ * ============================================================ */
+
+    const THEME_SKINS = [
+
+      /* ---------------- 默认：清华紫（学校主题色） ---------------- */
+      {
+        id: "hongta",
+        name: {zh: "清华紫", en: "Tsinghua Purple"},
+        tagline: {zh: "每一步 都算数", en: "Every step counts"},
+        poem: {zh: "人生在立，行达天下", en: "Stand firm, and you will go far"},
+        bgImage: "assets/bg.jpg",
+        bgImageAlt: "assets/bg2.jpg",
+        bgImageEnd: "assets/bg_end.jpg",
+        bgOpacity: 0.26,
+        bgGrad: "radial-gradient(1200px 800px at 20% 0%, #2a1040, #120a18 60%)",
+        vars: {
+          "--brand": "#660874", "--brand-deep": "#3d0647", "--brand-lite": "#8a2b9c",
+          "--purple": "#c08ae8", "--purple2": "#9c4dcc",
+          "--gold": "#d7b45a", "--gold-soft": "#f0d488",
+          "--bg": "#120a18", "--panel": "#1e1029", "--panel2": "#2a1638", "--line": "#4a2760",
+          "--txt": "#f2ecf7", "--dim": "#bda9cd",
+          "--green": "#7ee0c0", "--red": "#ff7aa2", "--blue": "#a86ddb",
+          "--glow": "156, 77, 204", "--glow2": "192, 138, 232", "--brand-rgb": "102, 8, 116",
+          "--bg-overlay": "rgba(18, 10, 24, .82)"
+        }
+      },
+
+      /* ---------------- 群星：来时群星正落 ---------------- */
+      {
+        id: "stars",
+        name: {zh: "群星", en: "Stars"},
+        tagline: {zh: "来时群星正落", en: "The stars were falling when you came"},
+        poem: {zh: "你抬头时，天上正落着一场没有声音的雨", en: "You looked up: a silent rain of stars"},
+        bgOpacity: 0.22,
+        bgGrad: "radial-gradient(1000px 700px at 15% 5%, #1d2450, #0b0f22 62%), radial-gradient(600px 400px at 85% 90%, #1a1f45, transparent 70%)",
+        vars: {
+          "--brand": "#232a5e", "--brand-deep": "#12162f", "--brand-lite": "#3f4c9c",
+          "--purple": "#a9b6ff", "--purple2": "#7b8cf0",
+          "--gold": "#e8d48b", "--gold-soft": "#fff0c0",
+          "--bg": "#0b0f22", "--panel": "#131a35", "--panel2": "#1c2547", "--line": "#38456f",
+          "--txt": "#e9edff", "--dim": "#a9b2d8",
+          "--green": "#6fe3c4", "--red": "#ff7a9c", "--blue": "#7aa2ff",
+          "--glow": "123, 140, 240", "--glow2": "169, 182, 255", "--brand-rgb": "35, 42, 94",
+          "--bg-overlay": "rgba(11, 15, 34, .80)"
+        }
+      },
+
+      /* ---------------- 草原：去后野草自蓬勃（呼吸感） ---------------- */
+      {
+        id: "grassland",
+        name: {zh: "草原", en: "Grassland"},
+        tagline: {zh: "去后野草自蓬勃", en: "The grass grows on after you leave"},
+        poem: {zh: "风一吹，整片野草替你把话说完了", en: "The wind speaks for you through the grass"},
+        bgOpacity: 0.22,
+        bgGrad: "radial-gradient(1100px 760px at 25% 0%, #2b5340, #0e1a12 62%), radial-gradient(700px 500px at 80% 95%, #3a6b4a, transparent 70%)",
+        vars: {
+          "--brand": "#2f6b46", "--brand-deep": "#17402a", "--brand-lite": "#4e9a68",
+          "--purple": "#bde8c4", "--purple2": "#6ec98a",
+          "--gold": "#e2c275", "--gold-soft": "#ffeab0",
+          "--bg": "#0e1a12", "--panel": "#16281c", "--panel2": "#1e3726", "--line": "#3a6247",
+          "--txt": "#eaf6ec", "--dim": "#a8c4ae",
+          "--green": "#8ce8b0", "--red": "#ff8f7a", "--blue": "#7fd3c0",
+          "--glow": "110, 201, 138", "--glow2": "189, 232, 196", "--brand-rgb": "47, 107, 70",
+          "--bg-overlay": "rgba(14, 26, 18, .80)"
+        }
+      },
+
+      /* ---------------- 晨曦：天亮之前先把灯点着 ---------------- */
+      {
+        id: "dawn",
+        name: {zh: "晨曦", en: "Dawn"},
+        tagline: {zh: "天亮之前，先把灯点着", en: "Light the lamp before the dawn"},
+        poem: {zh: "早读的窗玻璃上，先亮起来的是你", en: "On the window, you brighten first"},
+        bgOpacity: 0.22,
+        bgGrad: "radial-gradient(1000px 700px at 20% 0%, #6a3320, #1b110d 62%), radial-gradient(700px 500px at 85% 90%, #8a4526, transparent 70%)",
+        vars: {
+          "--brand": "#a84b2f", "--brand-deep": "#5e2416", "--brand-lite": "#d97a4e",
+          "--purple": "#ffc9a3", "--purple2": "#ff9d6b",
+          "--gold": "#ffd98a", "--gold-soft": "#fff0cf",
+          "--bg": "#1b110d", "--panel": "#2a1a14", "--panel2": "#3a2519", "--line": "#6b4030",
+          "--txt": "#fdf0e6", "--dim": "#d9b9a4",
+          "--green": "#9ad9a0", "--red": "#ff7a72", "--blue": "#ffb27a",
+          "--glow": "255, 157, 107", "--glow2": "255, 201, 163", "--brand-rgb": "168, 75, 47",
+          "--bg-overlay": "rgba(27, 17, 13, .78)"
+        }
+      },
+
+      /* ---------------- 深海：越深的沉默，越亮的回声 ---------------- */
+      {
+        id: "abyss",
+        name: {zh: "深海", en: "Deep Sea"},
+        tagline: {zh: "越深的沉默，越亮的回声", en: "The deeper the silence, the brighter the echo"},
+        poem: {zh: "你在水底喊了一声，三年后才听见回响", en: "You called underwater; the echo came three years later"},
+        bgOpacity: 0.24,
+        bgGrad: "radial-gradient(1000px 700px at 20% 0%, #10414a, #061418 62%), radial-gradient(700px 500px at 82% 92%, #0d5560, transparent 70%)",
+        vars: {
+          "--brand": "#0f5f6b", "--brand-deep": "#06333c", "--brand-lite": "#1a8ea0",
+          "--purple": "#8fe6f0", "--purple2": "#35c3d4",
+          "--gold": "#e6d68f", "--gold-soft": "#fff3bd",
+          "--bg": "#061418", "--panel": "#0d2229", "--panel2": "#123038", "--line": "#1f5460",
+          "--txt": "#e6fbfd", "--dim": "#9fc4cb",
+          "--green": "#6ff0d0", "--red": "#ff6f8f", "--blue": "#59c8ff",
+          "--glow": "53, 195, 212", "--glow2": "143, 230, 240", "--brand-rgb": "15, 95, 107",
+          "--bg-overlay": "rgba(6, 20, 24, .80)"
+        }
+      },
+
+      /* ---------------- 素墨：留白处，才见少年 ---------------- */
+      {
+        id: "ink",
+        name: {zh: "素墨", en: "Ink"},
+        tagline: {zh: "留白处，才见少年", en: "In the blank space, the boy appears"},
+        poem: {zh: "纸上没写的那些，才是你的三年", en: "What the page left unsaid is your three years"},
+        bgOpacity: 0.18,
+        bgGrad: "radial-gradient(1000px 700px at 20% 0%, #35393f, #0e1013 62%), radial-gradient(700px 500px at 80% 92%, #2a2e34, transparent 70%)",
+        vars: {
+          "--brand": "#3a3f48", "--brand-deep": "#171a1f", "--brand-lite": "#5c646f",
+          "--purple": "#cfd6de", "--purple2": "#9aa3ad",
+          "--gold": "#c9b27a", "--gold-soft": "#e8d9a8",
+          "--bg": "#0e1013", "--panel": "#171a1f", "--panel2": "#21252b", "--line": "#3d434c",
+          "--txt": "#eceff2", "--dim": "#a7adb6",
+          "--green": "#9fc7a6", "--red": "#d98a8a", "--blue": "#a9b6c4",
+          "--glow": "154, 163, 173", "--glow2": "207, 214, 222", "--brand-rgb": "58, 63, 72",
+          "--bg-overlay": "rgba(14, 16, 19, .82)"
+        }
+      },
+
+      /* ---------------- 花灯：一盏灯，照亮三年 ---------------- */
+      {
+        id: "lantern",
+        name: {zh: "花灯", en: "Lantern"},
+        tagline: {zh: "一盏灯，照亮三年", en: "One lantern lights three years"},
+        poem: {zh: "玉溪的花灯一亮，整条街都亮了", en: "When the lanterns of Yuxi light up, the whole street does"},
+        bgOpacity: 0.22,
+        bgGrad: "radial-gradient(1000px 700px at 20% 0%, #6b1524, #170a0c 62%), radial-gradient(700px 500px at 82% 90%, #8a2334, transparent 70%)",
+        vars: {
+          "--brand": "#8f1f2e", "--brand-deep": "#4a0d16", "--brand-lite": "#c0392f",
+          "--purple": "#ffb9b0", "--purple2": "#ff7a6b",
+          "--gold": "#ffd76e", "--gold-soft": "#fff0b8",
+          "--bg": "#170a0c", "--panel": "#250f13", "--panel2": "#33161b", "--line": "#64202a",
+          "--txt": "#fbeeea", "--dim": "#cfa39c",
+          "--green": "#9fd6a0", "--red": "#ff6b6b", "--blue": "#ffab7a",
+          "--glow": "255, 122, 107", "--glow2": "255, 185, 176", "--brand-rgb": "143, 31, 46",
+          "--bg-overlay": "rgba(23, 10, 12, .80)"
+        }
+      }
+    ];
+
+    const THEME_MAP = {};
+    THEME_SKINS.forEach(t => {THEME_MAP[t.id] = t;});
+
+    const THEME_DEFAULT_ID = "hongta";
+    let THEME_CUR = THEME_DEFAULT_ID;
+
+    function themeById(id) {
+      return THEME_MAP[id] || THEME_MAP[THEME_DEFAULT_ID] || THEME_SKINS[0];
+    }
+
+    function currentTheme() {return themeById(THEME_CUR);}
+
+    /* ==================================================================
+     * 应用一套主题
+     * ==================================================================
+     * 只往 :root 上写 CSS 变量，不改任何 DOM 结构 ——
+     * 所以切换主题不需要重开一局，也不会影响存档数据。
+     * ================================================================== */
+    function applyThemeSkin(id) {
+      if (id == null) id = THEME_CUR;      // 不传就沿用当前主题
+      const t = themeById(id);
+      THEME_CUR = t.id;
+      const root = document.documentElement;
+
+      // 先打上主题 class，方便 css 里写「某主题下的特殊处理」
+      THEME_SKINS.forEach(s => root.classList.remove("theme-" + s.id));
+      root.classList.add("theme-" + t.id);
+
+      const v = t.vars || {};
+      for (const k in v) root.style.setProperty(k, v[k]);
+
+      // 背景：有图用图，没图用渐变（两套都写，img 缺失时自动落到渐变）
+      root.style.setProperty("--bg-image", t.bgImage ? `url("${t.bgImage}")` : "none");
+      root.style.setProperty("--bg-grad", t.bgGrad || "none");
+      root.style.setProperty("--bg-opacity", String(t.bgOpacity == null ? 0.24 : t.bgOpacity));
+      root.style.setProperty("--bg-overlay", (v["--bg-overlay"] || "rgba(18, 10, 24, .82)"));
+
+      if (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.theme) {
+        GAME_CONFIG.theme.accent = v["--brand"] || GAME_CONFIG.theme.accent;
+        GAME_CONFIG.theme.accent2 = v["--purple"] || GAME_CONFIG.theme.accent2;
+        GAME_CONFIG.theme.accentGold = v["--gold"] || GAME_CONFIG.theme.accentGold;
+        GAME_CONFIG.theme.bgOpacity = t.bgOpacity == null ? 0.24 : t.bgOpacity;
+        GAME_CONFIG.theme.bgImage = t.bgImage || "";
+        GAME_CONFIG.theme.bgImageAlt = t.bgImageAlt || "";
+        GAME_CONFIG.theme.bgImageEnd = t.bgImageEnd || "";
+      }
+      return t;
+    }
+
+    function setTheme(id, silent) {
+      const t = applyThemeSkin(id);
+      try {localStorage.setItem("htzx_theme", t.id);} catch (e) { }
+      if (typeof saveSettings === "function") saveSettings();
+      if (!silent && typeof toast === "function") toast(L("toast.theme", T(t.name)));
+      if (typeof renderStartExtras === "function") renderStartExtras();
+      return t;
+    }
+
+    function nextTheme() {
+      const i = THEME_SKINS.findIndex(t => t.id === THEME_CUR);
+      const n = THEME_SKINS[(i + 1 + THEME_SKINS.length) % THEME_SKINS.length];
+      return setTheme(n.id);
+    }
+
+    /* 背景切换：main / alt / end —— 沿用当前主题的图片 */
+    function themeBg(season) {
+      const t = currentTheme();
+      if (season === "end") return t.bgImageEnd || t.bgImage || "";
+      if (season === "alt") return t.bgImageAlt || t.bgImage || "";
+      return t.bgImage || "";
+    }
+
+    /* ==================================================================
+     * 设置持久化（主题 + 语言）
+     * ============================================================ */
+    const SETTINGS_KEY = "htzx_settings_v1";
+
+    function loadSettings() {
+      let d = null;
+      try {d = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");} catch (e) {d = null;}
+      // 兼容旧版单独存的两个 key
+      if (!d) d = {};
+      if (!d.theme) {try {d.theme = localStorage.getItem("htzx_theme") || "";} catch (e) { }}
+      if (!d.lang) {try {d.lang = localStorage.getItem("htzx_lang") || "";} catch (e) { }}
+      if (!THEME_MAP[d.theme]) d.theme = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.themeId) || THEME_DEFAULT_ID;
+      if (d.lang !== "en") d.lang = "zh";
+      LANG = d.lang;
+      applyThemeSkin(d.theme);
+      return d;
+    }
+
+    function saveSettings() {
+      try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify({theme: THEME_CUR, lang: LANG}));
+      } catch (e) { }
+    }
+
+    /* ==================================================================
+     * 主题选择界面（主菜单 + 弹窗）
+     * ================================================================== */
+    function themeChipHtml() {
+      return THEME_SKINS.map(t => {
+        const v = t.vars || {};
+        const on = t.id === THEME_CUR;
+        return `<button class="themechip${on ? " on" : ""}" onclick="setTheme('${t.id}')"
+          title="${T(t.poem)}"
+          style="--c1:${v["--brand-lite"]};--c2:${v["--purple"]};--c3:${v["--gold"]}">
+          <span class="tcdot"></span>
+          <span class="tcname">${T(t.name)}</span>
+          <span class="tctag">${T(t.tagline)}</span>
+        </button>`;
+      }).join("");
+    }
+
+    function renderStartExtras() {
+      const box = document.getElementById("themeList");
+      if (box) box.innerHTML = themeChipHtml();
+      const hint = document.getElementById("themeHint");
+      if (hint) hint.textContent = L("menu.themeHint");
+      const tl = document.getElementById("themeLabel");
+      if (tl) tl.textContent = L("menu.theme");
+      const ll = document.getElementById("langLabel");
+      if (ll) ll.textContent = L("menu.lang");
+      const lh = document.getElementById("langHint");
+      if (lh) lh.textContent = L("menu.langHint");
+      const lb = document.getElementById("langBtn");
+      if (lb) lb.textContent = LANG === "zh" ? "English" : "中文";
+      const ml = document.getElementById("moreLabel");
+      if (ml) ml.textContent = L("menu.more");
+      const sl = document.getElementById("slotsLabel");
+      if (sl) sl.textContent = L("menu.slots");
+      const al = document.getElementById("aboutLabel");
+      if (al) al.textContent = L("menu.about");
+      const ab = document.getElementById("aboutBody");
+      if (ab) ab.innerHTML = L("about.body");
+      ["btnGuide", "btnChangelog", "btnCredits"].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const map = {btnGuide: "menu.guide", btnChangelog: "menu.changelog", btnCredits: "menu.credits"};
+        el.textContent = L(map[id]);
+      });
+    }
+
+    /* 游戏内也能换主题（顶栏 🎨 按钮） */
+    function openThemePicker() {
+      const cur = currentTheme();
+      showPopup({
+        kind: "free",
+        title: L("menu.theme"),
+        body: `<div style="line-height:1.9;margin-bottom:10px;color:var(--dim);font-size:.86rem">
+            ${L("menu.themeHint")}<br>
+            <span style="color:var(--gold-soft)">「${T(cur.name)}」—— ${T(cur.tagline)}</span>
+          </div>
+          <div class="themepicker">${themeChipHtml()}</div>`,
+        options: [{t: L("modal.close"), fn: () => { }}]
+      });
+    }
 
 </script>
   <script>
@@ -2299,31 +3363,31 @@ function openDoc(key) {
       let closedByCancel = false;
 
       const opts = picked.map(b => ({
-        t: b.n, sub: `花费 ${b.cost}`,
+        t: TZ(b.n), sub: L("book.cost", b.cost),
         disabled: () => S.prop.经济 < b.cost,
         fn: () => {
-          if (S.prop.经济 < b.cost) {say("经济不足，买不起这本书。", "bad"); return;}
+          if (S.prop.经济 < b.cost) {say(L("book.poor"), "bad"); return;}
           modProp("经济", -b.cost);
           b.eff(S);
           count("read");
           read = true;
-          say(`📖 你读了${b.n}。`, "good");
+          say(L("book.read", TZ(b.n)), "good");
           checkAch(); renderHUD();
-          showModal("班级图书角", `<div style='line-height:2'>${b.lore || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
-            t: "合上书", fn: () => { }
-          }], () => {if (onDone) onDone();}, false, false, {kind: "free", badge: "📚 本周行动 · 图书角", img: b.img});
+          showModal(L("book.title"), `<div style='line-height:2'>${TZ(b.lore) || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
+            t: L("book.close"), fn: () => { }
+          }], () => {if (onDone) onDone();}, false, false, {kind: "free", badge: L("book.badge"), img: b.img});
         }
       }));
-      opts.push({t: "取消", fn: () => {closedByCancel = true;}});
+      opts.push({t: L("modal.cancel"), fn: () => {closedByCancel = true;}});
 
-      showModal("班级图书角", `<div>教室后墙的图书角摆着同学们捐的书，窗边那格落满阳光。你抽出一本——<br><span style="color:var(--dim);font-size:.85rem">当前经济：${Math.round(S.prop.经济)}</span></div>`, opts, () => {
+      showModal(L("book.title"), `<div>${L("book.body")}<br><span style="color:var(--dim);font-size:.85rem">${L("book.money", Math.round(S.prop.经济))}</span></div>`, opts, () => {
         if (closedByCancel || !read) {
-          say("你把书放回原处，转身回到座位。", "sys");
+          say(L("book.putBack"), "sys");
           setTimeout(ensureActionPanel, 0);
           return;
         }
         if (onDone) onDone();
-      }, false, true, {kind: "free", badge: "📚 本周行动 · 图书角"});
+      }, false, true, {kind: "free", badge: L("book.badge")});
     }
 
     /* ==================================================================
@@ -4469,16 +5533,16 @@ function runEffectSpec(spec, S) {
       S.evCntWeek = {};
       S.evCountWeek = 0;
       renderHUD();
-      say(`🏠 向父母要零花钱：${title}${g > 0 ? `，拿到 ${g} 元` : "，一分没拿到"}`, cls || "sys");
+      say(L("alw.log", title, g > 0 ? L("alw.got", g) : L("alw.none")), cls || "sys");
       /* 弹完这一个才继续走事件链 —— 否则两个弹窗会互相覆盖，
        * 玩家根本看不到父母说了什么。 */
       showPopup({
         kind: "free",
-        badge: "🏠 本周行动 · 家庭",
-        title: `向父母要零花钱 · ${title}`,
+        badge: L("alw.badge"),
+        title: `${L("alw.title")} · ${title}`,
         body: `<div style="line-height:2">${line}<br><br>
-          <span style="color:var(--dim);font-size:.85rem">当前亲情：${Math.round(clampNum(p.亲情, 0, 150, 80))}　·　亲情越高，父母越愿意给，也越少念叨</span></div>`,
-        options: [{t: g > 0 ? "谢谢爸妈" : "知道了", fn: () => {}}]
+          <span style="color:var(--dim);font-size:.85rem">${L("alw.hint", Math.round(clampNum(p.亲情, 0, 150, 80)))}</span></div>`,
+        options: [{t: g > 0 ? L("alw.thanks") : L("alw.know"), fn: () => {}}]
       }, () => {if (typeof onDone === "function") onDone();});
     }
 
@@ -4512,22 +5576,22 @@ function runEffectSpec(spec, S) {
         if (v < 90) perfect = false;
         total += v;
         const color = v >= 90 ? "var(--green)" : (v >= 60 ? "var(--gold)" : "var(--red)");
-        rows.push(`<div class="subjrow"><span style="width:3em">${sub}</span><div class="bar"><i style="width:${v}%;background:${color}"></i></div><b style="color:${color};width:2.5em;text-align:right">${v}</b></div>`);
+        rows.push(`<div class="subjrow"><span style="width:3em">${TZ(sub)}</span><div class="bar"><i style="width:${v}%;background:${color}"></i></div><b style="color:${color};width:2.5em;text-align:right">${v}</b></div>`);
       }
       if (S.examCharm) {S.examCharm = false;}
       if (S.penCharm) {S.penCharm = false;}
       const avg = subs.length ? Math.round(total / subs.length) : 0;
       S.lastExamScore = clampNum(avg, 0, 100); S.bestExam = Math.max(num(S.bestExam, 0), S.lastExamScore); count("exam");
       if (avg >= 80) count("goodExam");   // 用于「考试焦虑」的破茧进度
-      say(`📝【${name}】总分 ${Math.round(total)}/${subs.length * 100}，均分 ${avg}`, "exam");
-      if (avg >= 90) {say("名列前茅！全年级都听说了你的名字。", "good");}
-      else if (avg < 45) {say("考砸了……心态 -8，压力 +10", "bad"); modProp("心态", -8); modProp("压力", 10);}
+      say(L("exam.log", TZ(name), Math.round(total), subs.length * 100, avg), "exam");
+      if (avg >= 90) {say(L("exam.top"), "good");}
+      else if (avg < 45) {say(L("exam.bad"), "bad"); modProp("心态", -8); modProp("压力", 10);}
       else modProp("心态", 2);
       if (fullMarks.length) {S.cnt.subjFull = (S.cnt.subjFull || 0) + fullMarks.length;}
       if (perfect && subs.length > 0) count("allPerfect");
-      showModal(`${name} · 成绩单`, `<div>${rows.join("")}</div><div style="margin-top:10px;text-align:right;color:var(--gold)">均分:<b>${avg}</b> / 满分 100</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">🎉 满分科目:${fullMarks.join("、")}</div>` : ""}`,
+      showModal(L("exam.sheet", TZ(name)), `<div>${rows.join("")}</div><div style="margin-top:10px;text-align:right;color:var(--gold)">${L("exam.avg")}:<b>${avg}</b> / ${L("exam.full")}</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">${L("exam.fullMarks", TZ(fullMarks.join("、")))}</div>` : ""}`,
         [{
-          t: "收下成绩单", fn: () => {
+          t: L("exam.accept"), fn: () => {
             if (!S.daoDone && (avg >= 82 || p.悟性 >= 115) && Math.random() < 0.5) {examDao(avg);}
             else {nextWeek();}
           }
@@ -4550,9 +5614,9 @@ function runEffectSpec(spec, S) {
 
     function weekInTerm() {return S.week % (WEEKS_PER_TERM + 1)}
 
-    function gradeName() {return GRADES[Math.min(2, Math.floor(S.term / 2))]}
+    function gradeName() {return L("grade." + (Math.min(2, Math.floor(S.term / 2)) + 1))}
 
-    function termName() {return (S.term % 2 === 0) ? "上学期" : "下学期"}
+    function termName() {return (S.term % 2 === 0) ? L("term.up") : L("term.down")}
 
     function nextWeek() {
       if (S.over) return;
@@ -4592,7 +5656,7 @@ function runEffectSpec(spec, S) {
       if (S.week > 0 && weekInTerm() === 0 && S.term >= TERMS) {return zhongkao();}
       const wit = weekInTerm();
       const wi = weekInfo(S.week, S.term);
-      say(`—— 第 ${S.week} 周 · ${gradeName()}${termName()} · ${wi.month}月${wi.seasonIcon}${wi.season} ——`, "week-head");
+      say(L("flow.weekHead", S.week, gradeName(), termName(), wi.month, wi.seasonIcon, wi.season), "week-head");
       const fixed = fixedEventOf(S.term, wit);
       if (fixed) runFixed(fixed);
       else offerActions();
@@ -4639,19 +5703,18 @@ function runEffectSpec(spec, S) {
       if (S.slot === "clubday") {offerClubActions(); return;}
 
       const acts = [
-        {k: "study", t: "📖 努力学习"},
-        {k: "rest", t: "😴 好好休息"},
-        {k: "social", t: "👥 社交活动"},
-        {k: "fun", t: "🎮 摸鱼娱乐"},
-        {k: "allowance", t: "🏠 向父母要零花钱"},
-        {k: "read", t: "📚 图书角"},
+        {k: "study", t: L("act.study")},
+        {k: "rest", t: L("act.rest")},
+        {k: "social", t: L("act.social")},
+        {k: "fun", t: L("act.fun")},
+        {k: "allowance", t: L("act.allowance")},
+        {k: "read", t: L("act.read")},
       ];
 
       const box = document.getElementById("actionPanel");
       const doneN = num(S.actCount, 0), allN = num(S.actQuota, 1);
       const slot = SLOT_MAP[S.slot] || SLOTS[0];
-      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slot.name} · 选择行动${allN > 1 ? `（第 ${doneN + 1}/${allN} 次）` : ""}</div>`;
-      // 两列网格：六个按钮排成 3 行 × 2 列，高度压缩一半
+      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slotName(slot)} · ${allN > 1 ? L("act.titleN", doneN + 1, allN) : L("act.title")}</div>`;
       const grid = document.createElement("div");
       grid.className = "actgrid";
       acts.forEach(a => {
@@ -4671,7 +5734,7 @@ function runEffectSpec(spec, S) {
       const box = document.getElementById("actionPanel");
       const doneN = num(S.actCount, 0), allN = num(S.actQuota, 1);
       const slot = SLOT_MAP[S.slot] || SLOTS[0];
-      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slot.name}${allN > 1 ? `（第 ${doneN + 1}/${allN} 次）` : ""}</div>`;
+      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slotName(slot)}${allN > 1 ? `（${doneN + 1}/${allN}）` : ""}</div>`;
 
       const grid = document.createElement("div");
       grid.className = "actgrid";
@@ -4684,10 +5747,10 @@ function runEffectSpec(spec, S) {
         grid.appendChild(b);
       };
 
-      mk(`${c ? c.icon : "🎪"} 去社团活动`, c ? c.n : "", () => takeAction("club"));
-      mk("📖 留在教室写作业", "推掉这周社团", () => takeAction("study"));
-      mk("😴 回宿舍休息", "这周不想动", () => takeAction("rest"));
-      mk("👥 找同学玩", "不上社团课", () => takeAction("social"));
+      mk(`${c ? c.icon : "🎪"} ${L("act.club")}`, c ? TZ(c.n) : "", () => takeAction("club"));
+      mk(L("act.clubSkip"), L("act.clubSub"), () => takeAction("study"));
+      mk(L("act.clubRest"), L("act.restSub"), () => takeAction("rest"));
+      mk(L("act.clubSocial"), L("act.socialSub"), () => takeAction("social"));
 
       box.appendChild(grid);
       renderHUD();
@@ -4732,13 +5795,13 @@ function runEffectSpec(spec, S) {
         S.actCount = (S.actCount || 0) + 1;
         S.evCntWeek = {};
         S.evCountWeek = 0;
-        say(`🎪 周三社团课：${clubName() || "社团"}`, "sys");
+        say(L("flow.clubLog", clubName() || L("flow.club")), "sys");
         renderHUD();
         runClubEvent(() => afterAction(k));
         return;
       }
       studySettle(k);
-      say(`本周行动(${(S.actCount || 0) + 1}/${S.actQuota || 1}):${{study: "努力学习", rest: "好好休息", social: "社交活动", fun: "摸鱼娱乐", allowance: "向父母要零花钱"}[k]} → 学力结算后:${Math.round(num(S.score, 0))}`, "sys");
+      say(L("flow.actionLog", (S.actCount || 0) + 1, S.actQuota || 1, actionName(k), Math.round(num(S.score, 0))), "sys");
       S.actCount = (S.actCount || 0) + 1;
       S.evCntWeek = {};
       S.evCountWeek = 0;
@@ -5028,10 +6091,10 @@ function runEffectSpec(spec, S) {
       const html = logs.map(l => `<div class="${l.cls || ""}" style="margin:2px 0">${l.txt}</div>`).join("");
       showPopup({
         kind: "event",
-        badge: `⚡ 事件 ${clampNum(S.evWeekTotal, 0, 99)}/${GAME_CONFIG.maxEventsPerWeek} · 结果`,
-        title: "事件结局",
+        badge: L("ev.resultBadge", clampNum(S.evWeekTotal, 0, 99), GAME_CONFIG.maxEventsPerWeek),
+        title: L("ev.result"),
         body: `<div style="line-height:2.2">${html}</div>`,
-        options: [{t: "继续"}]
+        options: [{t: L("modal.continue")}]
       }, next);
     }
 
@@ -5042,9 +6105,9 @@ function runEffectSpec(spec, S) {
       if (S.prop.经济 <= 0 && S.term >= 2) {count("brokeWeek"); if (S.cnt.brokeWeek >= brokeNeed) {S.dead = "经济"; return gameOver();} }
 
       weeklySettle();
-      if (S.prop.压力 >= 100) {modProp("心态", GAME_CONFIG.difficulty === "story" ? -7 : -15); say(`压力爆表!心态 -${GAME_CONFIG.difficulty === "story" ? 7 : 15}`, "bad");}
-      if (S.prop.健康 < 30) say("⚠️ 身体在报警，下周该休息了。", "bad");
-      if (S.prop.心态 < 30) say("⚠️ 你最近情绪很低落，注意调节。", "bad");
+      if (S.prop.压力 >= 100) {modProp("心态", GAME_CONFIG.difficulty === "story" ? -7 : -15); say(L("flow.stressBurst", GAME_CONFIG.difficulty === "story" ? 7 : 15), "bad");}
+      if (S.prop.健康 < 30) say(L("flow.healthWarn"), "bad");
+      if (S.prop.心态 < 30) say(L("flow.mindWarn"), "bad");
       if (S.prop.压力 >= 80 && !Talent.have("不吃压力")) {modProp("效率", -3);}
       checkAch();
 
@@ -5085,7 +6148,7 @@ function runEffectSpec(spec, S) {
       }
       S.zhongkao = subs.length ? Math.round(clampNum(total / subs.length, 0, 100, 0)) : 0;
       S.lastExamScore = S.zhongkao;
-      say(`🎓 中考放榜!你的均分:${S.zhongkao}/100`, "exam");
+      say(L("flow.zhongkao", S.zhongkao), "exam");
       checkAch();
       gameOver();
     }
@@ -5096,27 +6159,27 @@ function runEffectSpec(spec, S) {
       const sc = GAME_CONFIG.school;
       setBackground("end");            // 结局画面切到「立行号」列车背景
       renderHUD();
-      const talentList = Talent.owned.length ? Talent.owned.map(t => `${t}(Lv.${TALENTS[t].lv})`).join("、") : "无";
-      const achList = S.ach.length ? S.ach.map(id => ACHIEVEMENTS[id].n).join("、") : "无";
+      const talentList = Talent.owned.length ? Talent.owned.map(t => `${TZ(t)}(Lv.${TALENTS[t].lv})`).join("、") : L("end.none");
+      const achList = S.ach.length ? S.ach.map(id => TZ(ACHIEVEMENTS[id].n)).join("、") : L("end.none");
       let reasonLine = "";
       if (S.zhongkao < 0) {
-        if (S.dead === "健康") reasonLine = "你因健康问题提前离场。";
-        else if (S.dead === "心态") reasonLine = "你因心理压力过重提前离场。";
-        else if (S.dead === "经济") reasonLine = "你因家庭经济困难提前离场。";
+        if (S.dead === "健康") reasonLine = L("end.reasonHealth");
+        else if (S.dead === "心态") reasonLine = L("end.reasonMind");
+        else if (S.dead === "经济") reasonLine = L("end.reasonMoney");
       }
-      showModal("初中落幕",
-        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${end.n}</h2><p style="margin-top:12px;line-height:2">${end.t}</p>
+      showModal(L("end.title"),
+        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${TZ(end.n)}</h2><p style="margin-top:12px;line-height:2">${TZ(end.t)}</p>
      ${reasonLine ? `<p style="margin-top:8px;color:var(--red);font-weight:bold">${reasonLine}</p>` : ""}
      <p style="margin-top:14px;color:var(--dim);font-size:.9rem">「${sc.motto}」<br>
-      <span style="font-size:.82rem">${sc.train} 到站了。这三年走过的每一步，都算数。</span></p>
-     <p style="margin-top:16px;color:var(--dim)">历时 ${S.week} 周 · 中考 ${S.zhongkao < 0 ? "—" : S.zhongkao} 分 · 天赋 ${Talent.owned.length} 个 · 成就 ${S.ach.length}/${Object.keys(ACHIEVEMENTS).length}</p>
+      <span style="font-size:.82rem">${L("end.arrival", sc.train)}</span></p>
+     <p style="margin-top:16px;color:var(--dim)">${L("end.stat", S.week, S.zhongkao < 0 ? "—" : S.zhongkao, Talent.owned.length, S.ach.length, Object.keys(ACHIEVEMENTS).length)}</p>
      <div style="margin-top:14px;font-size:.85rem;color:var(--dim);text-align:left;line-height:1.9">
-       <b style="color:var(--purple)">天赋:</b>${talentList}<br>
-       <b style="color:#ffb86b">成就:</b>${achList}
+       <b style="color:var(--purple)">${L("end.talents")}:</b>${talentList}<br>
+       <b style="color:#ffb86b">${L("end.ach")}:</b>${achList}
      </div></div>`,
         [{
-          t: "回到主菜单", fn: () => {setBackground("main"); toStart();}
-        }, {t: "重新开始", fn: () => {setBackground("main"); newGameAt(slotCur);}}], null, true, false, {kind: "ending"});
+          t: L("end.back"), fn: () => {setBackground("main"); toStart();}
+        }, {t: L("end.restart"), fn: () => {setBackground("main"); newGameAt(slotCur);}}], null, true, false, {kind: "ending"});
     }
 
 </script>
@@ -5141,29 +6204,29 @@ function runEffectSpec(spec, S) {
         ? t.inc.map(i => `${i} Lv.${TALENTS[i] ? TALENTS[i].lv : "?"}`).join(" · ")
         : "无";
 
-      showModal(`天赋详情`,
+      showModal(L("talent.detail"),
         `<div class="talent-header">
-            <span class="talent-name" style="color:${lvColor}">${name}</span>
+            <span class="talent-name" style="color:${lvColor}">${TZ(name)}</span>
             <span class="talent-lv" style="color:${lvColor}">Lv.${t.lv}</span>
          </div>
-         <div class="talent-poem">「${t.poem || "——"}」</div>
+         <div class="talent-poem">「${TZ(t.poem) || "——"}」</div>
          <div class="talent-row">
             <div class="talent-section">
-               <div class="label">效果</div>
-               <div class="value">${t.desc}</div>
+               <div class="label">${L("talent.effect")}</div>
+               <div class="value">${TZ(t.desc)}</div>
             </div>
             <div class="talent-section">
-               <div class="label">状态</div>
+               <div class="label">${L("talent.status")}</div>
                <div class="value">${owned
-          ? "<span style='color:var(--green)'>已拥有</span>"
-          : `未拥有 · ${t.hint || "—"}`}</div>
+          ? `<span style='color:var(--green)'>${L("talent.owned")}</span>`
+          : `${L("talent.locked")} · ${TZ(t.hint) || "—"}`}</div>
             </div>
          </div>
          <div class="talent-section inc">
-            <div class="label">矛盾项</div>
+            <div class="label">${L("talent.conflict")}</div>
             <div class="value">${incList}</div>
          </div>`,
-        [{t: "关闭", fn: () => { }}], null, false, true);
+        [{t: L("modal.close"), fn: () => { }}], null, false, true);
     }
 
     /* 天赋图鉴：每个天赋只占一行小卡片，诗句改用 title 悬停显示，
@@ -5174,35 +6237,35 @@ function runEffectSpec(spec, S) {
       const got = all.filter(([n]) => Talent.have(n));
       const lock = all.filter(([n]) => !Talent.have(n));
       let h = `<div style="color:var(--dim);font-size:.8rem;margin-bottom:8px">
-        已解锁 ${got.length} / ${all.length}　·　点任意天赋可看详情</div>`;
+        ${L("talent.bookHint", got.length, all.length)}</div>`;
       h += "<div class='talentgrid'>";
       const row = ([name, t], owned) =>
-        `<div class="talentitem ${owned ? "c" + t.lv : "lock"}" onclick="openTalentInfo('${name}')" title="${t.poem || ""}">
-          <b>${owned ? "🏆" : "🔒"} ${name}</b><span class="tlv">Lv.${t.lv}</span>
-          <div class="tdesc">${t.desc}</div>
+        `<div class="talentitem ${owned ? "c" + t.lv : "lock"}" onclick="openTalentInfo('${name}')" title="${TZ(t.poem) || ""}">
+          <b>${owned ? "🏆" : "🔒"} ${TZ(name)}</b><span class="tlv">Lv.${t.lv}</span>
+          <div class="tdesc">${TZ(t.desc)}</div>
         </div>`;
       got.sort((a, b) => b[1].lv - a[1].lv).forEach(x => {h += row(x, true);});
       lock.sort((a, b) => a[1].lv - b[1].lv).forEach(x => {h += row(x, false);});
       h += "</div>";
-      showModal("天赋图鉴", h, [{t: "关闭", fn: () => { }}], null, false, true);
+      showModal(L("talent.book"), h, [{t: L("modal.close"), fn: () => { }}], null, false, true);
     }
 
     function openShop() {
       const opts = SHOP_ITEMS.map(it => ({
-        t: it.n, sub: `价格 ${it.price}`,
+        t: TZ(it.n), sub: L("shop.price", it.price),
         disabled: () => S.prop.经济 < it.price,
         fn: () => {
-          if (S.prop.经济 < it.price) {say("经济不足，买不起。", "bad"); return;}
+          if (S.prop.经济 < it.price) {say(L("shop.poor"), "bad"); return;}
           modProp("经济", -it.price);
           S.items[it.id] = (S.items[it.id] || 0) + 1;
-          say(`🏪 你购买了【${it.n}】。`, "good");
-          toast(`购买：${it.n}`);
+          say(L("shop.buy", TZ(it.n)), "good");
+          toast(`${L("shop.title")}: ${TZ(it.n)}`);
           renderHUD();
           setTimeout(openShop, 100);
         }
       }));
-      opts.push({t: "离开", fn: () => {ensureActionPanel();}});
-      showModal("小卖铺", `<div>你走进校门口的小卖铺，货架上摆满了各种物件。<br><span style="color:var(--dim);font-size:.85rem">当前经济：${Math.round(S.prop.经济)}</span></div>`, opts, null, false, true, {kind: "free"});
+      opts.push({t: L("shop.leave"), fn: () => {ensureActionPanel();}});
+      showModal(L("shop.title"), `<div>${L("shop.body")}<br><span style="color:var(--dim);font-size:.85rem">${L("shop.money", Math.round(S.prop.经济))}</span></div>`, opts, null, false, true, {kind: "free"});
     }
 
     function useItem(id) {
@@ -5210,9 +6273,9 @@ function runEffectSpec(spec, S) {
       if (!it || !S.items[id] || S.items[id] <= 0) return;
       S.items[id]--;
       it.eff(S);
-      say(`🎒 你使用了【${it.n}】——${it.desc}`, "good");
+      say(L("item.used", TZ(it.n), TZ(it.desc)), "good");
       renderHUD();
-      showModal("道具使用", `<div style="line-height:2">【${it.n}】的效果已经生效：<br>${it.desc}</div>`, [{t: "好", fn: () => { }}], null, false, false, {kind: "free", img: it.img});
+      showModal(L("item.use"), `<div style="line-height:2">${L("item.effect", TZ(it.n))}<br>${TZ(it.desc)}</div>`, [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free", img: it.img});
     }
 
     const STAT_COLOR = {心态: "#ffb4d1", 经济: "#d9b3ff", 健康: "#7ee0c0", 效率: "#b388ff", 悟性: "#c9a7ff", 社交: "#ffb86b", 压力: "#ff7aa2", 亲情: "#ffd08a"};
@@ -5228,31 +6291,31 @@ function runEffectSpec(spec, S) {
 
     function renderHUD() {
       if (!S) return;
-      document.getElementById("hudGrade").textContent = `${S.name}(${S.gender}) · ${gradeName()}`;
-      document.getElementById("hudWeek").textContent = S.week;
+      document.getElementById("hudGrade").textContent = `${S.name}(${genderName(S.gender)}) · ${gradeName()}`;
+      document.getElementById("hudWeekText").textContent = L("hud.week", S.week);
       document.getElementById("hudTerm").textContent = termName();
       // 属性栏：只显示 PROP_HUD 里的项（亲情不在主界面显示）
       let h = "<div class='statgrid'>";
       for (const k of (typeof PROP_HUD !== "undefined" ? PROP_HUD : Object.keys(PROP_RANGE))) {
         const v = fixProp(k, S.prop[k]); S.prop[k] = v;
         const pct = k === "经济" ? clampNum(v / 30, 0, 100, 2) : clampNum(v / 1.5, 0, 100, 0);
-        h += `<div class="stat compact"><div style="display:flex;justify-content:space-between;gap:4px"><span>${k}</span><b>${Math.round(v)}</b></div><div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k]}"></i></div></div>`;
+        h += `<div class="stat compact"><div style="display:flex;justify-content:space-between;gap:4px"><span>${propName(k)}</span><b>${Math.round(v)}</b></div><div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k]}"></i></div></div>`;
       }
       // 亲情：折叠进属性栏末尾一行小字，不占整行高度
       const fam = fixProp("亲情", S.prop.亲情); S.prop.亲情 = fam;
-      h += `<div class="stat compact famrow"><div style="display:flex;justify-content:space-between;gap:4px"><span>亲情</span><b>${Math.round(fam)}</b></div><div class="bar"><i style="width:${clampNum(fam / 1.5, 0, 100, 0)}%;background:${STAT_COLOR.亲情}"></i></div></div>`;
+      h += `<div class="stat compact famrow"><div style="display:flex;justify-content:space-between;gap:4px"><span>${propName("亲情")}</span><b>${Math.round(fam)}</b></div><div class="bar"><i style="width:${clampNum(fam / 1.5, 0, 100, 0)}%;background:${STAT_COLOR.亲情}"></i></div></div>`;
       h += "</div>";
       document.getElementById("statPanel").innerHTML = h;
       document.getElementById("talentCount").textContent = Talent.owned.length;
       document.getElementById("talentPanel").innerHTML = Talent.owned.length ?
-        [...Talent.owned].sort((a, b) => TALENTS[b].lv - TALENTS[a].lv).map(t => `<span class="badge c${TALENTS[t].lv}" title="${TALENTS[t].desc}" onclick="openTalentInfo('${t}')">${t} Lv.${TALENTS[t].lv}${cureProgress(t)}</span>`).join("") : "<span style='color:var(--dim)'>尚无天赋 —— 在选择中觉醒</span>";
+        [...Talent.owned].sort((a, b) => TALENTS[b].lv - TALENTS[a].lv).map(t => `<span class="badge c${TALENTS[t].lv}" title="${TZ(TALENTS[t].desc)}" onclick="openTalentInfo('${t}')">${TZ(t)} Lv.${TALENTS[t].lv}${cureProgress(t)}</span>`).join("") : `<span style='color:var(--dim)'>${L("hud.noTalent")}</span>`;
       const itemCount = Object.values(S.items).reduce((a, b) => a + b, 0);
       document.getElementById("itemCount").textContent = itemCount;
       document.getElementById("itemPanel").innerHTML = itemCount > 0 ?
         Object.entries(S.items).filter(([k, v]) => v > 0).map(([k, v]) => {
           const it = SHOP_ITEMS.find(x => x.id === k);
-          return it ? `<span class="badge" onclick="useItem('${k}')">${it.n} ×${v}</span>` : "";
-        }).join("") : "<span style='color:var(--dim)'>暂无道具 —— 可去小卖铺购买</span>";
+          return it ? `<span class="badge" onclick="useItem('${k}')">${TZ(it.n)} ×${v}</span>` : "";
+        }).join("") : `<span style='color:var(--dim)'>${L("hud.noItem")}</span>`;
       document.getElementById("scoreNow").textContent = Math.round(num(S.score, 0));
       const subs = subjectsOf(S.term) || [];
       // 学科栏默认折叠，点击展开；只在展开时才渲染每一行，界面更短
@@ -5261,14 +6324,32 @@ function runEffectSpec(spec, S) {
         const v = clampNum(S.subj[s], 0, SUBJ_CAP, 0), rel = v / (clampNum(S.term, 0, 10) + 1);
         const pct = clampNum(rel / 700 * 100, 0, 100, 2);
         const color = rel >= 480 ? "var(--green)" : (rel >= 220 ? "var(--gold)" : "var(--red)");
-        return `<div class="subjrow"><span style="width:3em">${s}</span><div class="bar"><i style="width:${pct}%;background:${color}"></i></div><b style="width:3em;text-align:right;color:${color}">${Math.round(v)}</b></div>`;
+        return `<div class="subjrow"><span style="width:3em">${TZ(s)}</span><div class="bar"><i style="width:${pct}%;background:${color}"></i></div><b style="width:3em;text-align:right;color:${color}">${Math.round(v)}</b></div>`;
       }).join("");
       document.getElementById("subjPanel").innerHTML =
-        `<div class="subjtoggle" onclick="toggleSubjPanel()">${subjOpen ? "▾" : "▸"} 各科详情（${subs.length} 科）</div>` +
+        `<div class="subjtoggle" onclick="toggleSubjPanel()">${subjOpen ? "▾" : "▸"} ${L("hud.subjToggle", subs.length)}</div>` +
         (subjOpen ? `<div class="subjbody">${subjRows}</div>` : "");
       document.getElementById("lastExam").textContent = S.lastExamScore || "—";
       const r = S.zhongkao >= 0 ? S.zhongkao : (S.lastExamScore || 0);
-      document.getElementById("rankNow").textContent = r ? ("前 " + Math.max(1, Math.round(clampNum(100 - r, 1, 100))) + "%") : "—";
+      document.getElementById("rankNow").textContent = r ? L("hud.rankVal", Math.max(1, Math.round(clampNum(100 - r, 1, 100)))) : "—";
+      // 静态标签（语言切换后要重刷）
+      setText("talentLabel", L("hud.talent"));
+      setText("talentHint", L("hud.talentHint"));
+      setText("itemLabel", L("hud.item"));
+      setText("subjLabel", L("hud.subjects"));
+      setText("scoreLabel", L("hud.score"));
+      setText("scoreTotalLabel", L("hud.scoreTotal"));
+      setText("lastExamLabel", L("hud.lastExam"));
+      setText("rankLabel", L("hud.rank"));
+      setText("actLabel", L("hud.act"));
+      setText("evLabel", L("hud.ev"));
+      setText("btnShop", L("hud.shop"));
+      setText("btnTalentBook", L("hud.talentBook"));
+      setText("btnAch", L("hud.ach"));
+      setText("btnTheme", L("hud.theme"));
+      setText("btnSave", L("hud.save"));
+      setText("btnHome", L("hud.home"));
+      setText("btnLang", L("hud.lang"));
 
       // 本周行动进度
       const aq = num(S.actQuota, 0), ac = clampNum(S.actCount, 0, aq || 0);
@@ -5310,16 +6391,16 @@ function runEffectSpec(spec, S) {
       a.forEach((d, i) => {
         const el = document.createElement("div"); el.className = "slot";
         if (d) {
-          el.innerHTML = `<div class="info"><b>存档 ${i + 1} · ${d.name || "无名氏"}(${d.gender || "男"})</b> · ${GRADES[Math.min(2, Math.floor(d.term / 2))]} 第 ${d.week} 周${d.over ? " · <span style='color:var(--red)'>已完结</span>" : ""}<br>中考:${d.zhongkao < 0 ? "—" : d.zhongkao} · 成就 ${d.ach.length} · ${d.time}</div>
-      <div><button class="btn green" onclick="resumeGame(${i})">继续</button><button class="btn" onclick="if(confirm('覆盖该存档?'))newGameAt(${i})">重开</button><button class="btn" onclick="delSave(${i})">删除</button></div>`;
+          el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)} · ${d.name || L("save.anon")}(${genderName(d.gender)})</b> · ${L("grade." + (Math.min(2, Math.floor(d.term / 2)) + 1))} ${L("hud.week", d.week)}${d.over ? ` · <span style='color:var(--red)'>${L("save.over")}</span>` : ""}<br>${L("save.info", d.zhongkao < 0 ? "—" : d.zhongkao, d.ach.length, d.time)}</div>
+      <div><button class="btn green" onclick="resumeGame(${i})">${L("save.resume")}</button><button class="btn" onclick="if(confirm('${L("save.confirmOver")}'))newGameAt(${i})">${L("save.restart")}</button><button class="btn" onclick="delSave(${i})">${L("save.delete")}</button></div>`;
         } else {
-          el.innerHTML = `<div class="info"><b>存档 ${i + 1}</b> · 空</div><div><button class="btn primary" onclick="newGameAt(${i})">新开存档</button></div>`;
+          el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)}</b> · ${L("save.empty")}</div><div><button class="btn primary" onclick="newGameAt(${i})">${L("save.new")}</button></div>`;
         }
         box.appendChild(el);
       });
     }
 
-    function delSave(i) {if (!confirm("确定删除该存档?")) return; const a = loadSaves(); a[i] = null; writeSaves(a); renderSlots();}
+    function delSave(i) {if (!confirm(L("save.confirmDel"))) return; const a = loadSaves(); a[i] = null; writeSaves(a); renderSlots();}
 
     /* ------------------------------------------------------------------
      * 统一弹窗层：一切「需要玩家点击选择」的界面都是弹窗，弹窗就是事件
@@ -5335,10 +6416,10 @@ function runEffectSpec(spec, S) {
 
     function badgeText(kind) {
       if (!S) return "";
-      if (kind === "event") return `⚡ 事件 ${clampNum(S.evWeekTotal, 0, 99)}/${GAME_CONFIG.maxEventsPerWeek}`;
-      if (kind === "fixed") return "📅 固定事件";
-      if (kind === "free") return "🎒 自由操作 · 不消耗本周行动";
-      if (kind === "ending") return "🏁 结局";
+      if (kind === "event") return L("badge.event", clampNum(S.evWeekTotal, 0, 99), GAME_CONFIG.maxEventsPerWeek);
+      if (kind === "fixed") return L("badge.fixed");
+      if (kind === "free") return L("badge.free");
+      if (kind === "ending") return L("badge.ending");
       return "";
     }
 
@@ -5352,9 +6433,9 @@ function runEffectSpec(spec, S) {
       m.classList.remove("hidden");
       modalEl.classList.remove("k-event", "k-fixed", "k-ending", "k-free");
       modalEl.classList.add("k-" + kind);
-      if (title === "天赋详情") modalEl.classList.add("talent-modal");
+      if (title === L("talent.detail")) modalEl.classList.add("talent-modal");
       else modalEl.classList.remove("talent-modal");
-      document.getElementById("modalTitle").textContent = title === "天赋详情" ? "" : title;
+      document.getElementById("modalTitle").textContent = title === L("talent.detail") ? "" : title;
 
       const badge = document.getElementById("modalBadge");
       const bt = (meta && meta.badge) || badgeText(kind);
@@ -5376,7 +6457,7 @@ function runEffectSpec(spec, S) {
       const b = document.getElementById("modalBody");
       if (typeof body === "string" && body.includes("<")) b.innerHTML = body; else b.textContent = body;
       const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
-      const list = opts || [{t: "继续", fn: () => { }}];
+      const list = opts || [{t: L("modal.continue"), fn: () => { }}];
       let anyEnabled = false;
       list.forEach(o => {
         const btn = document.createElement("button"); btn.className = "btn primary optbtn";
@@ -5397,7 +6478,7 @@ function runEffectSpec(spec, S) {
       });
       if (!anyEnabled) {
         const btn = document.createElement("button"); btn.className = "btn primary optbtn";
-        btn.textContent = "继续";
+        btn.textContent = L("modal.continue");
         btn.onclick = () => closeModal(onClose);
         ob.appendChild(btn);
       }
@@ -5451,9 +6532,9 @@ function runEffectSpec(spec, S) {
       let h = "<div class='achlist'>";
       for (const [id, a] of Object.entries(ACHIEVEMENTS)) {
         const got = S && S.ach.includes(id);
-        h += `<div class="achitem ${got ? "" : "lock"}"><b>${got ? "🏆" : "🔒"} ${a.n}</b><br><span style="color:var(--dim)">${a.d}</span></div>`;
+        h += `<div class="achitem ${got ? "" : "lock"}"><b>${got ? "🏆" : "🔒"} ${TZ(a.n)}</b><br><span style="color:var(--dim)">${TZ(a.d)}</span></div>`;
       }
-      showModal("成就系统", h + "</div>", [{t: "关闭", fn: () => { }}], null, false, true, {kind: "free"});
+      showModal(L("ach.title"), h + "</div>", [{t: L("modal.close"), fn: () => { }}], null, false, true, {kind: "free"});
     }
 
     function toStart() {
@@ -5462,6 +6543,7 @@ function runEffectSpec(spec, S) {
       document.getElementById("gameScreen").classList.add("hidden");
       document.getElementById("startScreen").classList.remove("hidden");
       renderSlots();
+      if (typeof renderStartExtras === "function") renderStartExtras();
     }
 
 </script>
@@ -5504,7 +6586,7 @@ function runEffectSpec(spec, S) {
         time: new Date().toLocaleString()
       };
       writeSaves(a);
-      if (manual) {toast("💾 已保存"); renderSlots();}
+      if (manual) {toast(L("save.saved")); renderSlots();}
     }
 
     function resumeGame(i) {
@@ -5523,7 +6605,7 @@ function runEffectSpec(spec, S) {
       document.getElementById("startScreen").classList.add("hidden");
       document.getElementById("gameScreen").classList.remove("hidden");
       document.getElementById("log").innerHTML = "";
-      say("💾 存档读取成功，继续你的初中生活！", "sys");
+      say(L("save.loaded"), "sys");
       if (S.over) {gameOver();} else startWeek();
     }
 
@@ -5533,19 +6615,19 @@ function runEffectSpec(spec, S) {
       popupBusy = true;
       const _bd = document.getElementById("modalBadge"); if (_bd) _bd.style.display = "none";
       const _md = document.getElementById("modalMedia"); if (_md) {_md.innerHTML = ""; _md.style.display = "none";}
-      document.getElementById("modalTitle").textContent = "创建角色";
+      document.getElementById("modalTitle").textContent = L("cc.title");
       document.getElementById("modalBody").innerHTML =
         `<div style="line-height:2.4">
-       姓名:<input id="inpName" maxlength="8" placeholder="输入你的名字" style="background:#0b0818;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 12px;width:60%"><br>
-       性别:<label><input type="radio" name="inpGender" value="男" checked> 男</label>
-            <label style="margin-left:16px"><input type="radio" name="inpGender" value="女"> 女</label>
+       ${L("cc.name")}:<input id="inpName" maxlength="8" placeholder="${L("cc.namePh")}" style="background:#0b0818;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 12px;width:60%"><br>
+       ${L("cc.gender")}:<label><input type="radio" name="inpGender" value="男" checked> ${L("cc.male")}</label>
+            <label style="margin-left:16px"><input type="radio" name="inpGender" value="女"> ${L("cc.female")}</label>
      </div>
-     <div style="color:var(--dim);font-size:.85rem;margin-top:8px">或从下方随机名字中选一个：</div>
+     <div style="color:var(--dim);font-size:.85rem;margin-top:8px">${L("cc.pick")}</div>
      <div class="namegrid" id="nameGrid"></div>`;
       const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
-      const btn = document.createElement("button"); btn.className = "btn primary"; btn.textContent = "开始初中生活";
+      const btn = document.createElement("button"); btn.className = "btn primary"; btn.textContent = L("cc.start");
       btn.onclick = () => {
-        const nm = (document.getElementById("inpName").value || "").trim() || "无名氏";
+        const nm = (document.getElementById("inpName").value || "").trim() || L("save.anon");
         const gd = document.querySelector("input[name=inpGender]:checked").value;
         closeModal();
         newGame(nm, gd);
@@ -5553,15 +6635,19 @@ function runEffectSpec(spec, S) {
         document.getElementById("startScreen").classList.add("hidden");
         document.getElementById("gameScreen").classList.remove("hidden");
         document.getElementById("log").innerHTML = "";
-        say(`🌅 ${nm} 的初中生涯，开始了。`, "sys");
+        say(L("cc.begin", nm), "sys");
         startWeek();
       };
       ob.appendChild(btn);
       setTimeout(() => {
         const grid = document.getElementById("nameGrid");
         if (!grid) return;
-        const maleNames = ["李承宇", "王浩然", "张子墨", "刘俊熙", "陈宇航", "杨启航", "赵泽楷", "周天佑", "顾北辰", "沈亦白", "陆时安", "程星野", "谢知遥", "韩煜城", "顾言澈", "林书珩"];
-        const femaleNames = ["林诗涵", "苏婉清", "沈梦瑶", "顾念之", "叶清欢", "陆雨萱", "唐若曦", "许安然", "江晚吟", "沈知意", "顾星晚", "温以宁", "白书予", "叶挽晴", "林疏桐", "苏可盈"];
+        const maleNames = LANG === "en"
+          ? ["Ethan", "Noah", "Liam", "Lucas", "Mason", "Owen", "Caleb", "Ryan", "Adrian", "Felix", "Julian", "Milo", "Theo", "Ivan", "Oscar", "Leon"]
+          : ["李承宇", "王浩然", "张子墨", "刘俊熙", "陈宇航", "杨启航", "赵泽楷", "周天佑", "顾北辰", "沈亦白", "陆时安", "程星野", "谢知遥", "韩煜城", "顾言澈", "林书珩"];
+        const femaleNames = LANG === "en"
+          ? ["Emma", "Ava", "Sophia", "Chloe", "Luna", "Mia", "Nora", "Iris", "Elena", "Clara", "Hazel", "Ruby", "Vera", "Stella", "Freya", "Lydia"]
+          : ["林诗涵", "苏婉清", "沈梦瑶", "顾念之", "叶清欢", "陆雨萱", "唐若曦", "许安然", "江晚吟", "沈知意", "顾星晚", "温以宁", "白书予", "叶挽晴", "林疏桐", "苏可盈"];
         const getG = () => document.querySelector("input[name=inpGender]:checked").value;
         const renderNames = () => {
           const pool = getG() === "男" ? maleNames : femaleNames;
@@ -5585,12 +6671,26 @@ function runEffectSpec(spec, S) {
 /* ==================================================================
  * 启动入口
  * ------------------------------------------------------------------
- * 所有文件加载完毕后，由这里点火：应用主题皮肤 → 渲染存档槽。
+ * 所有文件加载完毕后，由这里点火：
+ *   读本地设置（主题 + 语言）→ 应用主题 → 刷文案 → 渲染存档槽。
  * 这是最后一个加载的 js 文件。
- * ============================================================ */
+ * ================================================================== */
 
-applyTheme();
-renderSlots();
+    (function boot() {
+      // 1. 先读设置：主题与语言会立刻写到 :root 上
+      if (typeof loadSettings === "function") loadSettings();
+
+      // 2. 应用主题皮肤（校名、校训、滚动条开关也在里面）
+      applyTheme();
+
+      // 3. 把界面文案刷成当前语言
+      if (typeof applyLangToDom === "function") applyLangToDom();
+      if (typeof refreshDocTitle === "function") refreshDocTitle();
+
+      // 4. 主菜单：存档槽 + 主题格子 + 说明文案
+      renderSlots();
+      if (typeof renderStartExtras === "function") renderStartExtras();
+    })();
 
 </script>
 </body>

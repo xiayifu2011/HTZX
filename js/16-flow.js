@@ -9,9 +9,9 @@
 
     function weekInTerm() {return S.week % (WEEKS_PER_TERM + 1)}
 
-    function gradeName() {return GRADES[Math.min(2, Math.floor(S.term / 2))]}
+    function gradeName() {return L("grade." + (Math.min(2, Math.floor(S.term / 2)) + 1))}
 
-    function termName() {return (S.term % 2 === 0) ? "上学期" : "下学期"}
+    function termName() {return (S.term % 2 === 0) ? L("term.up") : L("term.down")}
 
     function nextWeek() {
       if (S.over) return;
@@ -51,7 +51,7 @@
       if (S.week > 0 && weekInTerm() === 0 && S.term >= TERMS) {return zhongkao();}
       const wit = weekInTerm();
       const wi = weekInfo(S.week, S.term);
-      say(`—— 第 ${S.week} 周 · ${gradeName()}${termName()} · ${wi.month}月${wi.seasonIcon}${wi.season} ——`, "week-head");
+      say(L("flow.weekHead", S.week, gradeName(), termName(), wi.month, wi.seasonIcon, wi.season), "week-head");
       const fixed = fixedEventOf(S.term, wit);
       if (fixed) runFixed(fixed);
       else offerActions();
@@ -98,19 +98,18 @@
       if (S.slot === "clubday") {offerClubActions(); return;}
 
       const acts = [
-        {k: "study", t: "📖 努力学习"},
-        {k: "rest", t: "😴 好好休息"},
-        {k: "social", t: "👥 社交活动"},
-        {k: "fun", t: "🎮 摸鱼娱乐"},
-        {k: "allowance", t: "🏠 向父母要零花钱"},
-        {k: "read", t: "📚 图书角"},
+        {k: "study", t: L("act.study")},
+        {k: "rest", t: L("act.rest")},
+        {k: "social", t: L("act.social")},
+        {k: "fun", t: L("act.fun")},
+        {k: "allowance", t: L("act.allowance")},
+        {k: "read", t: L("act.read")},
       ];
 
       const box = document.getElementById("actionPanel");
       const doneN = num(S.actCount, 0), allN = num(S.actQuota, 1);
       const slot = SLOT_MAP[S.slot] || SLOTS[0];
-      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slot.name} · 选择行动${allN > 1 ? `（第 ${doneN + 1}/${allN} 次）` : ""}</div>`;
-      // 两列网格：六个按钮排成 3 行 × 2 列，高度压缩一半
+      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slotName(slot)} · ${allN > 1 ? L("act.titleN", doneN + 1, allN) : L("act.title")}</div>`;
       const grid = document.createElement("div");
       grid.className = "actgrid";
       acts.forEach(a => {
@@ -130,7 +129,7 @@
       const box = document.getElementById("actionPanel");
       const doneN = num(S.actCount, 0), allN = num(S.actQuota, 1);
       const slot = SLOT_MAP[S.slot] || SLOTS[0];
-      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slot.name}${allN > 1 ? `（第 ${doneN + 1}/${allN} 次）` : ""}</div>`;
+      box.innerHTML = `<div class='tag-title'>${slot.icon} ${slotName(slot)}${allN > 1 ? `（${doneN + 1}/${allN}）` : ""}</div>`;
 
       const grid = document.createElement("div");
       grid.className = "actgrid";
@@ -143,10 +142,10 @@
         grid.appendChild(b);
       };
 
-      mk(`${c ? c.icon : "🎪"} 去社团活动`, c ? c.n : "", () => takeAction("club"));
-      mk("📖 留在教室写作业", "推掉这周社团", () => takeAction("study"));
-      mk("😴 回宿舍休息", "这周不想动", () => takeAction("rest"));
-      mk("👥 找同学玩", "不上社团课", () => takeAction("social"));
+      mk(`${c ? c.icon : "🎪"} ${L("act.club")}`, c ? TZ(c.n) : "", () => takeAction("club"));
+      mk(L("act.clubSkip"), L("act.clubSub"), () => takeAction("study"));
+      mk(L("act.clubRest"), L("act.restSub"), () => takeAction("rest"));
+      mk(L("act.clubSocial"), L("act.socialSub"), () => takeAction("social"));
 
       box.appendChild(grid);
       renderHUD();
@@ -191,13 +190,13 @@
         S.actCount = (S.actCount || 0) + 1;
         S.evCntWeek = {};
         S.evCountWeek = 0;
-        say(`🎪 周三社团课：${clubName() || "社团"}`, "sys");
+        say(L("flow.clubLog", clubName() || L("flow.club")), "sys");
         renderHUD();
         runClubEvent(() => afterAction(k));
         return;
       }
       studySettle(k);
-      say(`本周行动(${(S.actCount || 0) + 1}/${S.actQuota || 1}):${{study: "努力学习", rest: "好好休息", social: "社交活动", fun: "摸鱼娱乐", allowance: "向父母要零花钱"}[k]} → 学力结算后:${Math.round(num(S.score, 0))}`, "sys");
+      say(L("flow.actionLog", (S.actCount || 0) + 1, S.actQuota || 1, actionName(k), Math.round(num(S.score, 0))), "sys");
       S.actCount = (S.actCount || 0) + 1;
       S.evCntWeek = {};
       S.evCountWeek = 0;
@@ -487,10 +486,10 @@
       const html = logs.map(l => `<div class="${l.cls || ""}" style="margin:2px 0">${l.txt}</div>`).join("");
       showPopup({
         kind: "event",
-        badge: `⚡ 事件 ${clampNum(S.evWeekTotal, 0, 99)}/${GAME_CONFIG.maxEventsPerWeek} · 结果`,
-        title: "事件结局",
+        badge: L("ev.resultBadge", clampNum(S.evWeekTotal, 0, 99), GAME_CONFIG.maxEventsPerWeek),
+        title: L("ev.result"),
         body: `<div style="line-height:2.2">${html}</div>`,
-        options: [{t: "继续"}]
+        options: [{t: L("modal.continue")}]
       }, next);
     }
 
@@ -501,9 +500,9 @@
       if (S.prop.经济 <= 0 && S.term >= 2) {count("brokeWeek"); if (S.cnt.brokeWeek >= brokeNeed) {S.dead = "经济"; return gameOver();} }
 
       weeklySettle();
-      if (S.prop.压力 >= 100) {modProp("心态", GAME_CONFIG.difficulty === "story" ? -7 : -15); say(`压力爆表!心态 -${GAME_CONFIG.difficulty === "story" ? 7 : 15}`, "bad");}
-      if (S.prop.健康 < 30) say("⚠️ 身体在报警，下周该休息了。", "bad");
-      if (S.prop.心态 < 30) say("⚠️ 你最近情绪很低落，注意调节。", "bad");
+      if (S.prop.压力 >= 100) {modProp("心态", GAME_CONFIG.difficulty === "story" ? -7 : -15); say(L("flow.stressBurst", GAME_CONFIG.difficulty === "story" ? 7 : 15), "bad");}
+      if (S.prop.健康 < 30) say(L("flow.healthWarn"), "bad");
+      if (S.prop.心态 < 30) say(L("flow.mindWarn"), "bad");
       if (S.prop.压力 >= 80 && !Talent.have("不吃压力")) {modProp("效率", -3);}
       checkAch();
 
@@ -544,7 +543,7 @@
       }
       S.zhongkao = subs.length ? Math.round(clampNum(total / subs.length, 0, 100, 0)) : 0;
       S.lastExamScore = S.zhongkao;
-      say(`🎓 中考放榜!你的均分:${S.zhongkao}/100`, "exam");
+      say(L("flow.zhongkao", S.zhongkao), "exam");
       checkAch();
       gameOver();
     }
@@ -555,25 +554,25 @@
       const sc = GAME_CONFIG.school;
       setBackground("end");            // 结局画面切到「立行号」列车背景
       renderHUD();
-      const talentList = Talent.owned.length ? Talent.owned.map(t => `${t}(Lv.${TALENTS[t].lv})`).join("、") : "无";
-      const achList = S.ach.length ? S.ach.map(id => ACHIEVEMENTS[id].n).join("、") : "无";
+      const talentList = Talent.owned.length ? Talent.owned.map(t => `${TZ(t)}(Lv.${TALENTS[t].lv})`).join("、") : L("end.none");
+      const achList = S.ach.length ? S.ach.map(id => TZ(ACHIEVEMENTS[id].n)).join("、") : L("end.none");
       let reasonLine = "";
       if (S.zhongkao < 0) {
-        if (S.dead === "健康") reasonLine = "你因健康问题提前离场。";
-        else if (S.dead === "心态") reasonLine = "你因心理压力过重提前离场。";
-        else if (S.dead === "经济") reasonLine = "你因家庭经济困难提前离场。";
+        if (S.dead === "健康") reasonLine = L("end.reasonHealth");
+        else if (S.dead === "心态") reasonLine = L("end.reasonMind");
+        else if (S.dead === "经济") reasonLine = L("end.reasonMoney");
       }
-      showModal("初中落幕",
-        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${end.n}</h2><p style="margin-top:12px;line-height:2">${end.t}</p>
+      showModal(L("end.title"),
+        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${TZ(end.n)}</h2><p style="margin-top:12px;line-height:2">${TZ(end.t)}</p>
      ${reasonLine ? `<p style="margin-top:8px;color:var(--red);font-weight:bold">${reasonLine}</p>` : ""}
      <p style="margin-top:14px;color:var(--dim);font-size:.9rem">「${sc.motto}」<br>
-      <span style="font-size:.82rem">${sc.train} 到站了。这三年走过的每一步，都算数。</span></p>
-     <p style="margin-top:16px;color:var(--dim)">历时 ${S.week} 周 · 中考 ${S.zhongkao < 0 ? "—" : S.zhongkao} 分 · 天赋 ${Talent.owned.length} 个 · 成就 ${S.ach.length}/${Object.keys(ACHIEVEMENTS).length}</p>
+      <span style="font-size:.82rem">${L("end.arrival", sc.train)}</span></p>
+     <p style="margin-top:16px;color:var(--dim)">${L("end.stat", S.week, S.zhongkao < 0 ? "—" : S.zhongkao, Talent.owned.length, S.ach.length, Object.keys(ACHIEVEMENTS).length)}</p>
      <div style="margin-top:14px;font-size:.85rem;color:var(--dim);text-align:left;line-height:1.9">
-       <b style="color:var(--purple)">天赋:</b>${talentList}<br>
-       <b style="color:#ffb86b">成就:</b>${achList}
+       <b style="color:var(--purple)">${L("end.talents")}:</b>${talentList}<br>
+       <b style="color:#ffb86b">${L("end.ach")}:</b>${achList}
      </div></div>`,
         [{
-          t: "回到主菜单", fn: () => {setBackground("main"); toStart();}
-        }, {t: "重新开始", fn: () => {setBackground("main"); newGameAt(slotCur);}}], null, true, false, {kind: "ending"});
+          t: L("end.back"), fn: () => {setBackground("main"); toStart();}
+        }, {t: L("end.restart"), fn: () => {setBackground("main"); newGameAt(slotCur);}}], null, true, false, {kind: "ending"});
     }

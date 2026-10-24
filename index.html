@@ -22,49 +22,60 @@
      ============================================================ -->
   <div id="startScreen" class="screen">
     <div class="school-brand" id="schoolBrand"></div>
-    <h1>中考人生模拟器</h1>
+    <h1 data-i18n="app.title">中考人生模拟器</h1>
     <p class="sub" id="subMotto">人生在立，行达天下 —— 登上立行号，每一步都算数</p>
+
     <div class="card premium-bg" style="position:relative;overflow:hidden">
       <div class="ink-decoration"></div>
-      <div class="tag-title">存档槽位</div>
+      <div class="tag-title" id="slotsLabel">存档槽位</div>
       <div class="slots" id="slotList"></div>
     </div>
+
+    <!-- ============================================================
+         设置：主题色 + 语言（两套切换都立刻生效，并写进本地设置）
+         ============================================================ -->
+    <div class="card" id="settingsCard">
+      <div class="setrow">
+        <span class="setlabel" id="themeLabel">主题色</span>
+        <button class="btn langbtn" id="langBtn" onclick="toggleLang()">English</button>
+      </div>
+      <div class="themelist" id="themeList"></div>
+      <div style="color:var(--dim);font-size:.76rem;margin-top:6px" id="themeHint"></div>
+      <div style="color:var(--dim);font-size:.76rem;margin-top:2px" id="langHint"></div>
+    </div>
+
     <div class="card" style="text-align:center">
-      <div class="tag-title" style="margin-bottom:8px">了解更多</div>
+      <div class="tag-title" style="margin-bottom:8px" id="moreLabel">了解更多</div>
       <div class="docbtns">
-        <button class="btn" onclick="openDoc('guide')">📘 新手介绍</button>
-        <button class="btn" onclick="openDoc('changelog')">🆕 更新日志</button>
-        <button class="btn" onclick="openDoc('credits')">🙏 鸣谢列表</button>
+        <button class="btn" id="btnGuide" onclick="openDoc('guide')">📘 新手介绍</button>
+        <button class="btn" id="btnChangelog" onclick="openDoc('changelog')">🆕 更新日志</button>
+        <button class="btn" id="btnCredits" onclick="openDoc('credits')">🙏 鸣谢列表</button>
       </div>
     </div>
+
     <div class="card" style="text-align:center">
-      <div class="tag-title" style="margin-bottom:8px">游戏说明</div>
-      <p style="color:var(--dim);font-size:.9rem;line-height:2">
-        你将经历初一至初三共 <b style="color:var(--gold)">150 周</b>,直至中考。<br>
-        <b style="color:var(--purple)">天赋不会在一开始赠送</b> —— 它们藏在一次次选择里。<br>
-        每周可做 <b style="color:var(--gold)">1~2 次本周行动</b>,每次行动后都会跟一个 <b style="color:var(--gold)">⚡ 事件弹窗</b>,偶尔还会连锁出后续事件。<br>
-        <b style="color:var(--green)">🎒 小卖铺 / 读书角 / 天赋图鉴 / 成就</b> 属于自由操作,<b>不占用行动次数</b>。<br>
-        一些负面天赋是可以<b style="color:var(--green)">「破茧」消除</b>的 —— 坚持学习、坚持休息,阴影总会散去。<br>
-        <span style="color:var(--dim);font-size:.85rem">「人生在立，行达天下」—— 登上立行号，这三年走的每一步，都算数。</span>
-      </p>
+      <div class="tag-title" style="margin-bottom:8px" id="aboutLabel">游戏说明</div>
+      <p style="color:var(--dim);font-size:.9rem;line-height:2" id="aboutBody"></p>
     </div>
   </div>
 
   <div id="gameScreen" class="screen hidden">
     <header class="topline">
-      <div class="weekpill"><b id="hudGrade">初一</b> · 第 <b id="hudWeek">0</b> 周 · <span id="hudTerm"></span></div>
-      <div class="evpill" id="actPill">🎯 本周行动 <b id="actNow">0</b>/<b id="actMax">0</b></div>
-      <div class="evpill" id="evPill">⚡ 事件
+      <div class="weekpill"><b id="hudGrade">初一</b> · <span id="hudWeekText">第 0 周</span> · <span id="hudTerm"></span></div>
+      <div class="evpill" id="actPill">🎯 <span class="nowrap" id="actLabel">本周行动</span> <b id="actNow">0</b>/<b id="actMax">0</b></div>
+      <div class="evpill" id="evPill">⚡ <span class="nowrap" id="evLabel">事件</span>
         <span class="dots" id="evDots"></span>
       </div>
       <div class="timepill" id="timePill">📅 <span id="hudTime">—</span></div>
       <div class="clubpill hidden" id="clubPill">🎪 <span id="hudClub">—</span></div>
-      <div>
+      <div class="topbtns">
         <button class="btn" id="btnShop" onclick="openShop()">🏪 小卖铺</button>
         <button class="btn" id="btnTalentBook" onclick="openTalentBook()">📖 天赋图鉴</button>
         <button class="btn" id="btnAch" onclick="openAch()">🏆 成就</button>
-        <button class="btn" onclick="saveGame(true)">💾 保存</button>
-        <button class="btn" onclick="toStart()">🏠 主菜单</button>
+        <button class="btn" id="btnTheme" onclick="openThemePicker()">🎨 主题</button>
+        <button class="btn" id="btnLang" onclick="toggleLang()">🌐 中/EN</button>
+        <button class="btn" id="btnSave" onclick="saveGame(true)">💾 保存</button>
+        <button class="btn" id="btnHome" onclick="toStart()">🏠 主菜单</button>
       </div>
     </header>
     <div id="hud">
@@ -72,20 +83,20 @@
       <div class="sidecol">
         <div class="card" id="statPanel"></div>
         <div class="card">
-          <div class="tag-title">天赋(<span id="talentCount">0</span>) <span
-              style="color:var(--dim);font-size:.7rem">点击看详情</span></div>
+          <div class="tag-title"><span id="talentLabel">天赋</span>(<span id="talentCount">0</span>) <span
+              style="color:var(--dim);font-size:.7rem" id="talentHint">点击看详情</span></div>
           <div id="talentPanel" style="margin-top:4px;line-height:1.7"></div>
-          <div class="tag-title" style="margin-top:6px">道具(<span id="itemCount">0</span>)</div>
+          <div class="tag-title" style="margin-top:6px"><span id="itemLabel">道具</span>(<span id="itemCount">0</span>)</div>
           <div id="itemPanel" style="margin-top:4px;line-height:1.7"></div>
         </div>
         <div class="card">
-          <div class="tag-title">各科(本年级)</div>
+          <div class="tag-title" id="subjLabel">各科(本年级)</div>
           <div id="subjPanel" style="margin-top:4px"></div>
-          <div class="tag-title" style="margin-top:6px">成绩</div>
+          <div class="tag-title" style="margin-top:6px" id="scoreLabel">成绩</div>
           <div style="margin-top:4px;line-height:1.7;font-size:.85rem">
-            综合学力:<b id="scoreNow" style="color:var(--gold)">0</b><br>
-            最近考试:<b id="lastExam" style="color:var(--blue)">—</b><br>
-            年级排名(估):<b id="rankNow" style="color:var(--green)">—</b>
+            <span id="scoreTotalLabel">综合学力</span>:<b id="scoreNow" style="color:var(--gold)">0</b><br>
+            <span id="lastExamLabel">最近考试</span>:<b id="lastExam" style="color:var(--blue)">—</b><br>
+            <span id="rankLabel">年级排名(估)</span>:<b id="rankNow" style="color:var(--green)">—</b>
           </div>
         </div>
       </div>
@@ -115,8 +126,12 @@
   <!-- 工具层：数值、属性、日志 -->
   <script src="js/00-docs.js"></script>
   <script src="js/01-utils.js"></script>
+  <!-- 双语层：中文 / English -->
+  <script src="js/01b-i18n.js"></script>
   <!-- 配置层：学校特色与玩法参数 -->
   <script src="js/02-config.js"></script>
+  <!-- 主题层：多套配色与主菜单切换 -->
+  <script src="js/02c-themes.js"></script>
   <script src="js/02b-time.js"></script>
   <!-- 天赋表 -->
   <script src="js/03-data-talents.js"></script>

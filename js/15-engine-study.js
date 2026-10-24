@@ -384,16 +384,16 @@
       S.evCntWeek = {};
       S.evCountWeek = 0;
       renderHUD();
-      say(`🏠 向父母要零花钱：${title}${g > 0 ? `，拿到 ${g} 元` : "，一分没拿到"}`, cls || "sys");
+      say(L("alw.log", title, g > 0 ? L("alw.got", g) : L("alw.none")), cls || "sys");
       /* 弹完这一个才继续走事件链 —— 否则两个弹窗会互相覆盖，
        * 玩家根本看不到父母说了什么。 */
       showPopup({
         kind: "free",
-        badge: "🏠 本周行动 · 家庭",
-        title: `向父母要零花钱 · ${title}`,
+        badge: L("alw.badge"),
+        title: `${L("alw.title")} · ${title}`,
         body: `<div style="line-height:2">${line}<br><br>
-          <span style="color:var(--dim);font-size:.85rem">当前亲情：${Math.round(clampNum(p.亲情, 0, 150, 80))}　·　亲情越高，父母越愿意给，也越少念叨</span></div>`,
-        options: [{t: g > 0 ? "谢谢爸妈" : "知道了", fn: () => {}}]
+          <span style="color:var(--dim);font-size:.85rem">${L("alw.hint", Math.round(clampNum(p.亲情, 0, 150, 80)))}</span></div>`,
+        options: [{t: g > 0 ? L("alw.thanks") : L("alw.know"), fn: () => {}}]
       }, () => {if (typeof onDone === "function") onDone();});
     }
 
@@ -427,22 +427,22 @@
         if (v < 90) perfect = false;
         total += v;
         const color = v >= 90 ? "var(--green)" : (v >= 60 ? "var(--gold)" : "var(--red)");
-        rows.push(`<div class="subjrow"><span style="width:3em">${sub}</span><div class="bar"><i style="width:${v}%;background:${color}"></i></div><b style="color:${color};width:2.5em;text-align:right">${v}</b></div>`);
+        rows.push(`<div class="subjrow"><span style="width:3em">${TZ(sub)}</span><div class="bar"><i style="width:${v}%;background:${color}"></i></div><b style="color:${color};width:2.5em;text-align:right">${v}</b></div>`);
       }
       if (S.examCharm) {S.examCharm = false;}
       if (S.penCharm) {S.penCharm = false;}
       const avg = subs.length ? Math.round(total / subs.length) : 0;
       S.lastExamScore = clampNum(avg, 0, 100); S.bestExam = Math.max(num(S.bestExam, 0), S.lastExamScore); count("exam");
       if (avg >= 80) count("goodExam");   // 用于「考试焦虑」的破茧进度
-      say(`📝【${name}】总分 ${Math.round(total)}/${subs.length * 100}，均分 ${avg}`, "exam");
-      if (avg >= 90) {say("名列前茅！全年级都听说了你的名字。", "good");}
-      else if (avg < 45) {say("考砸了……心态 -8，压力 +10", "bad"); modProp("心态", -8); modProp("压力", 10);}
+      say(L("exam.log", TZ(name), Math.round(total), subs.length * 100, avg), "exam");
+      if (avg >= 90) {say(L("exam.top"), "good");}
+      else if (avg < 45) {say(L("exam.bad"), "bad"); modProp("心态", -8); modProp("压力", 10);}
       else modProp("心态", 2);
       if (fullMarks.length) {S.cnt.subjFull = (S.cnt.subjFull || 0) + fullMarks.length;}
       if (perfect && subs.length > 0) count("allPerfect");
-      showModal(`${name} · 成绩单`, `<div>${rows.join("")}</div><div style="margin-top:10px;text-align:right;color:var(--gold)">均分:<b>${avg}</b> / 满分 100</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">🎉 满分科目:${fullMarks.join("、")}</div>` : ""}`,
+      showModal(L("exam.sheet", TZ(name)), `<div>${rows.join("")}</div><div style="margin-top:10px;text-align:right;color:var(--gold)">${L("exam.avg")}:<b>${avg}</b> / ${L("exam.full")}</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">${L("exam.fullMarks", TZ(fullMarks.join("、")))}</div>` : ""}`,
         [{
-          t: "收下成绩单", fn: () => {
+          t: L("exam.accept"), fn: () => {
             if (!S.daoDone && (avg >= 82 || p.悟性 >= 115) && Math.random() < 0.5) {examDao(avg);}
             else {nextWeek();}
           }

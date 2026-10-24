@@ -16,29 +16,29 @@
         ? t.inc.map(i => `${i} Lv.${TALENTS[i] ? TALENTS[i].lv : "?"}`).join(" · ")
         : "无";
 
-      showModal(`天赋详情`,
+      showModal(L("talent.detail"),
         `<div class="talent-header">
-            <span class="talent-name" style="color:${lvColor}">${name}</span>
+            <span class="talent-name" style="color:${lvColor}">${TZ(name)}</span>
             <span class="talent-lv" style="color:${lvColor}">Lv.${t.lv}</span>
          </div>
-         <div class="talent-poem">「${t.poem || "——"}」</div>
+         <div class="talent-poem">「${TZ(t.poem) || "——"}」</div>
          <div class="talent-row">
             <div class="talent-section">
-               <div class="label">效果</div>
-               <div class="value">${t.desc}</div>
+               <div class="label">${L("talent.effect")}</div>
+               <div class="value">${TZ(t.desc)}</div>
             </div>
             <div class="talent-section">
-               <div class="label">状态</div>
+               <div class="label">${L("talent.status")}</div>
                <div class="value">${owned
-          ? "<span style='color:var(--green)'>已拥有</span>"
-          : `未拥有 · ${t.hint || "—"}`}</div>
+          ? `<span style='color:var(--green)'>${L("talent.owned")}</span>`
+          : `${L("talent.locked")} · ${TZ(t.hint) || "—"}`}</div>
             </div>
          </div>
          <div class="talent-section inc">
-            <div class="label">矛盾项</div>
+            <div class="label">${L("talent.conflict")}</div>
             <div class="value">${incList}</div>
          </div>`,
-        [{t: "关闭", fn: () => { }}], null, false, true);
+        [{t: L("modal.close"), fn: () => { }}], null, false, true);
     }
 
     /* 天赋图鉴：每个天赋只占一行小卡片，诗句改用 title 悬停显示，
@@ -49,35 +49,35 @@
       const got = all.filter(([n]) => Talent.have(n));
       const lock = all.filter(([n]) => !Talent.have(n));
       let h = `<div style="color:var(--dim);font-size:.8rem;margin-bottom:8px">
-        已解锁 ${got.length} / ${all.length}　·　点任意天赋可看详情</div>`;
+        ${L("talent.bookHint", got.length, all.length)}</div>`;
       h += "<div class='talentgrid'>";
       const row = ([name, t], owned) =>
-        `<div class="talentitem ${owned ? "c" + t.lv : "lock"}" onclick="openTalentInfo('${name}')" title="${t.poem || ""}">
-          <b>${owned ? "🏆" : "🔒"} ${name}</b><span class="tlv">Lv.${t.lv}</span>
-          <div class="tdesc">${t.desc}</div>
+        `<div class="talentitem ${owned ? "c" + t.lv : "lock"}" onclick="openTalentInfo('${name}')" title="${TZ(t.poem) || ""}">
+          <b>${owned ? "🏆" : "🔒"} ${TZ(name)}</b><span class="tlv">Lv.${t.lv}</span>
+          <div class="tdesc">${TZ(t.desc)}</div>
         </div>`;
       got.sort((a, b) => b[1].lv - a[1].lv).forEach(x => {h += row(x, true);});
       lock.sort((a, b) => a[1].lv - b[1].lv).forEach(x => {h += row(x, false);});
       h += "</div>";
-      showModal("天赋图鉴", h, [{t: "关闭", fn: () => { }}], null, false, true);
+      showModal(L("talent.book"), h, [{t: L("modal.close"), fn: () => { }}], null, false, true);
     }
 
     function openShop() {
       const opts = SHOP_ITEMS.map(it => ({
-        t: it.n, sub: `价格 ${it.price}`,
+        t: TZ(it.n), sub: L("shop.price", it.price),
         disabled: () => S.prop.经济 < it.price,
         fn: () => {
-          if (S.prop.经济 < it.price) {say("经济不足，买不起。", "bad"); return;}
+          if (S.prop.经济 < it.price) {say(L("shop.poor"), "bad"); return;}
           modProp("经济", -it.price);
           S.items[it.id] = (S.items[it.id] || 0) + 1;
-          say(`🏪 你购买了【${it.n}】。`, "good");
-          toast(`购买：${it.n}`);
+          say(L("shop.buy", TZ(it.n)), "good");
+          toast(`${L("shop.title")}: ${TZ(it.n)}`);
           renderHUD();
           setTimeout(openShop, 100);
         }
       }));
-      opts.push({t: "离开", fn: () => {ensureActionPanel();}});
-      showModal("小卖铺", `<div>你走进校门口的小卖铺，货架上摆满了各种物件。<br><span style="color:var(--dim);font-size:.85rem">当前经济：${Math.round(S.prop.经济)}</span></div>`, opts, null, false, true, {kind: "free"});
+      opts.push({t: L("shop.leave"), fn: () => {ensureActionPanel();}});
+      showModal(L("shop.title"), `<div>${L("shop.body")}<br><span style="color:var(--dim);font-size:.85rem">${L("shop.money", Math.round(S.prop.经济))}</span></div>`, opts, null, false, true, {kind: "free"});
     }
 
     function useItem(id) {
@@ -85,9 +85,9 @@
       if (!it || !S.items[id] || S.items[id] <= 0) return;
       S.items[id]--;
       it.eff(S);
-      say(`🎒 你使用了【${it.n}】——${it.desc}`, "good");
+      say(L("item.used", TZ(it.n), TZ(it.desc)), "good");
       renderHUD();
-      showModal("道具使用", `<div style="line-height:2">【${it.n}】的效果已经生效：<br>${it.desc}</div>`, [{t: "好", fn: () => { }}], null, false, false, {kind: "free", img: it.img});
+      showModal(L("item.use"), `<div style="line-height:2">${L("item.effect", TZ(it.n))}<br>${TZ(it.desc)}</div>`, [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free", img: it.img});
     }
 
     const STAT_COLOR = {心态: "#ffb4d1", 经济: "#d9b3ff", 健康: "#7ee0c0", 效率: "#b388ff", 悟性: "#c9a7ff", 社交: "#ffb86b", 压力: "#ff7aa2", 亲情: "#ffd08a"};
@@ -103,31 +103,31 @@
 
     function renderHUD() {
       if (!S) return;
-      document.getElementById("hudGrade").textContent = `${S.name}(${S.gender}) · ${gradeName()}`;
-      document.getElementById("hudWeek").textContent = S.week;
+      document.getElementById("hudGrade").textContent = `${S.name}(${genderName(S.gender)}) · ${gradeName()}`;
+      document.getElementById("hudWeekText").textContent = L("hud.week", S.week);
       document.getElementById("hudTerm").textContent = termName();
       // 属性栏：只显示 PROP_HUD 里的项（亲情不在主界面显示）
       let h = "<div class='statgrid'>";
       for (const k of (typeof PROP_HUD !== "undefined" ? PROP_HUD : Object.keys(PROP_RANGE))) {
         const v = fixProp(k, S.prop[k]); S.prop[k] = v;
         const pct = k === "经济" ? clampNum(v / 30, 0, 100, 2) : clampNum(v / 1.5, 0, 100, 0);
-        h += `<div class="stat compact"><div style="display:flex;justify-content:space-between;gap:4px"><span>${k}</span><b>${Math.round(v)}</b></div><div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k]}"></i></div></div>`;
+        h += `<div class="stat compact"><div style="display:flex;justify-content:space-between;gap:4px"><span>${propName(k)}</span><b>${Math.round(v)}</b></div><div class="bar"><i style="width:${pct}%;background:${STAT_COLOR[k]}"></i></div></div>`;
       }
       // 亲情：折叠进属性栏末尾一行小字，不占整行高度
       const fam = fixProp("亲情", S.prop.亲情); S.prop.亲情 = fam;
-      h += `<div class="stat compact famrow"><div style="display:flex;justify-content:space-between;gap:4px"><span>亲情</span><b>${Math.round(fam)}</b></div><div class="bar"><i style="width:${clampNum(fam / 1.5, 0, 100, 0)}%;background:${STAT_COLOR.亲情}"></i></div></div>`;
+      h += `<div class="stat compact famrow"><div style="display:flex;justify-content:space-between;gap:4px"><span>${propName("亲情")}</span><b>${Math.round(fam)}</b></div><div class="bar"><i style="width:${clampNum(fam / 1.5, 0, 100, 0)}%;background:${STAT_COLOR.亲情}"></i></div></div>`;
       h += "</div>";
       document.getElementById("statPanel").innerHTML = h;
       document.getElementById("talentCount").textContent = Talent.owned.length;
       document.getElementById("talentPanel").innerHTML = Talent.owned.length ?
-        [...Talent.owned].sort((a, b) => TALENTS[b].lv - TALENTS[a].lv).map(t => `<span class="badge c${TALENTS[t].lv}" title="${TALENTS[t].desc}" onclick="openTalentInfo('${t}')">${t} Lv.${TALENTS[t].lv}${cureProgress(t)}</span>`).join("") : "<span style='color:var(--dim)'>尚无天赋 —— 在选择中觉醒</span>";
+        [...Talent.owned].sort((a, b) => TALENTS[b].lv - TALENTS[a].lv).map(t => `<span class="badge c${TALENTS[t].lv}" title="${TZ(TALENTS[t].desc)}" onclick="openTalentInfo('${t}')">${TZ(t)} Lv.${TALENTS[t].lv}${cureProgress(t)}</span>`).join("") : `<span style='color:var(--dim)'>${L("hud.noTalent")}</span>`;
       const itemCount = Object.values(S.items).reduce((a, b) => a + b, 0);
       document.getElementById("itemCount").textContent = itemCount;
       document.getElementById("itemPanel").innerHTML = itemCount > 0 ?
         Object.entries(S.items).filter(([k, v]) => v > 0).map(([k, v]) => {
           const it = SHOP_ITEMS.find(x => x.id === k);
-          return it ? `<span class="badge" onclick="useItem('${k}')">${it.n} ×${v}</span>` : "";
-        }).join("") : "<span style='color:var(--dim)'>暂无道具 —— 可去小卖铺购买</span>";
+          return it ? `<span class="badge" onclick="useItem('${k}')">${TZ(it.n)} ×${v}</span>` : "";
+        }).join("") : `<span style='color:var(--dim)'>${L("hud.noItem")}</span>`;
       document.getElementById("scoreNow").textContent = Math.round(num(S.score, 0));
       const subs = subjectsOf(S.term) || [];
       // 学科栏默认折叠，点击展开；只在展开时才渲染每一行，界面更短
@@ -136,14 +136,32 @@
         const v = clampNum(S.subj[s], 0, SUBJ_CAP, 0), rel = v / (clampNum(S.term, 0, 10) + 1);
         const pct = clampNum(rel / 700 * 100, 0, 100, 2);
         const color = rel >= 480 ? "var(--green)" : (rel >= 220 ? "var(--gold)" : "var(--red)");
-        return `<div class="subjrow"><span style="width:3em">${s}</span><div class="bar"><i style="width:${pct}%;background:${color}"></i></div><b style="width:3em;text-align:right;color:${color}">${Math.round(v)}</b></div>`;
+        return `<div class="subjrow"><span style="width:3em">${TZ(s)}</span><div class="bar"><i style="width:${pct}%;background:${color}"></i></div><b style="width:3em;text-align:right;color:${color}">${Math.round(v)}</b></div>`;
       }).join("");
       document.getElementById("subjPanel").innerHTML =
-        `<div class="subjtoggle" onclick="toggleSubjPanel()">${subjOpen ? "▾" : "▸"} 各科详情（${subs.length} 科）</div>` +
+        `<div class="subjtoggle" onclick="toggleSubjPanel()">${subjOpen ? "▾" : "▸"} ${L("hud.subjToggle", subs.length)}</div>` +
         (subjOpen ? `<div class="subjbody">${subjRows}</div>` : "");
       document.getElementById("lastExam").textContent = S.lastExamScore || "—";
       const r = S.zhongkao >= 0 ? S.zhongkao : (S.lastExamScore || 0);
-      document.getElementById("rankNow").textContent = r ? ("前 " + Math.max(1, Math.round(clampNum(100 - r, 1, 100))) + "%") : "—";
+      document.getElementById("rankNow").textContent = r ? L("hud.rankVal", Math.max(1, Math.round(clampNum(100 - r, 1, 100)))) : "—";
+      // 静态标签（语言切换后要重刷）
+      setText("talentLabel", L("hud.talent"));
+      setText("talentHint", L("hud.talentHint"));
+      setText("itemLabel", L("hud.item"));
+      setText("subjLabel", L("hud.subjects"));
+      setText("scoreLabel", L("hud.score"));
+      setText("scoreTotalLabel", L("hud.scoreTotal"));
+      setText("lastExamLabel", L("hud.lastExam"));
+      setText("rankLabel", L("hud.rank"));
+      setText("actLabel", L("hud.act"));
+      setText("evLabel", L("hud.ev"));
+      setText("btnShop", L("hud.shop"));
+      setText("btnTalentBook", L("hud.talentBook"));
+      setText("btnAch", L("hud.ach"));
+      setText("btnTheme", L("hud.theme"));
+      setText("btnSave", L("hud.save"));
+      setText("btnHome", L("hud.home"));
+      setText("btnLang", L("hud.lang"));
 
       // 本周行动进度
       const aq = num(S.actQuota, 0), ac = clampNum(S.actCount, 0, aq || 0);
@@ -185,16 +203,16 @@
       a.forEach((d, i) => {
         const el = document.createElement("div"); el.className = "slot";
         if (d) {
-          el.innerHTML = `<div class="info"><b>存档 ${i + 1} · ${d.name || "无名氏"}(${d.gender || "男"})</b> · ${GRADES[Math.min(2, Math.floor(d.term / 2))]} 第 ${d.week} 周${d.over ? " · <span style='color:var(--red)'>已完结</span>" : ""}<br>中考:${d.zhongkao < 0 ? "—" : d.zhongkao} · 成就 ${d.ach.length} · ${d.time}</div>
-      <div><button class="btn green" onclick="resumeGame(${i})">继续</button><button class="btn" onclick="if(confirm('覆盖该存档?'))newGameAt(${i})">重开</button><button class="btn" onclick="delSave(${i})">删除</button></div>`;
+          el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)} · ${d.name || L("save.anon")}(${genderName(d.gender)})</b> · ${L("grade." + (Math.min(2, Math.floor(d.term / 2)) + 1))} ${L("hud.week", d.week)}${d.over ? ` · <span style='color:var(--red)'>${L("save.over")}</span>` : ""}<br>${L("save.info", d.zhongkao < 0 ? "—" : d.zhongkao, d.ach.length, d.time)}</div>
+      <div><button class="btn green" onclick="resumeGame(${i})">${L("save.resume")}</button><button class="btn" onclick="if(confirm('${L("save.confirmOver")}'))newGameAt(${i})">${L("save.restart")}</button><button class="btn" onclick="delSave(${i})">${L("save.delete")}</button></div>`;
         } else {
-          el.innerHTML = `<div class="info"><b>存档 ${i + 1}</b> · 空</div><div><button class="btn primary" onclick="newGameAt(${i})">新开存档</button></div>`;
+          el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)}</b> · ${L("save.empty")}</div><div><button class="btn primary" onclick="newGameAt(${i})">${L("save.new")}</button></div>`;
         }
         box.appendChild(el);
       });
     }
 
-    function delSave(i) {if (!confirm("确定删除该存档?")) return; const a = loadSaves(); a[i] = null; writeSaves(a); renderSlots();}
+    function delSave(i) {if (!confirm(L("save.confirmDel"))) return; const a = loadSaves(); a[i] = null; writeSaves(a); renderSlots();}
 
     /* ------------------------------------------------------------------
      * 统一弹窗层：一切「需要玩家点击选择」的界面都是弹窗，弹窗就是事件
@@ -210,10 +228,10 @@
 
     function badgeText(kind) {
       if (!S) return "";
-      if (kind === "event") return `⚡ 事件 ${clampNum(S.evWeekTotal, 0, 99)}/${GAME_CONFIG.maxEventsPerWeek}`;
-      if (kind === "fixed") return "📅 固定事件";
-      if (kind === "free") return "🎒 自由操作 · 不消耗本周行动";
-      if (kind === "ending") return "🏁 结局";
+      if (kind === "event") return L("badge.event", clampNum(S.evWeekTotal, 0, 99), GAME_CONFIG.maxEventsPerWeek);
+      if (kind === "fixed") return L("badge.fixed");
+      if (kind === "free") return L("badge.free");
+      if (kind === "ending") return L("badge.ending");
       return "";
     }
 
@@ -227,9 +245,9 @@
       m.classList.remove("hidden");
       modalEl.classList.remove("k-event", "k-fixed", "k-ending", "k-free");
       modalEl.classList.add("k-" + kind);
-      if (title === "天赋详情") modalEl.classList.add("talent-modal");
+      if (title === L("talent.detail")) modalEl.classList.add("talent-modal");
       else modalEl.classList.remove("talent-modal");
-      document.getElementById("modalTitle").textContent = title === "天赋详情" ? "" : title;
+      document.getElementById("modalTitle").textContent = title === L("talent.detail") ? "" : title;
 
       const badge = document.getElementById("modalBadge");
       const bt = (meta && meta.badge) || badgeText(kind);
@@ -251,7 +269,7 @@
       const b = document.getElementById("modalBody");
       if (typeof body === "string" && body.includes("<")) b.innerHTML = body; else b.textContent = body;
       const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
-      const list = opts || [{t: "继续", fn: () => { }}];
+      const list = opts || [{t: L("modal.continue"), fn: () => { }}];
       let anyEnabled = false;
       list.forEach(o => {
         const btn = document.createElement("button"); btn.className = "btn primary optbtn";
@@ -272,7 +290,7 @@
       });
       if (!anyEnabled) {
         const btn = document.createElement("button"); btn.className = "btn primary optbtn";
-        btn.textContent = "继续";
+        btn.textContent = L("modal.continue");
         btn.onclick = () => closeModal(onClose);
         ob.appendChild(btn);
       }
@@ -326,9 +344,9 @@
       let h = "<div class='achlist'>";
       for (const [id, a] of Object.entries(ACHIEVEMENTS)) {
         const got = S && S.ach.includes(id);
-        h += `<div class="achitem ${got ? "" : "lock"}"><b>${got ? "🏆" : "🔒"} ${a.n}</b><br><span style="color:var(--dim)">${a.d}</span></div>`;
+        h += `<div class="achitem ${got ? "" : "lock"}"><b>${got ? "🏆" : "🔒"} ${TZ(a.n)}</b><br><span style="color:var(--dim)">${TZ(a.d)}</span></div>`;
       }
-      showModal("成就系统", h + "</div>", [{t: "关闭", fn: () => { }}], null, false, true, {kind: "free"});
+      showModal(L("ach.title"), h + "</div>", [{t: L("modal.close"), fn: () => { }}], null, false, true, {kind: "free"});
     }
 
     function toStart() {
@@ -337,4 +355,5 @@
       document.getElementById("gameScreen").classList.add("hidden");
       document.getElementById("startScreen").classList.remove("hidden");
       renderSlots();
+      if (typeof renderStartExtras === "function") renderStartExtras();
     }

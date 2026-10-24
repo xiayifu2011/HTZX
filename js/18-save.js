@@ -34,7 +34,7 @@
         time: new Date().toLocaleString()
       };
       writeSaves(a);
-      if (manual) {toast("💾 已保存"); renderSlots();}
+      if (manual) {toast(L("save.saved")); renderSlots();}
     }
 
     function resumeGame(i) {
@@ -53,7 +53,7 @@
       document.getElementById("startScreen").classList.add("hidden");
       document.getElementById("gameScreen").classList.remove("hidden");
       document.getElementById("log").innerHTML = "";
-      say("💾 存档读取成功，继续你的初中生活！", "sys");
+      say(L("save.loaded"), "sys");
       if (S.over) {gameOver();} else startWeek();
     }
 
@@ -63,19 +63,19 @@
       popupBusy = true;
       const _bd = document.getElementById("modalBadge"); if (_bd) _bd.style.display = "none";
       const _md = document.getElementById("modalMedia"); if (_md) {_md.innerHTML = ""; _md.style.display = "none";}
-      document.getElementById("modalTitle").textContent = "创建角色";
+      document.getElementById("modalTitle").textContent = L("cc.title");
       document.getElementById("modalBody").innerHTML =
         `<div style="line-height:2.4">
-       姓名:<input id="inpName" maxlength="8" placeholder="输入你的名字" style="background:#0b0818;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 12px;width:60%"><br>
-       性别:<label><input type="radio" name="inpGender" value="男" checked> 男</label>
-            <label style="margin-left:16px"><input type="radio" name="inpGender" value="女"> 女</label>
+       ${L("cc.name")}:<input id="inpName" maxlength="8" placeholder="${L("cc.namePh")}" style="background:#0b0818;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 12px;width:60%"><br>
+       ${L("cc.gender")}:<label><input type="radio" name="inpGender" value="男" checked> ${L("cc.male")}</label>
+            <label style="margin-left:16px"><input type="radio" name="inpGender" value="女"> ${L("cc.female")}</label>
      </div>
-     <div style="color:var(--dim);font-size:.85rem;margin-top:8px">或从下方随机名字中选一个：</div>
+     <div style="color:var(--dim);font-size:.85rem;margin-top:8px">${L("cc.pick")}</div>
      <div class="namegrid" id="nameGrid"></div>`;
       const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
-      const btn = document.createElement("button"); btn.className = "btn primary"; btn.textContent = "开始初中生活";
+      const btn = document.createElement("button"); btn.className = "btn primary"; btn.textContent = L("cc.start");
       btn.onclick = () => {
-        const nm = (document.getElementById("inpName").value || "").trim() || "无名氏";
+        const nm = (document.getElementById("inpName").value || "").trim() || L("save.anon");
         const gd = document.querySelector("input[name=inpGender]:checked").value;
         closeModal();
         newGame(nm, gd);
@@ -83,15 +83,19 @@
         document.getElementById("startScreen").classList.add("hidden");
         document.getElementById("gameScreen").classList.remove("hidden");
         document.getElementById("log").innerHTML = "";
-        say(`🌅 ${nm} 的初中生涯，开始了。`, "sys");
+        say(L("cc.begin", nm), "sys");
         startWeek();
       };
       ob.appendChild(btn);
       setTimeout(() => {
         const grid = document.getElementById("nameGrid");
         if (!grid) return;
-        const maleNames = ["李承宇", "王浩然", "张子墨", "刘俊熙", "陈宇航", "杨启航", "赵泽楷", "周天佑", "顾北辰", "沈亦白", "陆时安", "程星野", "谢知遥", "韩煜城", "顾言澈", "林书珩"];
-        const femaleNames = ["林诗涵", "苏婉清", "沈梦瑶", "顾念之", "叶清欢", "陆雨萱", "唐若曦", "许安然", "江晚吟", "沈知意", "顾星晚", "温以宁", "白书予", "叶挽晴", "林疏桐", "苏可盈"];
+        const maleNames = LANG === "en"
+          ? ["Ethan", "Noah", "Liam", "Lucas", "Mason", "Owen", "Caleb", "Ryan", "Adrian", "Felix", "Julian", "Milo", "Theo", "Ivan", "Oscar", "Leon"]
+          : ["李承宇", "王浩然", "张子墨", "刘俊熙", "陈宇航", "杨启航", "赵泽楷", "周天佑", "顾北辰", "沈亦白", "陆时安", "程星野", "谢知遥", "韩煜城", "顾言澈", "林书珩"];
+        const femaleNames = LANG === "en"
+          ? ["Emma", "Ava", "Sophia", "Chloe", "Luna", "Mia", "Nora", "Iris", "Elena", "Clara", "Hazel", "Ruby", "Vera", "Stella", "Freya", "Lydia"]
+          : ["林诗涵", "苏婉清", "沈梦瑶", "顾念之", "叶清欢", "陆雨萱", "唐若曦", "许安然", "江晚吟", "沈知意", "顾星晚", "温以宁", "白书予", "叶挽晴", "林疏桐", "苏可盈"];
         const getG = () => document.querySelector("input[name=inpGender]:checked").value;
         const renderNames = () => {
           const pool = getG() === "男" ? maleNames : femaleNames;

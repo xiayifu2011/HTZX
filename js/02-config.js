@@ -92,10 +92,12 @@
       },
 
       // —— 主题皮肤 ——
-      // 背景图放在 assets/ 文件夹里，在这里填文件名即可，不用改任何代码。
+      // 默认主题（清华紫）与另外六套主题都定义在 js/02c-themes.js。
+      // 这里只保留"默认用哪一套"和"背景不透明度"两个开关。
       // 说明：学校目前没有官方校徽，因此不使用校徽图标，只用校名与校训。
+      themeId: "hongta",      // 默认主题 id，见 js/02c-themes.js 的 THEME_SKINS
       theme: {
-        // 主背景：白天上课期间用这张
+        // 主背景：白天上课期间用这张（留空则只用主题的 CSS 渐变背景）
         bgImage: "assets/bg.jpg",
         // 备用背景：清晨 / 假期 / 特殊阶段（设为空字符串则不启用）
         bgImageAlt: "assets/bg2.jpg",
@@ -103,7 +105,7 @@
         bgImageEnd: "assets/bg_end.jpg",
         bgOpacity: 0.26,      // 背景图不透明度 0~1，太高会盖住文字
 
-        accent: "#660874",    // 主色：清华紫
+        accent: "#660874",    // 主色：清华紫（切换主题时会被覆盖）
         accent2: "#9c4dcc",   // 辅助亮紫（高亮、按钮边框）
         accentGold: "#c9a227" // 点缀金（徽章、进度条）
       }
@@ -111,13 +113,15 @@
 
     function applyTheme() {
       const t = GAME_CONFIG.theme || {}, root = document.documentElement;
-      if (t.bgImage) {
-        root.style.setProperty("--bg-image", `url("${t.bgImage}")`);
+
+      // 配色与背景全部交给主题层（js/02c-themes.js）
+      // 不传 id：沿用 loadSettings() 已经读出来的那套，避免覆盖玩家的选择
+      if (typeof applyThemeSkin === "function") {
+        applyThemeSkin();
+      } else {
+        root.style.setProperty("--bg-image", t.bgImage ? `url("${t.bgImage}")` : "none");
         root.style.setProperty("--bg-opacity", String(t.bgOpacity == null ? .26 : t.bgOpacity));
       }
-      if (t.accent) root.style.setProperty("--purple", t.accent);
-      if (t.accent2) root.style.setProperty("--purple2", t.accent2);
-      if (t.accentGold) root.style.setProperty("--gold", t.accentGold);
 
       // 滚动条：按配置给 body 挂上开关 class
       const ui = GAME_CONFIG.ui || {};
@@ -140,13 +144,16 @@
 
     /* 切换背景图：season 取 "main" | "alt" | "end" */
     function setBackground(season) {
-      const t = GAME_CONFIG.theme || {}, root = document.documentElement;
-      const map = {main: t.bgImage, alt: t.bgImageAlt, end: t.bgImageEnd};
-      const v = map[season] || t.bgImage;
-      if (!v) return;
-      root.style.setProperty("--bg-image", `url("${v}")`);
+      const root = document.documentElement;
+      // 优先用当前主题自己的背景图；主题没配图就回落到 GAME_CONFIG
+      let v = (typeof themeBg === "function") ? themeBg(season) : "";
+      const t = GAME_CONFIG.theme || {};
+      if (!v) v = {main: t.bgImage, alt: t.bgImageAlt, end: t.bgImageEnd}[season] || t.bgImage;
+      const base = (typeof currentTheme === "function")
+        ? currentTheme().bgOpacity : (t.bgOpacity == null ? .26 : t.bgOpacity);
+      root.style.setProperty("--bg-image", v ? `url("${v}")` : "none");
       root.style.setProperty("--bg-opacity", String(
-        season === "end" ? Math.min(0.45, (t.bgOpacity || .26) + 0.14) : (t.bgOpacity == null ? .26 : t.bgOpacity)
+        season === "end" ? Math.min(0.45, (base || .26) + 0.14) : (base == null ? .26 : base)
       ));
     }
 

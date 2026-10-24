@@ -31,6 +31,18 @@
       --green: #7ee0c0;
       --red: #ff7aa2;
       --blue: #a86ddb;
+
+      /* 发光色的 rgb 三元组：写成 rgb 才能在 rgba() 里调透明度。
+         这三组由 js/02c-themes.js 按主题覆盖，不要在这里改。 */
+      --glow: 156, 77, 204;
+      --glow2: 192, 138, 232;
+      --brand-rgb: 102, 8, 116;
+
+      /* 没有背景图时用的纯 CSS 渐变（主题自带） */
+      --bg-grad: none;
+      --bg-image: none;
+      --bg-opacity: 0.26;
+      --bg-overlay: rgba(18, 10, 24, .82);
     }
 
     * {
@@ -40,7 +52,9 @@
     }
 
     body {
-      background: radial-gradient(1200px 800px at 20% 0%, #2a1040, #120a18 60%);
+      /* 主题渐变 + 兜底深色，两者叠着用，主题没配渐变也不会白屏 */
+      background: var(--bg-grad, none), var(--bg);
+      background-color: var(--bg);
       color: var(--txt);
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
       min-height: 100vh;
