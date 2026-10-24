@@ -172,11 +172,14 @@ theme: {
 | 属性档位文案 | `js/01b-i18n.js` → `level.vlow / low / mid / high / vhigh` |
 | 哪些属性可见 / 模糊 | `js/01-utils.js` → `PROP_HUD` / `PROP_HIDDEN` / `PROP_BLUR` |
 | 运动锻炼的事件 | `js/05c-data-sport.js`（id 以 `sp_` 开头，只有运动能抽到） |
-| 做题题库 | `js/05d-data-quiz.js` → `QUIZ_BANK`（按科目 + 年级加题） |
+| 做题题库 | `js/05d-data-quiz.js` → `QUIZ_BANK`（按科目 + 年级加题，共 136 题） |
+| 填空题的判卷宽不宽容 | `js/05d-data-quiz.js` → `quizMatch()`（一/1/1.0、1/2/0.5/二分之一 都算对） |
+| 读书能解锁哪些天赋 | `js/03-data-talents.js` → `FAMILY_TALENTS`（清单里的出身类一律不解锁） |
 | 天赋退化（久不练习会失去） | `js/12-data-cures.js` → `TALENT_DECAY` |
 | 开局可选的时间跨度 | `js/02-config.js` → `TERM_PLAN` |
 | 亲情逻辑与家长称呼 | `js/03c-family.js` |
-| 主题配色与文案 | `js/02c-themes.js` → `THEME_SKINS` |
+| 主题配色与文案 | `js/02c-themes.js` → `THEME_SKINS`（改完注意保持正文对比度 ≥ 15、描边 ≥ 3） |
+| 英语模式要不要开放 | `js/01b-i18n.js` → `EN_READY`（现在是 `false`，点按钮只弹「敬请期待」） |
 | 手机违规的惩罚力度 | `js/07-data-events.js` → `phone`、`phone_check` |
 | 向父母要零花钱的金额 | `js/15-engine-study.js` → `allowanceSettle()` |
 | 亲情回落速度 | `js/02-config.js` → `family.weeklyDrop`（现为 0.35 概率、每次 -2） |

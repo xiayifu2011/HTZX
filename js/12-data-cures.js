@@ -191,18 +191,18 @@
       let got = "";
       if (hit.grant && !Talent.have(hit.grant)) {
         gainTalent(hit.grant, "退化·免费");
-        if (Talent.have(hit.grant)) got = `<div style="margin-top:10px;color:var(--red)">💧 你留下了阴影【${hit.grant}】</div>`;
+        if (Talent.have(hit.grant)) got = `<div style="margin-top:5px;color:var(--red)">💧 你留下了阴影【${hit.grant}】</div>`;
       }
       say(`💧 退化：你失去了【${hit.talent}】。`, "talent");
       toast(`💧 退化：${hit.talent} 已消失`, false);
       checkAch();
       renderHUD();
 
-      const body = `<div style="line-height:2">
+      const body = `<div style="line-height:1.62">
         <div style="color:var(--red);font-size:.9rem">已失去天赋：<b>${hit.talent}</b></div>
-        <div style="margin-top:10px;white-space:pre-wrap">${hit.text}</div>
+        <div style="margin-top:5px;white-space:pre-wrap">${hit.text}</div>
         ${got}
-        <div style="margin-top:12px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
+        <div style="margin-top:6px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
       </div>`;
       showPopup({
         kind: "free", badge: "💧 退化", title: hit.title, body: body,
@@ -235,18 +235,18 @@
       let got = "";
       if (hit.grant && !Talent.have(hit.grant)) {
         gainTalent(hit.grant, "破茧·免费");
-        if (Talent.have(hit.grant)) got = `<div style="margin-top:10px;color:var(--green)">🌱 你同时领悟了新天赋【${hit.grant}】</div>`;
+        if (Talent.have(hit.grant)) got = `<div style="margin-top:5px;color:var(--green)">🌱 你同时领悟了新天赋【${hit.grant}】</div>`;
       }
       say(`🌱 破茧：你走出了【${hit.talent}】的阴影。`, "talent");
       toast(`🌱 破茧：${hit.talent} 已消除`, true);
       checkAch();
       renderHUD();
 
-      const body = `<div style="line-height:2">
+      const body = `<div style="line-height:1.62">
         <div style="color:var(--red);font-size:.9rem">已消除负面天赋：<b>${hit.talent}</b></div>
-        <div style="margin-top:10px;white-space:pre-wrap">${hit.text}</div>
+        <div style="margin-top:5px;white-space:pre-wrap">${hit.text}</div>
         ${got}
-        <div style="margin-top:12px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
+        <div style="margin-top:6px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
       </div>`;
       showPopup({
         kind: "free", badge: "🌱 破茧", title: hit.title, body: body,

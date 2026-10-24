@@ -322,6 +322,32 @@ if (BANK) {
     });
   }
   console.log(`共载入 ${n} 道题目`);
+
+  /* 「写了却永远抽不到」的死题检测：
+   * 生物 / 地理只在初一初二考，物理只在初二初三考 ——
+   * 如果某科的题目标了比它能出现的最高年级还高的 g，玩家一辈子遇不上。 */
+  const GRADE_SUBJ = {"语文": 2, "数学": 2, "英语": 2, "历史": 2, "政治": 2,
+    "物理": 2, "化学": 2, "生物": 1, "地理": 1};
+  for (const [sub, list] of Object.entries(BANK)) {
+    const maxG = GRADE_SUBJ[sub];
+    if (maxG == null) continue;
+    (list || []).forEach((q, i) => {
+      if (Number(q.g == null ? 0 : q.g) > maxG) {
+        warns.push(`题库 ${sub} 第 ${i + 1} 题标了 g=${q.g}，但该科最高只到 g=${maxG} —— 这道题永远抽不到（把 g 调小或删掉）`);
+      }
+    });
+  }
+
+  // 每个年级实际能抽到的题量，太少了要提醒
+  for (let g = 0; g <= 2; g++) {
+    let cnt = 0;
+    for (const [sub, list] of Object.entries(BANK)) {
+      if (Number(GRADE_SUBJ[sub] == null ? 2 : GRADE_SUBJ[sub]) < g) continue;
+      cnt += (list || []).filter(q => Number(q.g == null ? 0 : q.g) <= g).length;
+    }
+    console.log(`  初${g + 1} 可抽 ${cnt} 题`);
+    if (cnt < 30) warns.push(`初${g + 1}只能抽到 ${cnt} 道题，太少容易重复（建议补到 30+）`);
+  }
 }
 
 // ---------- 5d. 天赋退化表检查 ----------

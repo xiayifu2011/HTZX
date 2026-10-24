@@ -508,7 +508,7 @@
         kind: "free",
         badge: L("alw.badge"),
         title: `${L("alw.title")} · ${title}`,
-        body: `<div style="line-height:2">${line}<br><br>
+        body: `<div style="line-height:1.62">${line}<br>
           <span style="color:var(--dim);font-size:.85rem">${L("alw.hint", Math.round(clampNum(p.亲情, 0, 150, 80)))}</span></div>`,
         options: [{t: g > 0 ? L("alw.thanks") : L("alw.know"), fn: () => {}}]
       }, () => {if (typeof onDone === "function") onDone();});
@@ -557,7 +557,7 @@
       else modProp("心态", 2);
       if (fullMarks.length) {S.cnt.subjFull = (S.cnt.subjFull || 0) + fullMarks.length;}
       if (perfect && subs.length > 0) count("allPerfect");
-      showModal(L("exam.sheet", TZ(name)), `<div>${rows.join("")}</div><div style="margin-top:10px;text-align:right;color:var(--gold)">${L("exam.avg")}:<b>${avg}</b> / ${L("exam.full")}</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">${L("exam.fullMarks", TZ(fullMarks.join("、")))}</div>` : ""}`,
+      showModal(L("exam.sheet", TZ(name)), `<div>${rows.join("")}</div><div style="margin-top:5px;text-align:right;color:var(--gold)">${L("exam.avg")}:<b>${avg}</b> / ${L("exam.full")}</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">${L("exam.fullMarks", TZ(fullMarks.join("、")))}</div>` : ""}`,
         [{
           t: L("exam.accept"), fn: () => {
             if (!S.daoDone && (avg >= 82 || p.悟性 >= 115) && Math.random() < 0.5) {examDao(avg);}

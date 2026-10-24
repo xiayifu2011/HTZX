@@ -7,15 +7,47 @@
  * ============================================================ */
 
     const SAVE_KEY = "zhongkao_life_saves_v6";
+    const SAVE_VER = 7;             // 存档结构版本，升级结构时 +1
+    const SAVE_SLOTS = 3;
 
-    function loadSaves() {try {return JSON.parse(localStorage.getItem(SAVE_KEY)) || [null, null, null]} catch (e) {return [null, null, null]} }
+    /* 读存档：任何一条坏数据都不许让主菜单打不开 */
+    function loadSaves() {
+      let raw = null;
+      try {raw = JSON.parse(localStorage.getItem(SAVE_KEY));} catch (e) {raw = null;}
+      if (!Array.isArray(raw)) raw = [];
+      // 补齐 / 截断到固定槽数，脏字段直接丢掉
+      const out = [];
+      for (let i = 0; i < SAVE_SLOTS; i++) out.push(isSaveUsable(raw[i]) ? raw[i] : null);
+      return out;
+    }
 
-    function writeSaves(a) {localStorage.setItem(SAVE_KEY, JSON.stringify(a))}
+    /* 一个存档槽的数据是否还能用（最基本的可读性检查） */
+    function isSaveUsable(d) {
+      if (!d || typeof d !== "object") return false;
+      if (typeof d.name !== "string") return false;
+      if (!isFinite(d.week) || !isFinite(d.term)) return false;
+      if (d.week < 0 || d.term < 0) return false;
+      return true;
+    }
 
-    function saveGame(manual) {
-      if (!S) return;
+    /* 写存档：写不进去（隐私模式 / 空间满）也不能崩 */
+    function writeSaves(a) {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(a));
+        return true;
+      } catch (e) {
+        if (typeof toast === "function") toast(L("save.fail"));
+        return false;
+      }
+    }
+
+    function saveGame(manual, autoSave) {
+      if (!S) return false;
+      // 槽号越界（存档结构变动 / 手动改过 localStorage）时拉回 0 号槽
+      if (!(slotCur >= 0 && slotCur < SAVE_SLOTS)) slotCur = 0;
       const a = loadSaves();
       a[slotCur] = {
+        v: SAVE_VER,
         week: S.week, term: S.term, name: S.name, gender: S.gender,
         evCnt: S.evCnt, daoDone: S.daoDone, subj: S.subj, prop: S.prop,
         score: S.score, lastExamScore: S.lastExamScore, bestExam: S.bestExam, zhongkao: S.zhongkao,
@@ -38,10 +70,15 @@
         didSocialWeek: S.didSocialWeek, didQuizWeek: S.didQuizWeek,
         idleWeeks: S.idleWeeks, stressStreak: S.stressStreak,
         famConflictWeek: S.famConflictWeek, familyMain: S.familyMain,
-        time: new Date().toLocaleString()
+        time: new Date().toLocaleString(),
+        // 周结束自动存档时打标记，主菜单能显示"自动存于第 N 周"
+        autoWeek: num(S.week, 0),
+        auto: !!autoSave
       };
-      writeSaves(a);
-      if (manual) {toast(L("save.saved")); renderSlots();}
+      const ok = writeSaves(a);
+      if (manual) {toast(ok ? L("save.saved") : L("save.fail")); renderSlots();}
+      else if (typeof renderSlots === "function" && autoSave) renderSlots();
+      return ok;
     }
 
     function resumeGame(i) {
@@ -82,7 +119,7 @@
       const _md = document.getElementById("modalMedia"); if (_md) {_md.innerHTML = ""; _md.style.display = "none";}
       document.getElementById("modalTitle").textContent = L("cc.title");
       document.getElementById("modalBody").innerHTML =
-        `<div style="line-height:2.4">
+        `<div style="line-height:1.75">
        ${L("cc.name")}:<input id="inpName" maxlength="8" placeholder="${L("cc.namePh")}" style="background:#0b0818;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 12px;width:60%"><br>
        ${L("cc.gender")}:<label><input type="radio" name="inpGender" value="男" checked> ${L("cc.male")}</label>
             <label style="margin-left:16px"><input type="radio" name="inpGender" value="女"> ${L("cc.female")}</label>

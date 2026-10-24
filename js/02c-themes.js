@@ -38,8 +38,8 @@
           "--brand": "#660874", "--brand-deep": "#3d0647", "--brand-lite": "#8a2b9c",
           "--purple": "#c08ae8", "--purple2": "#9c4dcc",
           "--gold": "#d7b45a", "--gold-soft": "#f0d488",
-          "--bg": "#120a18", "--panel": "#1e1029", "--panel2": "#2a1638", "--line": "#4a2760",
-          "--txt": "#f2ecf7", "--dim": "#bda9cd",
+          "--bg": "#120a18", "--panel": "#1e1029", "--panel2": "#443250", "--line": "#795f89",
+          "--txt": "#f7f4fa", "--dim": "#cfc0da",
           "--green": "#7ee0c0", "--red": "#ff7aa2", "--blue": "#a86ddb",
           "--glow": "156, 77, 204", "--glow2": "192, 138, 232", "--brand-rgb": "102, 8, 116",
           "--bg-overlay": "rgba(18, 10, 24, .82)"
@@ -58,8 +58,8 @@
           "--brand": "#232a5e", "--brand-deep": "#12162f", "--brand-lite": "#3f4c9c",
           "--purple": "#a9b6ff", "--purple2": "#7b8cf0",
           "--gold": "#e8d48b", "--gold-soft": "#fff0c0",
-          "--bg": "#0b0f22", "--panel": "#131a35", "--panel2": "#1c2547", "--line": "#38456f",
-          "--txt": "#e9edff", "--dim": "#a9b2d8",
+          "--bg": "#0b0f22", "--panel": "#131a35", "--panel2": "#333b59", "--line": "#606a8c",
+          "--txt": "#fafbff", "--dim": "#c4cae4",
           "--green": "#6fe3c4", "--red": "#ff7a9c", "--blue": "#7aa2ff",
           "--glow": "123, 140, 240", "--glow2": "169, 182, 255", "--brand-rgb": "35, 42, 94",
           "--bg-overlay": "rgba(11, 15, 34, .80)"
@@ -73,13 +73,13 @@
         tagline: {zh: "去后野草自蓬勃", en: "The grass grows on after you leave"},
         poem: {zh: "风一吹，整片野草替你把话说完了", en: "The wind speaks for you through the grass"},
         bgOpacity: 0.22,
-        bgGrad: "radial-gradient(1100px 760px at 25% 0%, #2b5340, #0e1a12 62%), radial-gradient(700px 500px at 80% 95%, #3a6b4a, transparent 70%)",
+        bgGrad: "radial-gradient(1100px 760px at 25% 0%, #35654e, #0e1a12 62%), radial-gradient(700px 500px at 80% 95%, #47805a, transparent 70%)",
         vars: {
           "--brand": "#2f6b46", "--brand-deep": "#17402a", "--brand-lite": "#4e9a68",
-          "--purple": "#bde8c4", "--purple2": "#6ec98a",
-          "--gold": "#e2c275", "--gold-soft": "#ffeab0",
-          "--bg": "#0e1a12", "--panel": "#16281c", "--panel2": "#1e3726", "--line": "#3a6247",
-          "--txt": "#eaf6ec", "--dim": "#a8c4ae",
+          "--purple": "#d8f4de", "--purple2": "#8ddca4",
+          "--gold": "#eed39a", "--gold-soft": "#fff4cf",
+          "--bg": "#0e1a12", "--panel": "#16281c", "--panel2": "#32493a", "--line": "#587a63",
+          "--txt": "#f6fdf7", "--dim": "#c8dacc",
           "--green": "#8ce8b0", "--red": "#ff8f7a", "--blue": "#7fd3c0",
           "--glow": "110, 201, 138", "--glow2": "189, 232, 196", "--brand-rgb": "47, 107, 70",
           "--bg-overlay": "rgba(14, 26, 18, .80)"
@@ -98,8 +98,8 @@
           "--brand": "#a84b2f", "--brand-deep": "#5e2416", "--brand-lite": "#d97a4e",
           "--purple": "#ffc9a3", "--purple2": "#ff9d6b",
           "--gold": "#ffd98a", "--gold-soft": "#fff0cf",
-          "--bg": "#1b110d", "--panel": "#2a1a14", "--panel2": "#3a2519", "--line": "#6b4030",
-          "--txt": "#fdf0e6", "--dim": "#d9b9a4",
+          "--bg": "#1b110d", "--panel": "#2a1a14", "--panel2": "#4e3b30", "--line": "#896659",
+          "--txt": "#fffefc", "--dim": "#e2c9b9",
           "--green": "#9ad9a0", "--red": "#ff7a72", "--blue": "#ffb27a",
           "--glow": "255, 157, 107", "--glow2": "255, 201, 163", "--brand-rgb": "168, 75, 47",
           "--bg-overlay": "rgba(27, 17, 13, .78)"
@@ -118,8 +118,8 @@
           "--brand": "#0f5f6b", "--brand-deep": "#06333c", "--brand-lite": "#1a8ea0",
           "--purple": "#8fe6f0", "--purple2": "#35c3d4",
           "--gold": "#e6d68f", "--gold-soft": "#fff3bd",
-          "--bg": "#061418", "--panel": "#0d2229", "--panel2": "#123038", "--line": "#1f5460",
-          "--txt": "#e6fbfd", "--dim": "#9fc4cb",
+          "--bg": "#061418", "--panel": "#0d2229", "--panel2": "#27434a", "--line": "#4a747e",
+          "--txt": "#f3fdfe", "--dim": "#b9d4d9",
           "--green": "#6ff0d0", "--red": "#ff6f8f", "--blue": "#59c8ff",
           "--glow": "53, 195, 212", "--glow2": "143, 230, 240", "--brand-rgb": "15, 95, 107",
           "--bg-overlay": "rgba(6, 20, 24, .80)"
@@ -138,8 +138,8 @@
           "--brand": "#3a3f48", "--brand-deep": "#171a1f", "--brand-lite": "#5c646f",
           "--purple": "#cfd6de", "--purple2": "#9aa3ad",
           "--gold": "#c9b27a", "--gold-soft": "#e8d9a8",
-          "--bg": "#0e1013", "--panel": "#171a1f", "--panel2": "#21252b", "--line": "#3d434c",
-          "--txt": "#eceff2", "--dim": "#a7adb6",
+          "--bg": "#0e1013", "--panel": "#171a1f", "--panel2": "#393d42", "--line": "#666a72",
+          "--txt": "#f7f9fa", "--dim": "#c6cad0",
           "--green": "#9fc7a6", "--red": "#d98a8a", "--blue": "#a9b6c4",
           "--glow": "154, 163, 173", "--glow2": "207, 214, 222", "--brand-rgb": "58, 63, 72",
           "--bg-overlay": "rgba(14, 16, 19, .82)"
@@ -158,8 +158,8 @@
           "--brand": "#8f1f2e", "--brand-deep": "#4a0d16", "--brand-lite": "#c0392f",
           "--purple": "#ffb9b0", "--purple2": "#ff7a6b",
           "--gold": "#ffd76e", "--gold-soft": "#fff0b8",
-          "--bg": "#170a0c", "--panel": "#250f13", "--panel2": "#33161b", "--line": "#64202a",
-          "--txt": "#fbeeea", "--dim": "#cfa39c",
+          "--bg": "#170a0c", "--panel": "#250f13", "--panel2": "#4b3236", "--line": "#8c5a61",
+          "--txt": "#fcf2ef", "--dim": "#ddbfba",
           "--green": "#9fd6a0", "--red": "#ff6b6b", "--blue": "#ffab7a",
           "--glow": "255, 122, 107", "--glow2": "255, 185, 176", "--brand-rgb": "143, 31, 46",
           "--bg-overlay": "rgba(23, 10, 12, .80)"
@@ -316,7 +316,7 @@
       showPopup({
         kind: "free",
         title: L("menu.theme"),
-        body: `<div style="line-height:1.9;margin-bottom:10px;color:var(--dim);font-size:.86rem">
+        body: `<div style="line-height:1.6;margin-bottom:5px;color:var(--dim);font-size:.86rem">
             ${L("menu.themeHint")}<br>
             <span style="color:var(--gold-soft)">「${T(cur.name)}」—— ${T(cur.tagline)}</span>
           </div>

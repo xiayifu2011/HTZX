@@ -87,7 +87,7 @@
       it.eff(S);
       say(L("item.used", TZ(it.n), TZ(it.desc)), "good");
       renderHUD();
-      showModal(L("item.use"), `<div style="line-height:2">${L("item.effect", TZ(it.n))}<br>${TZ(it.desc)}</div>`, [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free", img: it.img});
+      showModal(L("item.use"), `<div style="line-height:1.62">${L("item.effect", TZ(it.n))}<br>${TZ(it.desc)}</div>`, [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free", img: it.img});
     }
 
     const STAT_COLOR = {心态: "#ffb4d1", 经济: "#d9b3ff", 健康: "#7ee0c0", 效率: "#b388ff", 悟性: "#c9a7ff", 社交: "#ffb86b", 压力: "#ff7aa2", 亲情: "#ffd08a"};
@@ -218,7 +218,9 @@
       a.forEach((d, i) => {
         const el = document.createElement("div"); el.className = "slot";
         if (d) {
-          el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)} · ${d.name || L("save.anon")}(${genderName(d.gender)})</b> · ${L("grade." + (Math.min(2, Math.floor(d.term / 2)) + 1))} ${L("hud.week", d.week)}${d.over ? ` · <span style='color:var(--red)'>${L("save.over")}</span>` : ""}<br>${L("save.info", d.zhongkao < 0 ? "—" : d.zhongkao, d.ach.length, d.time)}</div>
+          // 自动存档时记下是哪一周，主菜单能显示"已存到第 N 周"，玩家知道进度被记住了
+          const autoTag = (d.auto && d.autoWeek != null) ? ` · <span style='color:var(--green)'>${L("save.auto")} ${L("hud.week", d.autoWeek)}</span>` : "";
+          el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)} · ${d.name || L("save.anon")}(${genderName(d.gender)})</b> · ${L("grade." + (Math.min(2, Math.floor(d.term / 2)) + 1))} ${L("hud.week", d.week)}${d.over ? ` · <span style='color:var(--red)'>${L("save.over")}</span>` : ""}${autoTag}<br>${L("save.info", d.zhongkao < 0 ? "—" : d.zhongkao, d.ach.length, d.time)}</div>
       <div><button class="btn green" onclick="resumeGame(${i})">${L("save.resume")}</button><button class="btn" onclick="if(confirm('${L("save.confirmOver")}'))newGameAt(${i})">${L("save.restart")}</button><button class="btn" onclick="delSave(${i})">${L("save.delete")}</button></div>`;
         } else {
           el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)}</b> · ${L("save.empty")}</div><div><button class="btn primary" onclick="newGameAt(${i})">${L("save.new")}</button></div>`;
@@ -252,6 +254,35 @@
 
     function hideModalRaw() {document.getElementById("modalMask").classList.add("hidden")}
 
+    /* 把换行转成 <br>，但只转「真正在文字中间」的那些换行。
+     *
+     * 规则（逐字符扫描，跟踪是否处在 <...> 标签内部）：
+     *   ① 标签内部的换行 —— 原样保留，绝不转换（转了就毁标签）
+     *   ② 标签之间、元素之间的换行 —— 直接丢掉（那是 HTML 源码排版）
+     *   ③ 文字与文字之间的换行 —— 转成 <br>（这是文案作者真实的换行）
+     */
+    function nl2br(src) {
+      if (typeof src !== "string") return src;
+      if (!src.includes("\n")) return src;
+      let out = "", inTag = false;
+      for (let i = 0; i < src.length; i++) {
+        const c = src[i];
+        if (c === "<") {inTag = true; out += c; continue;}
+        if (c === ">") {inTag = false; out += c; continue;}
+        if (c !== "\n") {out += c; continue;}
+        if (inTag) {out += c; continue;}          // ① 标签内：保留
+        // 前后跳过空白，看紧邻的是什么
+        let j = i - 1; while (j >= 0 && /[ \t\r]/.test(src[j])) j--;
+        let k = i + 1; while (k < src.length && /[ \t\r]/.test(src[k])) k++;
+        const prev = j >= 0 ? src[j] : "";
+        const next = k < src.length ? src[k] : "";
+        // ② 挨着标签边界（或开头/结尾）的换行：丢掉
+        if (prev === ">" || next === "<" || prev === "" || next === "") continue;
+        out += "<br>";                            // ③ 文字中间：转 <br>
+      }
+      return out;
+    }
+
     function showModal(title, body, opts, onClose, lock, showClose, meta) {
       const m = document.getElementById("modalMask");
       const modalEl = document.getElementById("modalBox") || m.querySelector(".modal");
@@ -283,7 +314,17 @@
       closeX.onclick = () => closeModal(onClose);
 
       const b = document.getElementById("modalBody");
-      if (typeof body === "string" && body.includes("<")) b.innerHTML = body; else b.textContent = body;
+      /* 正文里的手动换行（事件文案常写 \n）要变成 <br>。
+       * 以前靠弹窗整体的 white-space:pre-wrap 兜着 —— 但那样会把
+       * 模板字符串里的缩进换行也一起渲染出来，窗口凭空长出一大截空行。
+       *
+       * 现在用 nl2br() 精确处理：只有「夹在真实文字之间」的换行才转 <br>，
+       * 标签内部的换行（模板字符串为了好看做的缩进）必须原样保留 ——
+       * 否则 <button ...\n style="..."> 会在标签中间被插入 <br>，
+       * 标签结构被破坏，属性内容会直接显示成文字（曾经让主题卡片上
+       * 出现一整串 style="--c1:#8a2b9c;..." 的代码块）。 */
+      const html = nl2br(body);
+      if (typeof html === "string" && html.includes("<")) b.innerHTML = html; else b.textContent = html;
       const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
       const list = opts || [{t: L("modal.continue"), fn: () => { }}];
       let anyEnabled = false;
@@ -398,7 +439,7 @@
       };
 
       const meta = {kind: "free", badge: L("quiz.badge")};
-      const whyLine = q.why ? `<div style="margin-top:10px;color:var(--dim);font-size:.85rem">${L("quiz.why")} ${q.why}</div>` : "";
+      const whyLine = q.why ? `<div style="margin-top:5px;color:var(--dim);font-size:.85rem">${L("quiz.why")} ${q.why}</div>` : "";
 
       if (q.type === "choice") {
         const opts = q.opts.map((o, i) => ({
@@ -406,22 +447,22 @@
           fn: () => {
             const ok = (i === q.ansIndex);
             finish(ok);
-            showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+            showModal(L("quiz.resultTitle"), `<div style="line-height:1.62">
               <div>${q.q}</div>
-              <div style="margin-top:8px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
+              <div style="margin-top:5px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
               <div style="margin-top:4px">${L("quiz.answer")} <b>${q.opts[q.ansIndex]}</b></div>
               ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
           }
         }));
-        showModal(L("quiz.title", TZ(q.sub)), `<div style="line-height:2">${q.q}</div>
+        showModal(L("quiz.title", TZ(q.sub)), `<div style="line-height:1.62">${q.q}</div>
           <div style="margin-top:6px;color:var(--dim);font-size:.82rem">${L("quiz.tip")}</div>`,
           opts, null, false, false, meta);
         return;
       }
 
       // 填空题：手写一个答案
-      const bodyHtml = `<div style="line-height:2">${q.q}</div>
-        <div style="margin-top:10px"><input id="quizInput" type="text" autocomplete="off"
+      const bodyHtml = `<div style="line-height:1.62">${q.q}</div>
+        <div style="margin-top:5px"><input id="quizInput" type="text" autocomplete="off"
           placeholder="${L("quiz.placeholder")}"
           style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:.95rem"></div>
         <div style="margin-top:6px;color:var(--dim);font-size:.82rem">${L("quiz.fillTip")}</div>`;
@@ -433,9 +474,9 @@
           const val = el ? el.value : "";
           const ok = (typeof quizMatch === "function") ? quizMatch(val, q.ans) : false;
           finish(ok);
-          showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+          showModal(L("quiz.resultTitle"), `<div style="line-height:1.62">
             <div>${q.q}</div>
-            <div style="margin-top:8px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
+            <div style="margin-top:5px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
             <div style="margin-top:4px">${L("quiz.answer")} <b>${q.ans}</b>${val ? `（${L("quiz.yours")} ${val}）` : ""}</div>
             ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
         }
@@ -444,9 +485,9 @@
         fn: () => {
           say(L("quiz.giveupLog", TZ(q.sub)), "sys");
           finish(false);
-          showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+          showModal(L("quiz.resultTitle"), `<div style="line-height:1.62">
             <div>${q.q}</div>
-            <div style="margin-top:8px;color:var(--dim)">${L("quiz.gaveup")}</div>
+            <div style="margin-top:5px;color:var(--dim)">${L("quiz.gaveup")}</div>
             <div style="margin-top:4px">${L("quiz.answer")} <b>${q.ans}</b></div>
             ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
         }

@@ -173,7 +173,7 @@
         kind: "event",
         badge: L("fam.badge"),
         title: famText(e.t).replace(/\{p\}/g, p),
-        body: `<div style="line-height:2.2">${body.replace(/\n/g, "<br>")}</div>`,
+        body: `<div style="line-height:1.7">${body.replace(/\n/g, "<br>")}</div>`,
         options: [{
           t: L("fam.apologize"),
           fn: () => {

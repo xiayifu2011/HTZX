@@ -24,6 +24,14 @@
 
     /* 极简 Markdown → HTML（和 tools/sync-docs.js 保持同一套规则） */
 
+    /* 极简 Markdown → HTML（和 tools/sync-docs.js 保持同一套规则）
+     *
+     * 两个「把文档变短」的关键处理：
+     *   ① 软换行合并：源文件里一句话被拆成两行写 → 合成一个 <p>
+     *   ② 断句接回：一句话被空行拆成两段 → 接回一个 <p>
+     *      （判断依据：上一段不是以 。？！…」』） 结尾，说明话没说完）
+     * 写完 md 直接刷新就能看到，不用跑同步脚本。
+     */
     function mdToHtml(src) {
       const lines = String(src == null ? "" : src).replace(/\r\n/g, "\n").split("\n");
       const out = [];
@@ -34,47 +42,81 @@
         .replace(/`([^`]+)`/g, "<code>$1</code>")
         .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>");
 
-      const closeList = () => {if (inList) {out.push("</ul>"); inList = false;}};
-      const closeTable = () => {if (inTable) {out.push("</table>"); inTable = false;}};
+      /* 一段话是否「说完了」 */
+      const ENDS = /[。！？!?.…）)】」』》”"'〉]\s*$/;
+
+      /* 记住最后一个 <p> 的位置；插入标题 / 列表 / 表格后清空，
+       * 防止段落跨过结构性元素去拼接 */
+      let lastParaIdx = -1;
+      function pushHtml(h) {
+        out.push(h);
+        lastParaIdx = /^<p>/.test(h) ? out.length - 1 : -1;
+      }
+
+      const closeList = () => {if (inList) {pushHtml("</ul>"); inList = false;}};
+      const closeTable = () => {if (inTable) {pushHtml("</table>"); inTable = false;}};
+
+      let paraBuf = [];
+      const flushPara = () => {
+        if (!paraBuf.length) return;
+        let t = paraBuf[0];
+        for (let k = 1; k < paraBuf.length; k++) {
+          const prev = paraBuf[k - 1], cur = paraBuf[k];
+          // 英文/数字之间补空格；中文直接连上，不凭空插空格
+          const needSpace = /[A-Za-z0-9.,;:!?]$/.test(prev) && /^[A-Za-z0-9]/.test(cur);
+          t += (needSpace ? " " : "") + cur;
+        }
+        paraBuf = [];
+        if (lastParaIdx >= 0) {
+          const prev = out[lastParaIdx].replace(/^<p>/, "").replace(/<\/p>$/, "");
+          if (!ENDS.test(prev)) {
+            const needSpace = /[A-Za-z0-9.,;:!?]$/.test(prev) && /^[A-Za-z0-9]/.test(t);
+            pushHtml(`<p>${inline(prev + (needSpace ? " " : "") + t)}</p>`);
+            return;
+          }
+        }
+        pushHtml(`<p>${inline(t)}</p>`);
+      };
 
       for (let raw of lines) {
         const line = raw.trim();
-        if (!line) {closeList(); closeTable(); continue;}
+        if (!line) {flushPara(); closeList(); closeTable(); continue;}
 
         if (/^\|(.+)\|$/.test(line)) {
+          flushPara();
           const cells = line.slice(1, -1).split("|").map(c => c.trim());
-          if (!inTable) {out.push('<table class="mdtable">'); inTable = true;}
-          const isSep = cells.every(c => /^[-: ]+$/.test(c));
-          if (isSep) continue;
-          out.push("<tr>" + cells.map(c => `<${inTable && out.length ? "td" : "td"}>${inline(c)}</td>`).join("") + "</tr>");
+          if (!inTable) {pushHtml('<table class="mdtable">'); inTable = true;}
+          if (cells.every(c => /^[-: ]+$/.test(c))) continue;
+          pushHtml("<tr>" + cells.map(c => `<td>${inline(c)}</td>`).join("") + "</tr>");
           continue;
         }
         closeTable();
 
-        if (/^---+$/.test(line)) {closeList(); out.push('<hr class="mdhr">'); continue;}
+        if (/^---+$/.test(line)) {flushPara(); closeList(); pushHtml('<hr class="mdhr">'); continue;}
 
         let m;
         if ((m = line.match(/^(#{1,6})\s+(.*)$/))) {
-          closeList();
+          flushPara(); closeList();
           const lv = Math.min(6, m[1].length + 1);
-          out.push(`<h${lv}>${inline(m[2])}</h${lv}>`);
+          pushHtml(`<h${lv}>${inline(m[2])}</h${lv}>`);
           continue;
         }
         if ((m = line.match(/^>\s?(.*)$/))) {
-          closeList();
-          out.push(`<blockquote>${inline(m[1])}</blockquote>`);
+          flushPara(); closeList();
+          pushHtml(`<blockquote>${inline(m[1])}</blockquote>`);
           continue;
         }
         if (/^([-*])\s+/.test(line)) {
-          if (!inList) {out.push("<ul>"); inList = true;}
-          out.push(`<li>${inline(line.replace(/^([-*])\s+/, ""))}</li>`);
+          flushPara();
+          if (!inList) {pushHtml("<ul>"); inList = true;}
+          pushHtml(`<li>${inline(line.replace(/^([-*])\s+/, ""))}</li>`);
           continue;
         }
         closeList();
-        out.push(`<p>${inline(line)}</p>`);
+        paraBuf.push(line);
       }
-      closeList(); closeTable();
-      return out.join("\n");
+      flushPara(); closeList(); closeTable();
+      return out.join("");
     }
 
     /* ---------------- 本地缓存（localStorage） ---------------- */
@@ -162,7 +204,7 @@
       const has = !!(docsCache()[key] && docsCache()[key].md);
 
       showModal(L("doc.importTitle", d.title),
-        `<div style="line-height:1.9">
+        `<div style="line-height:1.6">
           <div style="color:var(--dim);font-size:.85rem">${L("doc.importTip", d.file)}</div>
           <div style="margin:8px 0">
             <input type="file" id="docFile" accept=".md,.txt"

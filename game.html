@@ -571,42 +571,42 @@
       color: var(--gold)
     }
 
-    /* 档位文字：t0 最糟 → t4 最好（压力由 JS 反向传 tone，配色自动对调） */
+    /* 档位文字：t0 最糟 → t4 最好（压力由 JS 反向传 tone，配色自动对调）
+     *
+     * ★ 注意：这里只给 color，绝不能给 background。
+     *   以前文字和背景用了同一个颜色，等于"红字画在红方块上"，
+     *   结果整块变成纯色方块，档位文字完全看不见。
+     *   刻度条的填充色由下面 .segbar i.on 单独负责。
+     */
     .stathead .lv {
       font-size: .74rem;
       letter-spacing: .5px;
-      white-space: nowrap
+      white-space: nowrap;
+      background: none;
+      padding: 0 2px;
+      border-radius: 3px
     }
 
-    .stathead .lv.t0,
-    .segbar.t0 i.on {
-      color: var(--red);
-      background: var(--red)
-    }
+    .stathead .lv.t0 {color: var(--red)}
 
-    .stathead .lv.t1,
-    .segbar.t1 i.on {
-      color: #ffb86b;
-      background: #ffb86b
-    }
+    .stathead .lv.t1 {color: #ffb86b}
 
-    .stathead .lv.t2,
-    .segbar.t2 i.on {
-      color: var(--gold);
-      background: var(--gold)
-    }
+    .stathead .lv.t2 {color: var(--gold)}
 
-    .stathead .lv.t3,
-    .segbar.t3 i.on {
-      color: #b9e37a;
-      background: #b9e37a
-    }
+    .stathead .lv.t3 {color: #b9e37a}
 
-    .stathead .lv.t4,
-    .segbar.t4 i.on {
-      color: var(--green);
-      background: var(--green)
-    }
+    .stathead .lv.t4 {color: var(--green)}
+
+    /* 刻度条的填充色：只画在 segbar 的格子上 */
+    .segbar.t0 i.on {background: var(--red)}
+
+    .segbar.t1 i.on {background: #ffb86b}
+
+    .segbar.t2 i.on {background: var(--gold)}
+
+    .segbar.t3 i.on {background: #b9e37a}
+
+    .segbar.t4 i.on {background: var(--green)}
 
     /* 五格刻度条：只暴露"第几档"，不暴露精确数值 */
     .segbar {
@@ -712,16 +712,25 @@
      * Markdown 文档弹窗
      * ============================================================ */
 
+    /* ★ v1.1 收紧：文档弹窗以前被拉得很长，
+     *   一半是因为段间距和行高都偏大，一半是因为
+     *   guide.md 里几乎每句话之间都有空行（每句一个 <p>）。
+     *   这里把间距压到"看着是一段话"的程度，而不是段与段之间空一大块。 */
+    /* ★ 关键修复：弹窗正文是 white-space: pre-wrap（为了保留事件文案里的手动换行），
+     *   但 Markdown 渲染出来的 HTML 每个标签之间都有一个 "\n"，
+     *   被 pre-wrap 一渲染就成了真实空行 —— 每两个元素之间凭空多出一行，
+     *   整篇文档被拉长一大截。这里把文档区改回 normal。 */
     .markdown {
-      line-height: 1.5;
-      font-size: .85rem
+      line-height: 1.45;
+      font-size: .85rem;
+      white-space: normal
     }
 
     .markdown h2 {
       font-size: .98rem;
       color: var(--gold-soft);
-      margin: 4px 0 6px;
-      padding-bottom: 3px;
+      margin: 2px 0 4px;
+      padding-bottom: 2px;
       border-bottom: 1px solid var(--line)
     }
 
@@ -732,32 +741,37 @@
     .markdown h3 {
       font-size: .9rem;
       color: var(--purple);
-      margin: 10px 0 3px
+      margin: 6px 0 2px
     }
 
     .markdown h4 {
       font-size: .85rem;
       color: var(--txt);
-      margin: 8px 0 2px
+      margin: 5px 0 1px
     }
 
     .markdown p {
-      margin: 4px 0;
+      margin: 1px 0;
       color: var(--txt)
     }
 
+    /* 相邻段落之间留一点点呼吸，但不再是"空一行" */
+    .markdown p + p {
+      margin-top: 2px
+    }
+
     .markdown ul {
-      margin: 3px 0 3px 18px
+      margin: 2px 0 2px 16px
     }
 
     .markdown li {
-      margin: 1px 0
+      margin: 0 0
     }
 
     .markdown blockquote {
-      margin: 6px 0;
-      padding: 6px 10px;
-      line-height: 1.5;
+      margin: 4px 0;
+      padding: 4px 8px;
+      line-height: 1.45;
       border-left: 3px solid var(--gold);
       background: rgba(215, 180, 90, .07);
       color: var(--gold-soft);
@@ -775,7 +789,7 @@
     .markdown hr.mdhr {
       border: 0;
       border-top: 1px dashed var(--line);
-      margin: 9px 0
+      margin: 5px 0
     }
 
     .markdown table.mdtable {
@@ -1155,6 +1169,22 @@
       pointer-events: none;
       width: max-content;
       max-width: 92vw
+    }
+
+    /* ============================================================
+     * 弹窗正文的换行处理
+     * ------------------------------------------------------------
+     * 以前弹窗正文整体是 white-space: pre-wrap，本意是保留事件文案里的
+     * 手动换行。但 JS 是用模板字符串拼 HTML 的，源码里为了好看有大量的
+     * 换行和缩进 —— pre-wrap 会把它们全部当成真实换行渲染出来，
+     * 于是天赋图鉴、破茧卡片、成绩单这些窗口凭空多出一堆空行，被拉得很长。
+     *
+     * 这里把默认改回 normal：只有显式写了 white-space:pre-wrap 的元素
+     * （内联样式优先级更高，不受本条影响）才保留手动换行。
+     * ============================================================ */
+    #modalBody,
+    #modalBody * {
+      white-space: normal
     }
 
     .toast {
@@ -2094,9 +2124,9 @@
  * ============================================================ */
 
 const GAME_DOCS = {
-  guide: {title: "新手介绍", html: "<h2>新手介绍</h2>\n\n<p>欢迎来到<b>中考人生模拟器 · 红塔中学版</b>。</p>\n\n<p>你将扮演一名<b>红塔少年</b>，从初一上学期走到初三中考，</p>\n<p>一共 <b>150 周</b>，约三年的时间。这不是一场考试，是一段生活。</p>\n\n<blockquote>校训「<b>人生在立，行达天下</b>」　|　登上「<b>立行号</b>」，每一步都算数。</blockquote>\n\n<hr class=\"mdhr\">\n\n<h3>一、基本玩法</h3>\n\n<p>每周你会做 <b>1~2 次行动</b>，一周分两个时段：</p>\n\n<table class=\"mdtable\">\n<tr><th>时段</th><th>说明</th></tr>\n<tr><td>🏫 <b>周中</b></td><td>住校的日子。早读、上课、晚自习、熄灯</td></tr>\n<tr><td>🏠 <b>周末</b></td><td>回家或自由安排的两天</td></tr>\n</table>\n\n<p>时段是<b>按先后顺序</b>推进的：一定是先在学校的周中，再是回家的周末。</p>\n<p>不会先回家、再回到宿舍。</p>\n\n<p>行动有八种：</p>\n\n<ul>\n<li>📖 努力学习 —— 涨学力，是中考分数的来源</li>\n<li>✏️ 做题 —— 出一道当前年级的题，答对本科目加成，答错小幅倒扣</li>\n<li>🏃 运动锻炼 —— 换身体的底子，之后可能连锁出运动类事件</li>\n<li>😴 好好休息 —— 回健康、降压力</li>\n<li>👥 社交活动 —— 涨社交、结识朋友</li>\n<li>🎮 摸鱼娱乐 —— 放松，但会掉效率</li>\n<li>🏠 向父母要零花钱 —— 拿到经济，金额看<b>亲情</b>；开口本身会掉一点亲情</li>\n<li>📚 图书角 —— 读书，只给正面的东西</li>\n</ul>\n\n<p><b>每次行动之后，一定会跟一个事件弹窗</b>，偶尔还会连锁出后续。</p>\n\n<hr class=\"mdhr\">\n\n<h3>二、属性：只看得见四项</h3>\n\n<p>面板上只有四项：心态 / 经济 / 健康 / 压力。</p>\n\n<p>而且<b>除经济外都不显示数字</b>——只显示「极低 / 较低 / 中 / 较高 / 极高」五档。</p>\n<p>你看到的是状态好不好，不是精确的 87 还是 88。</p>\n\n<table class=\"mdtable\">\n<tr><th>属性</th><th>作用</th></tr>\n<tr><td>心态</td><td>太低会崩溃，影响学习收益</td></tr>\n<tr><td>经济</td><td>买书、买道具、吃饭（唯一显示数字的一项）</td></tr>\n<tr><td>健康</td><td>太低会生病、甚至提前离场</td></tr>\n<tr><td>压力</td><td>太高会扣心态、扣效率；<b>连续三周爆表会提前离场</b></td></tr>\n</table>\n\n<p>效率、悟性、社交三项仍在后台实时计算，只是不再出现在面板上。</p>\n\n<p>还有一项 <b>亲情</b>，也不显示，只在家庭事件和向父母要钱时生效：</p>\n<p>亲情越高，父母越愿意给钱，也越少念叨。</p>\n<p>反过来，<b>开口要钱本身会掉亲情</b>，亲情太低会要不到钱，还可能触发家庭矛盾。</p>\n\n<p>各科的分数不再常驻面板，只在考试事件里出现。</p>\n\n<hr class=\"mdhr\">\n\n<h3>三、天赋不是开局送的</h3>\n\n<p>开局你一无所有。天赋会在一次次选择里<b>长出来</b>：</p>\n\n<ul>\n<li>坚持学习 → 可能获得「专注」「卷王」</li>\n<li>坚持休息 → 可能获得「晨型人」</li>\n<li>读书 → 只给正面的天赋</li>\n<li>社团活动 → 长期参与可能有所收获</li>\n</ul>\n\n<p><b>负面天赋也能消除</b>，这叫「破茧」：</p>\n\n<ul>\n<li>厌学 → 坚持学习 12 次后消失</li>\n<li>网瘾 → 好好休息 10 次后消失</li>\n<li>拖延症 → 坚持学习 16 次后消失，还会送你「自律机器」</li>\n</ul>\n\n<p>天赋面板上会显示进度，比如「厌学 Lv.2 🌱5/12」。</p>\n\n<p><b>反过来也成立</b>：正面天赋放着不用，会<b>退化</b>。</p>\n<p>连续几周不学习，「过目不忘」「数学脑」「卷王」会一个个消失；不运动则「运动健将」会退化。</p>\n<p>天赋是长出来的，也是要养的。</p>\n\n<hr class=\"mdhr\">\n\n<h3>四、关于手机（重要）</h3>\n\n<p>红塔中学对手机<b>零容忍</b>。</p>\n\n<p>如果你在周末选择<b>把手机带去学校</b>，那么接下来几周里：</p>\n\n<ul>\n<li>可能遇到<b>宿舍突击检查</b></li>\n<li>可能遇到<b>熄灯后的诱惑</b></li>\n</ul>\n\n<p>被抓到的后果很重：没收、请家长、取消评优、学习状态下降数周。</p>\n\n<p><b>选择不带，是最聪明的做法。</b> 自律会拿到「自律机器」天赋和学习加成。</p>\n\n<hr class=\"mdhr\">\n\n<h3>五、社团</h3>\n\n<p>社团活动<b>只在周三下午</b>发生，其他时候不会有。</p>\n<p>（唯一例外是花灯社的剧院研学，那是走出校园的活动。）</p>\n\n<p><b>抢社团</b>在每学年<b>上学期第 3~5 周</b>的周末开放：</p>\n<p>初一上、初二上、初三上各一次机会。</p>\n\n<p>红塔中学的社团是<b>抢</b>的——名额有限，手慢无。</p>\n<p>而且<b>窗口只弹一次</b>：抢不上，这一年就没有社团。</p>\n\n<table class=\"mdtable\">\n<tr><th>难度</th><th>社团</th></tr>\n<tr><td>最难抢（约 35%）</td><td>🏀 篮球社、🤸 啦啦操社</td></tr>\n<tr><td>较难（约 45%）</td><td>🏮 花灯社、🎭 话剧社、💻 编程社</td></tr>\n<tr><td>一般（约 60%）</td><td>🖌 国画社、🎨 黏土社、🎵 合唱团、🎙 朗诵社、🔊 英语播音配音社、📷 摄影社、🏓 乒乓球社</td></tr>\n<tr><td>最好抢（约 75%）</td><td>♟ 围棋社</td></tr>\n</table>\n\n<p>入社后，<b>每周三的社团课</b>会有社团的事。</p>\n<p>长期参加（累计 6 次）还可能有所收获。</p>\n\n<p>每学年上学期可以<b>重选社团</b>，但重选会清零累计次数——</p>\n<p>三年待在同一个社团，和每年换一个，是两种玩法。</p>\n\n<hr class=\"mdhr\">\n\n<h3>六、时间与季节</h3>\n\n<p>游戏里有真实的校历时间：<b>9 月开学 → 次年 1 月</b>，<b>2 月开学 → 6 月</b>。</p>\n<p>分春 🌸 / 夏 🌞 / 秋 🍂 / 冬 ❄️ 四季。</p>\n\n<p>有些事件只在特定季节出现：</p>\n\n<ul>\n<li>秋天才有落叶的林荫道</li>\n<li>夏天才有吊扇与蝉鸣</li>\n<li>冬天才有天没亮的早读</li>\n</ul>\n\n<p>顶栏的 📅 会显示当前的月份和季节。</p>\n\n<hr class=\"mdhr\">\n\n<h3>七、小提示</h3>\n\n<ul>\n<li><b>小卖铺、天赋图鉴、成就、道具</b>都属于自由操作，<b>不消耗行动次数</b></li>\n<li>每周行动机会有限，<b>各科只在考试后才看得见</b>——平时只能凭感觉判断</li>\n<li>压力爆表会扣心态，别忘了休息</li>\n<li>中考分数不是唯一结局，还有艺考、体校、职高等多种去向</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>八、开局可以自己选</h3>\n\n<p>创建角色时有两个新选项：</p>\n\n<ul>\n<li><b>难度</b>：剧情（有保底，适合展示）/ 标准 / 硬核</li>\n<li><b>玩哪几个学期</b>：初中三年 / 初二到初三 / 只玩初三 / 只玩初一</li>\n</ul>\n\n<p>从中间年级开始时，各科会按那个年级应有的水平初始化，不用担心一上来就是留级生。</p>\n<p>这两个选择会写进存档，读档后沿用。</p>\n\n<hr class=\"mdhr\">\n\n<p><b>祝你在红塔中学的三年，走得踏实。</b></p>\n"},
-  changelog: {title: "更新日志", html: "<h2>更新日志</h2>\n\n<h3>v1.1 · 屏幕情绪与更难的三年</h3>\n\n<p><b>界面：会随你的状态变化</b></p>\n\n<ul>\n<li>压力爆表时四周涌起红雾，心态过低时整屏褪色灰暗，健康见底时画面发虚，经济紧张时边缘发冷</li>\n<li>每档特效分轻/重两级，弹窗永远压在特效之上；回主菜单和进结局会自动清掉</li>\n<li>屏幕自适应：根字号随视口宽度变化，1024 到 2560 宽都能一屏装下，不用滚</li>\n<li>七套主题色可在主菜单切换，每套配一句文案（群星、草原、晨曦、深海、素墨、花灯）</li>\n<li>英语模式：界面、属性名、行动、弹窗全部可切英文</li>\n</ul>\n\n<p><b>属性：模糊化</b></p>\n\n<ul>\n<li>面板上只看得到四项：心态 / 经济 / 健康 / 压力</li>\n<li>除经济外，其余只显示「极低 / 较低 / 中 / 较高 / 极高」五档，不再给精确数字</li>\n<li>效率 / 悟性 / 社交 / 亲情 仍在后台实时计算，但面板上不再出现</li>\n<li>学科分数板块删除，各科只在考试事件里出现</li>\n</ul>\n\n<p><b>新增两个行动</b></p>\n\n<ul>\n<li>🏃 运动锻炼：消耗一次行动，换身体的底子，之后有概率连锁出运动类事件（新建 10 条）</li>\n<li>✏️ 做题：按当前年级与科目出题，选择题或填空题；答对本科目加成，答错小幅倒扣</li>\n</ul>\n\n<p><b>更难的三年</b></p>\n\n<ul>\n<li>学习收益 ×0.80、遗忘 ×1.30、考试 ×0.94、学习带来的压力 ×1.40，并新增「一周没学习 → 全科再 -3%」</li>\n<li>实测：认真玩（每周两次学习）初三约 75 分，只学一次约 60 分</li>\n</ul>\n\n<p><b>遗憾离场</b></p>\n\n<ul>\n<li>不再「压力一到 100 就崩」，改为连续三周爆表才提前结束，中途有两次预警</li>\n<li>压力周结算改为向学业基线回归（原来是无回归的随机漫步，三年下来迟早撞上 100）</li>\n</ul>\n\n<p><b>亲情</b></p>\n\n<ul>\n<li>开口要钱会掉亲情（亲情越低掉得越多），亲情低于 40 会被念叨、打折，最低时大概率要不到钱</li>\n<li>亲情低于 30 有概率触发家庭矛盾，三选一，认错和冷战都是实打实的负面</li>\n</ul>\n\n<p><b>破茧的另一面：天赋退化</b></p>\n\n<ul>\n<li>连续几周不学习，「过目不忘」「数学脑」「卷王」等学习天赋会一个个消失（共 13 条）</li>\n<li>不运动则「运动健将」「钢筋铁骨」退化</li>\n</ul>\n\n<p><b>其它</b></p>\n\n<ul>\n<li>削弱天赋「家财万贯」：每周 +150 降到 +45，开局 300 降到 150</li>\n<li>「单亲家庭」天赋：事件里爸爸妈妈的称呼会统一成同一位家长，不会再一会爸一会妈；留守少年则换成爷爷奶奶</li>\n<li>开局可选难度与学期范围（初中三年 / 初二到初三 / 只玩初三 / 只玩初一），会写进存档</li>\n<li>修掉一批提示动效问题：多条提示条不再叠在同一处，飘字错开排列</li>\n<li>文档实时更新：改完 docs/*.md 刷新即生效（起本地服务时），或用弹窗里的「导入」按钮选文件/粘贴</li>\n<li>全部文件名改为英文，启动脚本改为纯 ASCII，任何解压软件都不会乱码</li>\n<li>暂不使用校园插画配图，改用七套主题自带的 CSS 渐变（想恢复就打开 <code>GAME_CONFIG.usePhotos</code>）</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v1.0 · 正式版（发布版）</h3>\n\n<p>这是第一个完整版本。界面、数值、文案、体检脚本全部过了一遍，</p>\n<p>可以作为社团成果提交审核、在全校展示。</p>\n\n<p><b>界面：更紧凑，少滚滚轮</b></p>\n\n<ul>\n<li>弹窗内边距、行间距整体收紧（正文行高 1.8 → 1.55），字少不再空一大片</li>\n<li>行动面板改为<b>单列竖排</b>，六个选项一眼看全</li>\n<li>主界面左栏合并：天赋 + 道具并成一张卡，各科 + 成绩并成一张卡</li>\n<li>按钮、卡片、日志区、成就格、Markdown 文档的间距统一压缩</li>\n</ul>\n\n<p><b>修掉一批会影响体验的问题</b></p>\n\n<ul>\n<li>读档后社团会消失 —— 社团、手机标记、事件冷却原本根本没存进存档，已补齐</li>\n<li>「向父母要零花钱」时，父母的台词弹窗会被后面的随机事件直接盖掉，已改成说完再继续</li>\n<li>剧情模式（story）下仍可能因经济归零而「辍学打工」提前结束 ——</li>\n</ul>\n<p>  与该难度「不会中途暴毙」的承诺不符，已加经济保底线</p>\n<ul>\n<li>学力衰减在一周内被计算了两次（每次行动一次 + 周结算一次），</li>\n</ul>\n<p>  导致初三时衰减量超过学习量、学力一路跌回个位数，已去掉重复计算</p>\n<ul>\n<li>体检脚本新增：社团奖励天赋校验、时段/季节合法性校验、</li>\n</ul>\n<p>  「写了却永远拿不到」的死成就检测、条件分支里的指令错别字检查</p>\n\n<p><b>结局与成就</b></p>\n\n<ul>\n<li>「少年班」「平凡而幸福」两条结局排在了分数结局后面，条件再符合也轮不到，已重排</li>\n<li>「冠军之心」「锦鲤本鲤」「竞赛之星」「青春悸动」「干饭之魂」五个成就</li>\n</ul>\n<p>  没有任何地方会为它们计数，已接上计数并补充事件</p>\n<ul>\n<li>「六边形战士」把「压力」也算成一条边（压力高是坏事），已改为只算六项主属性</li>\n<li>补上社团表里缺失的奖励天赋【匠心】【逻辑鬼才】（天赋数 80 → 82）</li>\n</ul>\n\n<p><b>内容与文案</b></p>\n\n<ul>\n<li>每条随机事件都标注了时段（周中 / 周三社团课 / 周末），</li>\n</ul>\n<p>  不会再出现「住校却半夜接手机」「周末还在教室随堂小测」这类时间错误</p>\n<ul>\n<li>新增事件：校门口的小吃摊、课桌里的纸条、陪妈妈去赶集、周日的作业、</li>\n</ul>\n<p>  周末的一顿饭、爬一次红塔山、体艺节前的排练、黑板右上角（初三）、百日誓师</p>\n<ul>\n<li>「社团招新周」与固定日程的社团展演重复，改为「社团开放日」（未入社时才出现）</li>\n<li>「体育艺术文化节」与固定日程撞车，改为节前的排练</li>\n<li>天赋诗句去重 16 处（多处引用同一句诗），并为新增天赋补了诗句</li>\n<li>大量事件、书目、道具文案改写，增强文学性与玉溪本地气息</li>\n</ul>\n\n<p><b>数值</b></p>\n\n<ul>\n<li>中考公式里学力的权重过低（0.7），学力几乎不影响分数，</li>\n</ul>\n<p>  天天摸鱼和天天学习考出的分差不多。已提到 1.3，并把权重做成</p>\n<p>  <code>js/02-config.js</code> 里可调的 <code>exam.subjWeight</code></p>\n<ul>\n<li>参考值（剧情模式）：均衡游玩 ≈ 87 分，偏重学习 ≈ 88 分，长期摸鱼 ≈ 73 分</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.10 · 真实社团版本</h3>\n\n<p><b>社团改为学校实际名单（13 个）</b></p>\n\n<ul>\n<li>国画、黏土、花灯、合唱、朗诵、话剧、英语播音配音、篮球、啦啦操、乒乓球、围棋、摄影、编程</li>\n<li>移除此前没有依据的 7 个社团</li>\n</ul>\n\n<p><b>社团活动只在周三</b></p>\n\n<ul>\n<li>时段顺序改为：周中 → <b>周三社团课</b> → 周末</li>\n<li>社团事件全部限定在周三社团课，其他时候不会出现</li>\n<li>唯一例外：花灯社的剧院研学（走出校园）安排在周末</li>\n<li>没加入社团时不排「周三社团课」这个时段</li>\n<li>周三社团课的行动选项与平时不同（去社团 / 写作业 / 休息 / 找同学）</li>\n</ul>\n\n<p><b>抢社团改为每学年上学期一次</b></p>\n\n<ul>\n<li>窗口：初一上、初二上、初三上的<b>第 3~5 周</b></li>\n<li>整个窗口只弹一次，抢不上这一年就没有社团</li>\n<li>每学年上学期可重选，重选清零累计次数</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.9 · 时间与社团版本</h3>\n\n<p><b>新增</b></p>\n\n<ul>\n<li>校历时间系统：月份、季节（春夏秋冬），顶栏实时显示</li>\n<li>一周分「周中 / 周末」两个时段，按时间先后顺序推进</li>\n<li>时段数量<b>动态调整</b>：上周攒下的后续事件会让对应时段自动延长</li>\n<li>社团系统：红塔中学 16 个社团</li>\n<li>初一上第 1~3 周周末<b>抢社团</b>，热门社团手慢无</li>\n<li>入社后社团事件均匀分布在学期中</li>\n<li>长期参与（6 次）可能获得天赋</li>\n<li>每个社团有每周微小加成</li>\n<li>事件分布开关 <code>dist</code>：</li>\n<li><code>uniform</code> 均匀分布（距上次越久概率越高）</li>\n<li><code>decay</code> 出现后衰减</li>\n<li><code>front</code> 前期多 / <code>back</code> 后期多</li>\n<li>事件时段字段 <code>slot</code>、季节字段 <code>season</code>、月份字段 <code>months</code></li>\n<li>事件最小间隔 <code>minGap</code>，避免扎堆</li>\n<li>选项<b>条件分支</b> <code>branch</code>：同一选项按数值走向不同结果</li>\n<li>后续事件挂起 <code>raise</code>：不立刻触发，而是在几周内提高概率</li>\n<li>标记系统 <code>flag</code>：例如\"有没有把手机带到学校\"</li>\n<li>手机事件链：返校前选择 → 带手机才可能被查到 → 被抓有后果</li>\n<li>四季观景事件：春（操场边先绿了）、夏（吊扇与蝉鸣）、冬（早读时天还没亮）</li>\n<li>主菜单三个按钮：新手介绍 / 更新日志 / 鸣谢列表（内容在 docs/*.md 里改）</li>\n</ul>\n\n<p><b>调整</b></p>\n\n<ul>\n<li>宿舍熄灯事件去掉手机选项，改为「和室友聊到很晚」（手机玩法独立成链）</li>\n<li>秋日林荫道改为只在秋季出现</li>\n<li>事件选择引擎重写，支持时段、季节、分布、间隔、挂起</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.8 · 红塔中学定制版</h3>\n\n<ul>\n<li>填入校训「人生在立，行达天下」、立行文化四立、立行号意象</li>\n<li>主题色改为清华紫 #660874</li>\n<li>15 条红塔中学专属事件（花灯、聂耳、寄宿生活、家校团建等）</li>\n<li>3 张扁平插画风背景（校园全景 / 林荫道 / 立行号列车）</li>\n<li>不使用校徽，只用校名与校训文字</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.7 · 内容调整</h3>\n\n<ul>\n<li>移除图书馆（学校没有），改为班级图书角</li>\n<li>手机违规惩罚大幅加重</li>\n<li>体育艺术节改为一年一次（上学期第 8 周）</li>\n<li>「打零工」改为「向父母要零花钱」，新增亲情属性</li>\n<li>新增 5 条家庭事件</li>\n<li>读书只给正面天赋，无天赋可给时改为给悟性</li>\n<li>界面瘦身：属性栏双列、行动按钮两列、学科栏可折叠、日志区限高</li>\n<li>天赋图鉴改为紧凑卡片，关闭按钮跟随滚动</li>\n<li>修复多事件弹窗互相覆盖导致卡死的 Bug</li>\n<li>数值边界处理，杜绝 NaN</li>\n</ul>\n\n<hr class=\"mdhr\">\n\n<h3>v0.6 · 开源拆分</h3>\n\n<ul>\n<li>单文件拆分为 40 个文件的项目结构</li>\n<li>引擎层 / 内容层 / 配置层分离</li>\n<li>事件效果支持中文指令写法</li>\n<li>内容体检脚本、单文件打包脚本</li>\n<li>三份文档：文件大纲、内容教程、审核清单</li>\n</ul>\n"},
-  credits: {title: "鸣谢列表", html: "<h2>鸣谢列表</h2>\n\n<h3>团队核心</h3>\n<p>红塔中学（学生团队）</p>\n\n<ul>\n<li>2027届8班 夏毅夫 核心代码构建，github仓库提供者</li>\n<li>2027届5班 林钰航 代码边界测试，开发工具提供者</li>\n<li>2027届5班 尹鹏肖 结局数值判断与发展方向提供者</li>\n<li>2027届5班 蔡家骏 中文指令与玩家开放式内容编辑灵感提供者</li>\n</ul>\n\n<p>红塔中学（老师）</p>\n<ul>\n<li>邓瑞老师 自治社团项目的支持者与核心审核员</li>\n<li>王家平校长与学校的诸位老师 该项目的舞台提供与支持者</li>\n</ul>\n\n<p>校外人员</p>\n<ul>\n<li>deepseek 免费开源的才是真正的代码精神！</li>\n<li>杨方烨 编程大佬，该项目初期的指引者</li>\n<li>文艺清 游戏边界BUG的超强寻找者</li>\n</ul>\n\n\n<p>...欢迎更多人参与我们的项目，如果你发现了BUG或提供了新的idea，和维护者说，这里给你单开一行</p>\n\n<h3>立项与开发</h3>\n\n<p><b>玉溪市红塔中学（玉溪一中附属中学）社团开发项目</b></p>\n\n<p>由学校社团学生自主开发，用于全校展示与教学实践。</p>\n\n<h3>指导</h3>\n\n<ul>\n<li>感谢学校老师对游戏内容的审核与指导</li>\n<li>感谢社团指导的组织协调</li>\n</ul>\n\n<h3>素材来源</h3>\n\n<ul>\n<li>校训「人生在立，行达天下」、立行文化四立 —— 学校公开宣传材料</li>\n<li>「立行号」列车意象、「每一步都算数」 —— 学校迎新物料</li>\n<li>体育艺术文化节主题「行者」 —— 学校第二届体艺节</li>\n<li>玉溪花灯戏、聂耳与国歌 —— 玉溪本土非遗与红色文化</li>\n<li>社团名录、寄宿制生活细节 —— 学校公开报道</li>\n</ul>\n\n<h3>关于图片</h3>\n\n<ul>\n<li><b>v1.1 起暂不使用校园插画配图</b>，界面改用七套主题自带的渐变底色</li>\n<li>想恢复：把 <code>js/02-config.js</code> 里的 <code>usePhotos</code> 改回 <code>true</code>，图片放回 <code>assets/</code> 即可</li>\n<li>恢复时请注意：背景应为校园实景的<b>扁平矢量插画风格艺术化重绘</b>，</li>\n</ul>\n<p>  不含真实人物肖像、不含校服与学生照片</p>\n<ul>\n<li><b>学校目前没有官方校徽，游戏不使用校徽图标</b>，只用校名与校训文字</li>\n</ul>\n\n<h3>关于图片（旧版说明）</h3>\n\n<ul>\n<li>背景图为校园实景的<b>扁平矢量插画风格艺术化重绘</b></li>\n<li>不含真实人物肖像、不含校服与学生照片</li>\n<li><b>学校目前没有官方校徽，游戏不使用校徽图标</b>，只用校名与校训文字</li>\n</ul>\n\n<h3>技术</h3>\n<ul>\n<li>纯原生 JavaScript / HTML / CSS，无任何第三方库</li>\n<li>无联网请求，数据保存在本机浏览器</li>\n<li>无广告、无付费、无个人信息采集</li>\n</ul>\n<h3>特别感谢</h3>\n<p>感谢每一位试玩并给出意见的同学。</p>\n<p>这个游戏能被玩完、被讨论、被吐槽，就是它存在的意义。</p>\n"}
+  guide: {title: "新手介绍", html: "<h2>新手介绍</h2><p>欢迎来到<b>中考人生模拟器 · 红塔中学版</b>。</p><p>你将扮演一名<b>红塔少年</b>，从初一上学期走到初三中考，一共 <b>150 周</b>，约三年的时间。这不是一场考试，是一段生活。</p><blockquote>校训「<b>人生在立，行达天下</b>」　|　登上「<b>立行号</b>」，每一步都算数。</blockquote><hr class=\"mdhr\"><h3>一、基本玩法</h3><p>每周你会做 <b>1~2 次行动</b>，一周分两个时段：</p><table class=\"mdtable\"><tr><th>时段</th><th>说明</th></tr><tr><td>🏫 <b>周中</b></td><td>住校的日子。早读、上课、晚自习、熄灯</td></tr><tr><td>🏠 <b>周末</b></td><td>回家或自由安排的两天</td></tr></table><p>时段是<b>按先后顺序</b>推进的：一定是先在学校的周中，再是回家的周末。不会先回家、再回到宿舍。</p><p>行动有八种：</p><ul><li>📖 努力学习 —— 涨学力，是中考分数的来源</li><li>✏️ 做题 —— 出一道当前年级的题，答对本科目加成，答错小幅倒扣</li><li>🏃 运动锻炼 —— 换身体的底子，之后可能连锁出运动类事件</li><li>😴 好好休息 —— 回健康、降压力</li><li>👥 社交活动 —— 涨社交、结识朋友</li><li>🎮 摸鱼娱乐 —— 放松，但会掉效率</li><li>🏠 向父母要零花钱 —— 拿到经济，金额看<b>亲情</b>；开口本身会掉一点亲情</li><li>📚 图书角 —— 读书，只给正面的东西</li></ul><p><b>每次行动之后，一定会跟一个事件弹窗</b>，偶尔还会连锁出后续。</p><hr class=\"mdhr\"><h3>二、属性：只看得见四项</h3><p>面板上只有四项：心态 / 经济 / 健康 / 压力。</p><p>而且<b>除经济外都不显示数字</b>——只显示「极低 / 较低 / 中 / 较高 / 极高」五档。你看到的是状态好不好，不是精确的 87 还是 88。</p><table class=\"mdtable\"><tr><th>属性</th><th>作用</th></tr><tr><td>心态</td><td>太低会崩溃，影响学习收益</td></tr><tr><td>经济</td><td>买书、买道具、吃饭（唯一显示数字的一项）</td></tr><tr><td>健康</td><td>太低会生病、甚至提前离场</td></tr><tr><td>压力</td><td>太高会扣心态、扣效率；<b>连续三周爆表会提前离场</b></td></tr></table><p>效率、悟性、社交三项仍在后台实时计算，只是不再出现在面板上。</p><p>还有一项 <b>亲情</b>，也不显示，只在家庭事件和向父母要钱时生效：亲情越高，父母越愿意给钱，也越少念叨。反过来，<b>开口要钱本身会掉亲情</b>，亲情太低会要不到钱，还可能触发家庭矛盾。</p><p>各科的分数不再常驻面板，只在考试事件里出现。</p><hr class=\"mdhr\"><h3>三、天赋不是开局送的</h3><p>开局你一无所有。天赋会在一次次选择里<b>长出来</b>：</p><ul><li>坚持学习 → 可能获得「专注」「卷王」</li><li>坚持休息 → 可能获得「晨型人」</li><li>读书 → 只给正面的天赋</li><li>社团活动 → 长期参与可能有所收获</li></ul><p><b>负面天赋也能消除</b>，这叫「破茧」：</p><ul><li>厌学 → 坚持学习 12 次后消失</li><li>网瘾 → 好好休息 10 次后消失</li><li>拖延症 → 坚持学习 16 次后消失，还会送你「自律机器」</li></ul><p>天赋面板上会显示进度，比如「厌学 Lv.2 🌱5/12」。</p><p><b>反过来也成立</b>：正面天赋放着不用，会<b>退化</b>。连续几周不学习，「过目不忘」「数学脑」「卷王」会一个个消失；不运动则「运动健将」会退化。天赋是长出来的，也是要养的。</p><hr class=\"mdhr\"><h3>四、关于手机（重要）</h3><p>红塔中学对手机<b>零容忍</b>。</p><p>如果你在周末选择<b>把手机带去学校</b>，那么接下来几周里：</p><ul><li>可能遇到<b>宿舍突击检查</b></li><li>可能遇到<b>熄灯后的诱惑</b></li></ul><p>被抓到的后果很重：没收、请家长、取消评优、学习状态下降数周。</p><p><b>选择不带，是最聪明的做法。</b> 自律会拿到「自律机器」天赋和学习加成。</p><hr class=\"mdhr\"><h3>五、社团</h3><p>社团活动<b>只在周三下午</b>发生，其他时候不会有。（唯一例外是花灯社的剧院研学，那是走出校园的活动。）</p><p><b>抢社团</b>在每学年<b>上学期第 3~5 周</b>的周末开放：初一上、初二上、初三上各一次机会。</p><p>红塔中学的社团是<b>抢</b>的——名额有限，手慢无。而且<b>窗口只弹一次</b>：抢不上，这一年就没有社团。</p><table class=\"mdtable\"><tr><th>难度</th><th>社团</th></tr><tr><td>最难抢（约 35%）</td><td>🏀 篮球社、🤸 啦啦操社</td></tr><tr><td>较难（约 45%）</td><td>🏮 花灯社、🎭 话剧社、💻 编程社</td></tr><tr><td>一般（约 60%）</td><td>🖌 国画社、🎨 黏土社、🎵 合唱团、🎙 朗诵社、🔊 英语播音配音社、📷 摄影社、🏓 乒乓球社</td></tr><tr><td>最好抢（约 75%）</td><td>♟ 围棋社</td></tr></table><p>入社后，<b>每周三的社团课</b>会有社团的事。长期参加（累计 6 次）还可能有所收获。</p><p>每学年上学期可以<b>重选社团</b>，但重选会清零累计次数——三年待在同一个社团，和每年换一个，是两种玩法。</p><hr class=\"mdhr\"><h3>六、时间与季节</h3><p>游戏里有真实的校历时间：<b>9 月开学 → 次年 1 月</b>，<b>2 月开学 → 6 月</b>。分春 🌸 / 夏 🌞 / 秋 🍂 / 冬 ❄️ 四季。</p><p>有些事件只在特定季节出现：</p><ul><li>秋天才有落叶的林荫道</li><li>夏天才有吊扇与蝉鸣</li><li>冬天才有天没亮的早读</li></ul><p>顶栏的 📅 会显示当前的月份和季节。</p><hr class=\"mdhr\"><h3>七、小提示</h3><ul><li><b>小卖铺、天赋图鉴、成就、道具</b>都属于自由操作，<b>不消耗行动次数</b></li><li>每周行动机会有限，<b>各科只在考试后才看得见</b>——平时只能凭感觉判断</li><li>压力爆表会扣心态，别忘了休息</li><li>中考分数不是唯一结局，还有艺考、体校、职高等多种去向</li></ul><hr class=\"mdhr\"><h3>八、开局可以自己选</h3><p>创建角色时有两个新选项：</p><ul><li><b>难度</b>：剧情（有保底，适合展示）/ 标准 / 硬核</li><li><b>玩哪几个学期</b>：初中三年 / 初二到初三 / 只玩初三 / 只玩初一</li></ul><p>从中间年级开始时，各科会按那个年级应有的水平初始化，不用担心一上来就是留级生。这两个选择会写进存档，读档后沿用。</p><hr class=\"mdhr\"><p><b>祝你在红塔中学的三年，走得踏实。</b></p>"},
+  changelog: {title: "更新日志", html: "<h2>更新日志</h2><h3>v1.1 · 屏幕情绪与更难的三年</h3><p><b>界面：会随你的状态变化</b></p><ul><li>压力爆表时四周涌起红雾，心态过低时整屏褪色灰暗，健康见底时画面发虚，经济紧张时边缘发冷</li><li>每档特效分轻/重两级，弹窗永远压在特效之上；回主菜单和进结局会自动清掉</li><li>屏幕自适应：根字号随视口宽度变化，1024 到 2560 宽都能一屏装下，不用滚</li><li>七套主题色可在主菜单切换，每套配一句文案（群星、草原、晨曦、深海、素墨、花灯）</li><li>英语模式：界面、属性名、行动、弹窗全部可切英文</li></ul><p><b>属性：模糊化</b></p><ul><li>面板上只看得到四项：心态 / 经济 / 健康 / 压力</li><li>除经济外，其余只显示「极低 / 较低 / 中 / 较高 / 极高」五档，不再给精确数字</li><li>效率 / 悟性 / 社交 / 亲情 仍在后台实时计算，但面板上不再出现</li><li>学科分数板块删除，各科只在考试事件里出现</li></ul><p><b>新增两个行动</b></p><ul><li>🏃 运动锻炼：消耗一次行动，换身体的底子，之后有概率连锁出运动类事件（新建 10 条）</li><li>✏️ 做题：按当前年级与科目出题，选择题或填空题；答对本科目加成，答错小幅倒扣</li></ul><p><b>更难的三年</b></p><ul><li>学习收益 ×0.80、遗忘 ×1.30、考试 ×0.94、学习带来的压力 ×1.40，并新增「一周没学习 → 全科再 -3%」</li><li>实测：认真玩（每周两次学习）初三约 75 分，只学一次约 60 分</li></ul><p><b>遗憾离场</b></p><ul><li>不再「压力一到 100 就崩」，改为连续三周爆表才提前结束，中途有两次预警</li><li>压力周结算改为向学业基线回归（原来是无回归的随机漫步，三年下来迟早撞上 100）</li></ul><p><b>亲情</b></p><ul><li>开口要钱会掉亲情（亲情越低掉得越多），亲情低于 40 会被念叨、打折，最低时大概率要不到钱</li><li>亲情低于 30 有概率触发家庭矛盾，三选一，认错和冷战都是实打实的负面</li></ul><p><b>破茧的另一面：天赋退化</b></p><ul><li>连续几周不学习，「过目不忘」「数学脑」「卷王」等学习天赋会一个个消失（共 13 条）</li><li>不运动则「运动健将」「钢筋铁骨」退化</li></ul><p><b>其它</b></p><ul><li>削弱天赋「家财万贯」：每周 +150 降到 +45，开局 300 降到 150</li><li>「单亲家庭」天赋：事件里爸爸妈妈的称呼会统一成同一位家长，不会再一会爸一会妈；留守少年则换成爷爷奶奶</li><li>开局可选难度与学期范围（初中三年 / 初二到初三 / 只玩初三 / 只玩初一），会写进存档</li><li>修掉一批提示动效问题：多条提示条不再叠在同一处，飘字错开排列</li><li>文档实时更新：改完 docs/*.md 刷新即生效（起本地服务时），或用弹窗里的「导入」按钮选文件/粘贴</li><li>全部文件名改为英文，启动脚本改为纯 ASCII，任何解压软件都不会乱码</li><li>暂不使用校园插画配图，改用七套主题自带的 CSS 渐变（想恢复就打开 <code>GAME_CONFIG.usePhotos</code>）</li></ul><hr class=\"mdhr\"><h3>v1.1.1 · 修一批看得见的问题</h3><p><b>英语模式暂停开放</b></p><ul><li>只译好了一部分，事件、天赋、书目仍是中文，切换后会出现半中半英和刷新不及时</li><li>现在点切换按钮会弹出「敬请期待」说明，不再真的切过去</li><li>已经切到英文的玩家，再点一次可以切回中文，不会卡住</li><li>将来译完，把 <code>js/01b-i18n.js</code> 里的 <code>EN_READY</code> 改回 <code>true</code> 就会自动恢复</li></ul><p><b>属性栏：档位文字看得见了</b></p><ul><li>模糊化之后，「中 / 较高 / 较低」这些字被一个有颜色的方块盖住了 ——</li><p>原因是文字颜色和背景色被写成了同一个值，等于红字画在红方块上</p><li>现在档位文字只有颜色、没有底色，刻度条的填充色单独画</li></ul><p><b>窗口不再被拉得老长</b></p><ul><li>根因：弹窗正文整体是 <code>white-space: pre-wrap</code>，而 HTML 是模板字符串拼的，</li><p>源码里为了好看的换行和缩进，被 pre-wrap 一个个渲染成了真实空行</p><li>现在默认改回 normal，需要保留手动换行的地方（事件文案、破茧文案）单独声明</li><li>顺带收紧了正文行高（2 → 1.62）、块间距、以及 Markdown 的段间距</li><li>新手介绍从 4221px 缩到 2341px（-44%），天赋图鉴从 3885px 缩到 1908px（-51%）</li><li>Markdown 新增「断句接回」：源文件里一句话被空行拆成两段，渲染时会自动接回一段</li></ul><p><b>主题对比度全面拉高</b></p><ul><li>描边（卡片边界）原来对比度只有 1.5~2.2，几乎看不见，界面显得糊 —— 现在提到 3.2+</li><li>次要文字从 7.7~9.1 提到 10.5，正文提到 15+</li><li>青草主题按要求往白色靠：正文改用近白，强调色与背景渐变一起提亮</li></ul><hr class=\"mdhr\"><h3>v1.1.2 · 修代码泄漏、读书出身、存档与题库</h3><p><b>修掉界面上泄漏出来的代码</b></p><ul><li>主题卡片上会显示一整串 <code>style=\"--c1:#8a2b9c;...\"</code> ——</li><p>原因是弹窗正文把换行统一转成了 <code><br></code>，连 HTML 标签内部为了缩进产生的换行也一起转了，标签结构被破坏，属性内容就变成了可见文字</p><li>现在换成精确的 <code>nl2br()</code>：只转「夹在真实文字之间」的换行，</li><p>标签内部的原样保留，元素之间的直接丢掉。既不丢文案换行，也不会多出空行</p></ul><p><b>读书不再改变出身</b></p><ul><li>出身类天赋（家财万贯 / 家徒四壁 / 书香门第 / 单亲家庭 / 留守少年 …）</li><p>现在只能由开局抽到，读书、社团、事件一律不发</p><li>读再多书也没法把「家徒四壁」读成「书香门第」</li><li>清单在 <code>js/03-data-talents.js</code> 的 <code>FAMILY_TALENTS</code>，想调整改一处即可</li></ul><p><b>存档机制</b></p><ul><li>每周所有结算走完之后自动存一次，读档正好回到新周的开端，不丢任何已结算内容</li><li>中考分数算出来、以及进入结局时也会立刻落盘</li><li>存档加了结构版本号；读档时会做可用性检查，坏数据自动清空而不是让主菜单打不开</li><li>写不进去（隐私模式 / 空间满）会提示，不再静默失败</li><li>主菜单会显示「自动存档 第 N 周」，玩家知道进度被记住了</li></ul><p><b>题库 42 → 136 题</b></p><ul><li>九科齐全，初一可抽 41 题、初二 90 题、初三 112 题</li><li>体检脚本新增「死题检测」：题目年级高于该科能出现的最高年级时会被提醒</li><p>（生物 / 地理只考到初二，标了初三的题永远抽不到，已修正 5 条）</p></ul><p><b>判卷更宽容</b></p><ul><li>一 / 1 / 1.0 / 01 都算对</li><li>1/2 / 0.5 / 二分之一 / 50% 都算对</li><li>大小写不分、空格随便加、书名号括号可省、单位可写可不写（4cm ↔ 4）</li><li><code>x=4</code> 和 <code>4</code> 互认</li><li>实测 8 道题用各种等价写法作答，全部判对</li></ul><hr class=\"mdhr\"><h3>v1.0 · 正式版（发布版）</h3><p>这是第一个完整版本。界面、数值、文案、体检脚本全部过了一遍，可以作为社团成果提交审核、在全校展示。</p><p><b>界面：更紧凑，少滚滚轮</b></p><ul><li>弹窗内边距、行间距整体收紧（正文行高 1.8 → 1.55），字少不再空一大片</li><li>行动面板改为<b>单列竖排</b>，六个选项一眼看全</li><li>主界面左栏合并：天赋 + 道具并成一张卡，各科 + 成绩并成一张卡</li><li>按钮、卡片、日志区、成就格、Markdown 文档的间距统一压缩</li></ul><p><b>修掉一批会影响体验的问题</b></p><ul><li>读档后社团会消失 —— 社团、手机标记、事件冷却原本根本没存进存档，已补齐</li><li>「向父母要零花钱」时，父母的台词弹窗会被后面的随机事件直接盖掉，已改成说完再继续</li><li>剧情模式（story）下仍可能因经济归零而「辍学打工」提前结束 ——</li><p>与该难度「不会中途暴毙」的承诺不符，已加经济保底线</p><li>学力衰减在一周内被计算了两次（每次行动一次 + 周结算一次），</li><p>导致初三时衰减量超过学习量、学力一路跌回个位数，已去掉重复计算</p><li>体检脚本新增：社团奖励天赋校验、时段/季节合法性校验、</li><p>「写了却永远拿不到」的死成就检测、条件分支里的指令错别字检查</p></ul><p><b>结局与成就</b></p><ul><li>「少年班」「平凡而幸福」两条结局排在了分数结局后面，条件再符合也轮不到，已重排</li><li>「冠军之心」「锦鲤本鲤」「竞赛之星」「青春悸动」「干饭之魂」五个成就</li><p>没有任何地方会为它们计数，已接上计数并补充事件</p><li>「六边形战士」把「压力」也算成一条边（压力高是坏事），已改为只算六项主属性</li><li>补上社团表里缺失的奖励天赋【匠心】【逻辑鬼才】（天赋数 80 → 82）</li></ul><p><b>内容与文案</b></p><ul><li>每条随机事件都标注了时段（周中 / 周三社团课 / 周末），</li><p>不会再出现「住校却半夜接手机」「周末还在教室随堂小测」这类时间错误</p><li>新增事件：校门口的小吃摊、课桌里的纸条、陪妈妈去赶集、周日的作业、</li><p>周末的一顿饭、爬一次红塔山、体艺节前的排练、黑板右上角（初三）、百日誓师</p><li>「社团招新周」与固定日程的社团展演重复，改为「社团开放日」（未入社时才出现）</li><li>「体育艺术文化节」与固定日程撞车，改为节前的排练</li><li>天赋诗句去重 16 处（多处引用同一句诗），并为新增天赋补了诗句</li><li>大量事件、书目、道具文案改写，增强文学性与玉溪本地气息</li></ul><p><b>数值</b></p><ul><li>中考公式里学力的权重过低（0.7），学力几乎不影响分数，</li><p>天天摸鱼和天天学习考出的分差不多。已提到 1.3，并把权重做成<code>js/02-config.js</code> 里可调的 <code>exam.subjWeight</code></p><li>参考值（剧情模式）：均衡游玩 ≈ 87 分，偏重学习 ≈ 88 分，长期摸鱼 ≈ 73 分</li></ul><hr class=\"mdhr\"><h3>v0.10 · 真实社团版本</h3><p><b>社团改为学校实际名单（13 个）</b></p><ul><li>国画、黏土、花灯、合唱、朗诵、话剧、英语播音配音、篮球、啦啦操、乒乓球、围棋、摄影、编程</li><li>移除此前没有依据的 7 个社团</li></ul><p><b>社团活动只在周三</b></p><ul><li>时段顺序改为：周中 → <b>周三社团课</b> → 周末</li><li>社团事件全部限定在周三社团课，其他时候不会出现</li><li>唯一例外：花灯社的剧院研学（走出校园）安排在周末</li><li>没加入社团时不排「周三社团课」这个时段</li><li>周三社团课的行动选项与平时不同（去社团 / 写作业 / 休息 / 找同学）</li></ul><p><b>抢社团改为每学年上学期一次</b></p><ul><li>窗口：初一上、初二上、初三上的<b>第 3~5 周</b></li><li>整个窗口只弹一次，抢不上这一年就没有社团</li><li>每学年上学期可重选，重选清零累计次数</li></ul><hr class=\"mdhr\"><h3>v0.9 · 时间与社团版本</h3><p><b>新增</b></p><ul><li>校历时间系统：月份、季节（春夏秋冬），顶栏实时显示</li><li>一周分「周中 / 周末」两个时段，按时间先后顺序推进</li><li>时段数量<b>动态调整</b>：上周攒下的后续事件会让对应时段自动延长</li><li>社团系统：红塔中学 16 个社团</li><li>初一上第 1~3 周周末<b>抢社团</b>，热门社团手慢无</li><li>入社后社团事件均匀分布在学期中</li><li>长期参与（6 次）可能获得天赋</li><li>每个社团有每周微小加成</li><li>事件分布开关 <code>dist</code>：</li><li><code>uniform</code> 均匀分布（距上次越久概率越高）</li><li><code>decay</code> 出现后衰减</li><li><code>front</code> 前期多 / <code>back</code> 后期多</li><li>事件时段字段 <code>slot</code>、季节字段 <code>season</code>、月份字段 <code>months</code></li><li>事件最小间隔 <code>minGap</code>，避免扎堆</li><li>选项<b>条件分支</b> <code>branch</code>：同一选项按数值走向不同结果</li><li>后续事件挂起 <code>raise</code>：不立刻触发，而是在几周内提高概率</li><li>标记系统 <code>flag</code>：例如\"有没有把手机带到学校\"</li><li>手机事件链：返校前选择 → 带手机才可能被查到 → 被抓有后果</li><li>四季观景事件：春（操场边先绿了）、夏（吊扇与蝉鸣）、冬（早读时天还没亮）</li><li>主菜单三个按钮：新手介绍 / 更新日志 / 鸣谢列表（内容在 docs/*.md 里改）</li></ul><p><b>调整</b></p><ul><li>宿舍熄灯事件去掉手机选项，改为「和室友聊到很晚」（手机玩法独立成链）</li><li>秋日林荫道改为只在秋季出现</li><li>事件选择引擎重写，支持时段、季节、分布、间隔、挂起</li></ul><hr class=\"mdhr\"><h3>v0.8 · 红塔中学定制版</h3><ul><li>填入校训「人生在立，行达天下」、立行文化四立、立行号意象</li><li>主题色改为清华紫 #660874</li><li>15 条红塔中学专属事件（花灯、聂耳、寄宿生活、家校团建等）</li><li>3 张扁平插画风背景（校园全景 / 林荫道 / 立行号列车）</li><li>不使用校徽，只用校名与校训文字</li></ul><hr class=\"mdhr\"><h3>v0.7 · 内容调整</h3><ul><li>移除图书馆（学校没有），改为班级图书角</li><li>手机违规惩罚大幅加重</li><li>体育艺术节改为一年一次（上学期第 8 周）</li><li>「打零工」改为「向父母要零花钱」，新增亲情属性</li><li>新增 5 条家庭事件</li><li>读书只给正面天赋，无天赋可给时改为给悟性</li><li>界面瘦身：属性栏双列、行动按钮两列、学科栏可折叠、日志区限高</li><li>天赋图鉴改为紧凑卡片，关闭按钮跟随滚动</li><li>修复多事件弹窗互相覆盖导致卡死的 Bug</li><li>数值边界处理，杜绝 NaN</li></ul><hr class=\"mdhr\"><h3>v0.6 · 开源拆分</h3><ul><li>单文件拆分为 40 个文件的项目结构</li><li>引擎层 / 内容层 / 配置层分离</li><li>事件效果支持中文指令写法</li><li>内容体检脚本、单文件打包脚本</li><li>三份文档：文件大纲、内容教程、审核清单</li></ul>"},
+  credits: {title: "鸣谢列表", html: "<h2>鸣谢列表</h2><h3>团队核心</h3><p>红塔中学（学生团队）</p><ul><li>2027届8班 夏毅夫 核心代码构建，github仓库提供者</li><li>2027届5班 林钰航 代码边界测试，开发工具提供者</li><li>2027届5班 尹鹏肖 结局数值判断与发展方向提供者</li><li>2027届5班 蔡家骏 中文指令与玩家开放式内容编辑灵感提供者</li></ul><p>红塔中学（老师）</p><ul><li>邓瑞老师 自治社团项目的支持者与核心审核员</li><li>王家平校长与学校的诸位老师 该项目的舞台提供与支持者</li></ul><p>校外人员</p><ul><li>deepseek 免费开源的才是真正的代码精神！</li><li>杨方烨 编程大佬，该项目初期的指引者</li><li>文艺清 游戏边界BUG的超强寻找者</li></ul><p>...欢迎更多人参与我们的项目，如果你发现了BUG或提供了新的idea，和维护者说，这里给你单开一行</p><h3>立项与开发</h3><p><b>玉溪市红塔中学（玉溪一中附属中学）社团开发项目</b></p><p><b>玉溪市红塔中学（玉溪一中附属中学）社团开发项目</b>由学校社团学生自主开发，用于全校展示与教学实践。</p><h3>指导</h3><ul><li>感谢学校老师对游戏内容的审核与指导</li><li>感谢社团指导的组织协调</li></ul><h3>素材来源</h3><ul><li>校训「人生在立，行达天下」、立行文化四立 —— 学校公开宣传材料</li><li>「立行号」列车意象、「每一步都算数」 —— 学校迎新物料</li><li>体育艺术文化节主题「行者」 —— 学校第二届体艺节</li><li>玉溪花灯戏、聂耳与国歌 —— 玉溪本土非遗与红色文化</li><li>社团名录、寄宿制生活细节 —— 学校公开报道</li></ul><h3>关于图片</h3><ul><li><b>v1.1 起暂不使用校园插画配图</b>，界面改用七套主题自带的渐变底色</li><li>想恢复：把 <code>js/02-config.js</code> 里的 <code>usePhotos</code> 改回 <code>true</code>，图片放回 <code>assets/</code> 即可</li><li>恢复时请注意：背景应为校园实景的<b>扁平矢量插画风格艺术化重绘</b>，</li><p>不含真实人物肖像、不含校服与学生照片</p><li><b>学校目前没有官方校徽，游戏不使用校徽图标</b>，只用校名与校训文字</li></ul><h3>关于图片（旧版说明）</h3><ul><li>背景图为校园实景的<b>扁平矢量插画风格艺术化重绘</b></li><li>不含真实人物肖像、不含校服与学生照片</li><li><b>学校目前没有官方校徽，游戏不使用校徽图标</b>，只用校名与校训文字</li></ul><h3>技术</h3><ul><li>纯原生 JavaScript / HTML / CSS，无任何第三方库</li><li>无联网请求，数据保存在本机浏览器</li><li>无广告、无付费、无个人信息采集</li></ul><h3>特别感谢</h3><p>感谢每一位试玩并给出意见的同学。这个游戏能被玩完、被讨论、被吐槽，就是它存在的意义。</p>"}
 };
 
 /* 打开一个文档弹窗 */
@@ -2137,6 +2167,14 @@ function openDoc(key) {
 
     /* 极简 Markdown → HTML（和 tools/sync-docs.js 保持同一套规则） */
 
+    /* 极简 Markdown → HTML（和 tools/sync-docs.js 保持同一套规则）
+     *
+     * 两个「把文档变短」的关键处理：
+     *   ① 软换行合并：源文件里一句话被拆成两行写 → 合成一个 <p>
+     *   ② 断句接回：一句话被空行拆成两段 → 接回一个 <p>
+     *      （判断依据：上一段不是以 。？！…」』） 结尾，说明话没说完）
+     * 写完 md 直接刷新就能看到，不用跑同步脚本。
+     */
     function mdToHtml(src) {
       const lines = String(src == null ? "" : src).replace(/\r\n/g, "\n").split("\n");
       const out = [];
@@ -2147,47 +2185,81 @@ function openDoc(key) {
         .replace(/`([^`]+)`/g, "<code>$1</code>")
         .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>");
 
-      const closeList = () => {if (inList) {out.push("</ul>"); inList = false;}};
-      const closeTable = () => {if (inTable) {out.push("</table>"); inTable = false;}};
+      /* 一段话是否「说完了」 */
+      const ENDS = /[。！？!?.…）)】」』》”"'〉]\s*$/;
+
+      /* 记住最后一个 <p> 的位置；插入标题 / 列表 / 表格后清空，
+       * 防止段落跨过结构性元素去拼接 */
+      let lastParaIdx = -1;
+      function pushHtml(h) {
+        out.push(h);
+        lastParaIdx = /^<p>/.test(h) ? out.length - 1 : -1;
+      }
+
+      const closeList = () => {if (inList) {pushHtml("</ul>"); inList = false;}};
+      const closeTable = () => {if (inTable) {pushHtml("</table>"); inTable = false;}};
+
+      let paraBuf = [];
+      const flushPara = () => {
+        if (!paraBuf.length) return;
+        let t = paraBuf[0];
+        for (let k = 1; k < paraBuf.length; k++) {
+          const prev = paraBuf[k - 1], cur = paraBuf[k];
+          // 英文/数字之间补空格；中文直接连上，不凭空插空格
+          const needSpace = /[A-Za-z0-9.,;:!?]$/.test(prev) && /^[A-Za-z0-9]/.test(cur);
+          t += (needSpace ? " " : "") + cur;
+        }
+        paraBuf = [];
+        if (lastParaIdx >= 0) {
+          const prev = out[lastParaIdx].replace(/^<p>/, "").replace(/<\/p>$/, "");
+          if (!ENDS.test(prev)) {
+            const needSpace = /[A-Za-z0-9.,;:!?]$/.test(prev) && /^[A-Za-z0-9]/.test(t);
+            pushHtml(`<p>${inline(prev + (needSpace ? " " : "") + t)}</p>`);
+            return;
+          }
+        }
+        pushHtml(`<p>${inline(t)}</p>`);
+      };
 
       for (let raw of lines) {
         const line = raw.trim();
-        if (!line) {closeList(); closeTable(); continue;}
+        if (!line) {flushPara(); closeList(); closeTable(); continue;}
 
         if (/^\|(.+)\|$/.test(line)) {
+          flushPara();
           const cells = line.slice(1, -1).split("|").map(c => c.trim());
-          if (!inTable) {out.push('<table class="mdtable">'); inTable = true;}
-          const isSep = cells.every(c => /^[-: ]+$/.test(c));
-          if (isSep) continue;
-          out.push("<tr>" + cells.map(c => `<${inTable && out.length ? "td" : "td"}>${inline(c)}</td>`).join("") + "</tr>");
+          if (!inTable) {pushHtml('<table class="mdtable">'); inTable = true;}
+          if (cells.every(c => /^[-: ]+$/.test(c))) continue;
+          pushHtml("<tr>" + cells.map(c => `<td>${inline(c)}</td>`).join("") + "</tr>");
           continue;
         }
         closeTable();
 
-        if (/^---+$/.test(line)) {closeList(); out.push('<hr class="mdhr">'); continue;}
+        if (/^---+$/.test(line)) {flushPara(); closeList(); pushHtml('<hr class="mdhr">'); continue;}
 
         let m;
         if ((m = line.match(/^(#{1,6})\s+(.*)$/))) {
-          closeList();
+          flushPara(); closeList();
           const lv = Math.min(6, m[1].length + 1);
-          out.push(`<h${lv}>${inline(m[2])}</h${lv}>`);
+          pushHtml(`<h${lv}>${inline(m[2])}</h${lv}>`);
           continue;
         }
         if ((m = line.match(/^>\s?(.*)$/))) {
-          closeList();
-          out.push(`<blockquote>${inline(m[1])}</blockquote>`);
+          flushPara(); closeList();
+          pushHtml(`<blockquote>${inline(m[1])}</blockquote>`);
           continue;
         }
         if (/^([-*])\s+/.test(line)) {
-          if (!inList) {out.push("<ul>"); inList = true;}
-          out.push(`<li>${inline(line.replace(/^([-*])\s+/, ""))}</li>`);
+          flushPara();
+          if (!inList) {pushHtml("<ul>"); inList = true;}
+          pushHtml(`<li>${inline(line.replace(/^([-*])\s+/, ""))}</li>`);
           continue;
         }
         closeList();
-        out.push(`<p>${inline(line)}</p>`);
+        paraBuf.push(line);
       }
-      closeList(); closeTable();
-      return out.join("\n");
+      flushPara(); closeList(); closeTable();
+      return out.join("");
     }
 
     /* ---------------- 本地缓存（localStorage） ---------------- */
@@ -2275,7 +2347,7 @@ function openDoc(key) {
       const has = !!(docsCache()[key] && docsCache()[key].md);
 
       showModal(L("doc.importTitle", d.title),
-        `<div style="line-height:1.9">
+        `<div style="line-height:1.6">
           <div style="color:var(--dim);font-size:.85rem">${L("doc.importTip", d.file)}</div>
           <div style="margin:8px 0">
             <input type="file" id="docFile" accept=".md,.txt"
@@ -2695,6 +2767,16 @@ function openDoc(key) {
         "burn.warnBody": "你已经连续好几周顶着压力硬扛了。\n再这样下去，身体会先替你做决定。\n这周试着休息一次、运动一次，或者找人说说。",
         "burn.over": "🕯 压力连续三周爆表，你没能撑到中考。",
 
+        /* ---------------- 存档 ---------------- */
+        "save.fail": "⚠ 存档没能写入（浏览器隐私模式或空间已满）",
+        "save.auto": "自动存档",
+
+        /* ---------------- 英语模式敬请期待 ---------------- */
+        "lang.pendingTitle": "🌐 英语模式",
+        "lang.pendingLead": "敬请期待",
+        "lang.pendingBody": "英语模式还在翻译中。目前界面只译好了一部分，事件、天赋、书目仍是中文，切换后会出现半中半英和刷新不及时的问题。<br>先把它收起来，等全部译完再开放。",
+        "lang.pendingFoot": "如果已经切到英文了，再点一次这个按钮就能切回中文。",
+
         /* ---------------- 文档实时更新 ---------------- */
         "doc.srcNet": "📄 直接读取 docs/ 里的文件（改完刷新即可）",
         "doc.srcCache": "📄 来自本机导入的版本",
@@ -3040,6 +3122,16 @@ function openDoc(key) {
         "doc.readFail": "Could not read that file",
         "doc.missing": "This document has no content yet",
 
+        /* ---------------- 存档 ---------------- */
+        "save.fail": "⚠ Could not write the save (private mode or storage full)",
+        "save.auto": "Auto-saved",
+
+        /* ---------------- 英语模式敬请期待 ---------------- */
+        "lang.pendingTitle": "🌐 English mode",
+        "lang.pendingLead": "Coming soon",
+        "lang.pendingBody": "English is still being translated. Only part of the interface is done — events, talents and books are still in Chinese, so switching now gives you a half-and-half mess.<br>It is parked until the translation is complete.",
+        "lang.pendingFoot": "If you are already in English, click this button again to switch back to Chinese.",
+
         "act.title": "Choose an action",
         "act.titleN": "Choose an action ({0}/{1})",
         "act.study": "📖 Study hard",
@@ -3306,12 +3398,48 @@ function openDoc(key) {
       return LANG;
     }
 
+    /* ==================================================================
+     * 切换语言
+     * ------------------------------------------------------------------
+     * ★ v1.1 当前状态：英语模式暂停开放。
+     *   已译好的界面只覆盖了一部分，事件、天赋、书目仍是中文，
+     *   切换后会出现"半中半英"和刷新不及时的问题。
+     *   所以点中文界面上的切换按钮时，弹出说明而不是真的切过去。
+     *
+     *   唯一例外：已经处于英文模式的存档 / 玩家，允许切回中文，
+     *   不会把人卡在英文里出不来。
+     *
+     * 将来要重新开放英语模式：把 EN_READY 改成 true 即可，
+     *   下面这段提示逻辑会自动让路，恢复成正常切换。
+     * ============================================================ */
+
+    const EN_READY = false;      // ← 英语模式完工后改成 true
+
     function toggleLang() {
-      setLang(LANG === "zh" ? "en" : "zh");
+      // 已经是英文：无条件放行，让人能切回中文
+      if (LANG === "en") {doSetLang("zh"); return;}
+      // 中文 → 英文：英语还没准备好，弹窗说明
+      if (!EN_READY) {showLangPending(); return;}
+      doSetLang("en");
+    }
+
+    function doSetLang(id) {
+      setLang(id);
       if (typeof ensureActionPanel === "function") {
         const p = document.getElementById("actionPanel");
         if (p && p.innerHTML !== "" && S && !S.over) {p.innerHTML = ""; ensureActionPanel();}
       }
+    }
+
+    function showLangPending() {
+      if (typeof showModal !== "function") {if (typeof toast === "function") toast("英语模式敬请期待"); return;}
+      showModal(L("lang.pendingTitle"),
+        `<div style="line-height:1.6">
+          <div style="font-size:1.05rem;margin-bottom:6px">${L("lang.pendingLead")}</div>
+          <div style="color:var(--dim);font-size:.88rem">${L("lang.pendingBody")}</div>
+          <div style="color:var(--dim);font-size:.82rem;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)">${L("lang.pendingFoot")}</div>
+        </div>`,
+        [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free"});
     }
 
     /* ==================================================================
@@ -3740,8 +3868,8 @@ function openDoc(key) {
           "--brand": "#660874", "--brand-deep": "#3d0647", "--brand-lite": "#8a2b9c",
           "--purple": "#c08ae8", "--purple2": "#9c4dcc",
           "--gold": "#d7b45a", "--gold-soft": "#f0d488",
-          "--bg": "#120a18", "--panel": "#1e1029", "--panel2": "#2a1638", "--line": "#4a2760",
-          "--txt": "#f2ecf7", "--dim": "#bda9cd",
+          "--bg": "#120a18", "--panel": "#1e1029", "--panel2": "#443250", "--line": "#795f89",
+          "--txt": "#f7f4fa", "--dim": "#cfc0da",
           "--green": "#7ee0c0", "--red": "#ff7aa2", "--blue": "#a86ddb",
           "--glow": "156, 77, 204", "--glow2": "192, 138, 232", "--brand-rgb": "102, 8, 116",
           "--bg-overlay": "rgba(18, 10, 24, .82)"
@@ -3760,8 +3888,8 @@ function openDoc(key) {
           "--brand": "#232a5e", "--brand-deep": "#12162f", "--brand-lite": "#3f4c9c",
           "--purple": "#a9b6ff", "--purple2": "#7b8cf0",
           "--gold": "#e8d48b", "--gold-soft": "#fff0c0",
-          "--bg": "#0b0f22", "--panel": "#131a35", "--panel2": "#1c2547", "--line": "#38456f",
-          "--txt": "#e9edff", "--dim": "#a9b2d8",
+          "--bg": "#0b0f22", "--panel": "#131a35", "--panel2": "#333b59", "--line": "#606a8c",
+          "--txt": "#fafbff", "--dim": "#c4cae4",
           "--green": "#6fe3c4", "--red": "#ff7a9c", "--blue": "#7aa2ff",
           "--glow": "123, 140, 240", "--glow2": "169, 182, 255", "--brand-rgb": "35, 42, 94",
           "--bg-overlay": "rgba(11, 15, 34, .80)"
@@ -3775,13 +3903,13 @@ function openDoc(key) {
         tagline: {zh: "去后野草自蓬勃", en: "The grass grows on after you leave"},
         poem: {zh: "风一吹，整片野草替你把话说完了", en: "The wind speaks for you through the grass"},
         bgOpacity: 0.22,
-        bgGrad: "radial-gradient(1100px 760px at 25% 0%, #2b5340, #0e1a12 62%), radial-gradient(700px 500px at 80% 95%, #3a6b4a, transparent 70%)",
+        bgGrad: "radial-gradient(1100px 760px at 25% 0%, #35654e, #0e1a12 62%), radial-gradient(700px 500px at 80% 95%, #47805a, transparent 70%)",
         vars: {
           "--brand": "#2f6b46", "--brand-deep": "#17402a", "--brand-lite": "#4e9a68",
-          "--purple": "#bde8c4", "--purple2": "#6ec98a",
-          "--gold": "#e2c275", "--gold-soft": "#ffeab0",
-          "--bg": "#0e1a12", "--panel": "#16281c", "--panel2": "#1e3726", "--line": "#3a6247",
-          "--txt": "#eaf6ec", "--dim": "#a8c4ae",
+          "--purple": "#d8f4de", "--purple2": "#8ddca4",
+          "--gold": "#eed39a", "--gold-soft": "#fff4cf",
+          "--bg": "#0e1a12", "--panel": "#16281c", "--panel2": "#32493a", "--line": "#587a63",
+          "--txt": "#f6fdf7", "--dim": "#c8dacc",
           "--green": "#8ce8b0", "--red": "#ff8f7a", "--blue": "#7fd3c0",
           "--glow": "110, 201, 138", "--glow2": "189, 232, 196", "--brand-rgb": "47, 107, 70",
           "--bg-overlay": "rgba(14, 26, 18, .80)"
@@ -3800,8 +3928,8 @@ function openDoc(key) {
           "--brand": "#a84b2f", "--brand-deep": "#5e2416", "--brand-lite": "#d97a4e",
           "--purple": "#ffc9a3", "--purple2": "#ff9d6b",
           "--gold": "#ffd98a", "--gold-soft": "#fff0cf",
-          "--bg": "#1b110d", "--panel": "#2a1a14", "--panel2": "#3a2519", "--line": "#6b4030",
-          "--txt": "#fdf0e6", "--dim": "#d9b9a4",
+          "--bg": "#1b110d", "--panel": "#2a1a14", "--panel2": "#4e3b30", "--line": "#896659",
+          "--txt": "#fffefc", "--dim": "#e2c9b9",
           "--green": "#9ad9a0", "--red": "#ff7a72", "--blue": "#ffb27a",
           "--glow": "255, 157, 107", "--glow2": "255, 201, 163", "--brand-rgb": "168, 75, 47",
           "--bg-overlay": "rgba(27, 17, 13, .78)"
@@ -3820,8 +3948,8 @@ function openDoc(key) {
           "--brand": "#0f5f6b", "--brand-deep": "#06333c", "--brand-lite": "#1a8ea0",
           "--purple": "#8fe6f0", "--purple2": "#35c3d4",
           "--gold": "#e6d68f", "--gold-soft": "#fff3bd",
-          "--bg": "#061418", "--panel": "#0d2229", "--panel2": "#123038", "--line": "#1f5460",
-          "--txt": "#e6fbfd", "--dim": "#9fc4cb",
+          "--bg": "#061418", "--panel": "#0d2229", "--panel2": "#27434a", "--line": "#4a747e",
+          "--txt": "#f3fdfe", "--dim": "#b9d4d9",
           "--green": "#6ff0d0", "--red": "#ff6f8f", "--blue": "#59c8ff",
           "--glow": "53, 195, 212", "--glow2": "143, 230, 240", "--brand-rgb": "15, 95, 107",
           "--bg-overlay": "rgba(6, 20, 24, .80)"
@@ -3840,8 +3968,8 @@ function openDoc(key) {
           "--brand": "#3a3f48", "--brand-deep": "#171a1f", "--brand-lite": "#5c646f",
           "--purple": "#cfd6de", "--purple2": "#9aa3ad",
           "--gold": "#c9b27a", "--gold-soft": "#e8d9a8",
-          "--bg": "#0e1013", "--panel": "#171a1f", "--panel2": "#21252b", "--line": "#3d434c",
-          "--txt": "#eceff2", "--dim": "#a7adb6",
+          "--bg": "#0e1013", "--panel": "#171a1f", "--panel2": "#393d42", "--line": "#666a72",
+          "--txt": "#f7f9fa", "--dim": "#c6cad0",
           "--green": "#9fc7a6", "--red": "#d98a8a", "--blue": "#a9b6c4",
           "--glow": "154, 163, 173", "--glow2": "207, 214, 222", "--brand-rgb": "58, 63, 72",
           "--bg-overlay": "rgba(14, 16, 19, .82)"
@@ -3860,8 +3988,8 @@ function openDoc(key) {
           "--brand": "#8f1f2e", "--brand-deep": "#4a0d16", "--brand-lite": "#c0392f",
           "--purple": "#ffb9b0", "--purple2": "#ff7a6b",
           "--gold": "#ffd76e", "--gold-soft": "#fff0b8",
-          "--bg": "#170a0c", "--panel": "#250f13", "--panel2": "#33161b", "--line": "#64202a",
-          "--txt": "#fbeeea", "--dim": "#cfa39c",
+          "--bg": "#170a0c", "--panel": "#250f13", "--panel2": "#4b3236", "--line": "#8c5a61",
+          "--txt": "#fcf2ef", "--dim": "#ddbfba",
           "--green": "#9fd6a0", "--red": "#ff6b6b", "--blue": "#ffab7a",
           "--glow": "255, 122, 107", "--glow2": "255, 185, 176", "--brand-rgb": "143, 31, 46",
           "--bg-overlay": "rgba(23, 10, 12, .80)"
@@ -4018,7 +4146,7 @@ function openDoc(key) {
       showPopup({
         kind: "free",
         title: L("menu.theme"),
-        body: `<div style="line-height:1.9;margin-bottom:10px;color:var(--dim);font-size:.86rem">
+        body: `<div style="line-height:1.6;margin-bottom:5px;color:var(--dim);font-size:.86rem">
             ${L("menu.themeHint")}<br>
             <span style="color:var(--gold-soft)">「${T(cur.name)}」—— ${T(cur.tagline)}</span>
           </div>
@@ -4199,6 +4327,26 @@ function openDoc(key) {
  *
  * 维护等级：内容层（可加天赋）
  * ============================================================ */
+
+    /* ==================================================================
+     * 出身类天赋（家庭背景）
+     * ------------------------------------------------------------------
+     * 这些天赋描述的是「你生在什么样的家庭」，只能由开局抽取
+     * （见 js/15-engine-study.js 的 rollStartTalents → FAMILY_POOL）。
+     *
+     * 后天途径（读书、社团、破茧、事件）一律不许发这些 ——
+     * 一个家徒四壁的孩子，不可能因为读了一本书就变成书香门第；
+     * 同理，读书也不该让单亲家庭凭空多出一个爸爸或妈妈。
+     *
+     * 想调整清单就改这个数组，两处逻辑会一起生效。
+     * ================================================================== */
+    const FAMILY_TALENTS = [
+      "家财万贯", "家徒四壁", "小康之家", "书香门第", "官宦世家",
+      "单亲家庭", "留守少年", "教师子女", "商人家庭", "艺术世家"
+    ];
+
+    /* 是不是出身类天赋 */
+    function isFamilyTalent(t) {return FAMILY_TALENTS.indexOf(t) >= 0;}
 
     const TALENTS = {
       "道心如铁": {lv: 5, inc: ["豪", "玻璃心", "内耗者", "多动症"], desc: "心态锁定 130 以上,心如止水", hint: "在一次次坚持与忍耐中炼成", poem: "泰山崩于前而色不变，麋鹿兴于左而目不瞬。"},
@@ -4467,7 +4615,7 @@ function openDoc(key) {
         kind: "event",
         badge: L("fam.badge"),
         title: famText(e.t).replace(/\{p\}/g, p),
-        body: `<div style="line-height:2.2">${body.replace(/\n/g, "<br>")}</div>`,
+        body: `<div style="line-height:1.7">${body.replace(/\n/g, "<br>")}</div>`,
         options: [{
           t: L("fam.apologize"),
           fn: () => {
@@ -4741,12 +4889,19 @@ function openDoc(key) {
       recalcScore();
     }
 
-    /* 抽一个「正面且没拥有」的天赋；抽不到就返回 null */
-
+    /* 抽一个「正面且没拥有」的天赋；抽不到就返回 null
+     *
+     * ★ 出身类天赋（家财万贯 / 单亲家庭 / 书香门第 …）不在池子里。
+     *   读书改变的是你这个人，不是你的出身 ——
+     *   读再多书也没法把"家徒四壁"读成"书香门第"。
+     *   清单见 js/03-data-talents.js 的 FAMILY_TALENTS。 */
     function pickGoodTalent(minLv, maxLv) {
       const pool = Object.keys(TALENTS).filter(t => {
         const lv = TALENTS[t].lv;
-        return lv >= minLv && lv <= maxLv && !Talent.have(t) && !isBadTalent(t);
+        if (lv < minLv || lv > maxLv) return false;
+        if (Talent.have(t) || isBadTalent(t)) return false;
+        if (typeof isFamilyTalent === "function" && isFamilyTalent(t)) return false;
+        return true;
       });
       return pool.length ? pool[rnd(pool.length)] : null;
     }
@@ -4830,7 +4985,7 @@ function openDoc(key) {
           read = true;
           say(L("book.read", TZ(b.n)), "good");
           checkAch(); renderHUD();
-          showModal(L("book.title"), `<div style='line-height:2'>${TZ(b.lore) || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
+          showModal(L("book.title"), `<div style='line-height:1.62'>${TZ(b.lore) || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
             t: L("book.close"), fn: () => { }
           }], () => {if (onDone) onDone();}, false, false, {kind: "free", badge: L("book.badge"), img: b.img});
         }
@@ -5716,7 +5871,9 @@ const SCHOOL_EVENTS = [
  *   ans   正确答案：choice 填选项文字，fill 填答案字符串
  *   why   答完显示的一句讲解（可留空）
  *
- * 填空题的判定：去空格、不分大小写、中英文括号与句号都算对。
+ * 填空题的判定非常宽容，见文件末尾的 quizMatch：
+ *   一 / 1 / 1.0 / 01 都算对；1/2 / 0.5 / 二分之一 都算对；
+ *   大小写不分、空格随便加、书名号括号可省、单位可写可不写。
  *
  * 维护等级：内容层（同学可以直接加题）
  * ================================================================== */
@@ -5726,61 +5883,155 @@ const SCHOOL_EVENTS = [
         {g: 0, type: "choice", q: "「床前明月光」的下一句是：", opts: ["疑是地上霜", "低头思故乡", "举头望明月", "霜叶红于二月花"], ans: "疑是地上霜", why: "李白《静夜思》"},
         {g: 0, type: "fill", q: "补全诗句：会当凌绝顶，______。", ans: "一览众山小", why: "杜甫《望岳》"},
         {g: 0, type: "choice", q: "下列成语书写正确的一项是：", opts: ["再接再励", "再接再厉", "在接再厉", "再接再历"], ans: "再接再厉", why: "「厉」通「砺」，磨砺之意"},
+        {g: 0, type: "fill", q: "补全诗句：海内存知己，______。", ans: "天涯若比邻", why: "王勃《送杜少府之任蜀州》"},
+        {g: 0, type: "choice", q: "「山重水复疑无路」的下一句是：", opts: ["柳暗花明又一村", "衣带渐宽终不悔", "直挂云帆济沧海", "轻舟已过万重山"], ans: "柳暗花明又一村", why: "陆游《游山西村》"},
+        {g: 0, type: "choice", q: "下列词语中没有错别字的一项是：", opts: ["走投无路", "走头无路", "走投无鹿", "走头无鹿"], ans: "走投无路", why: "「投」是投奔之意"},
+        {g: 0, type: "fill", q: "「春眠不觉晓」的下一句是「处处闻啼___」", ans: "鸟", why: "孟浩然《春晓》"},
+        {g: 0, type: "choice", q: "《论语》中「学而不思则罔」的下一句是：", opts: ["思而不学则殆", "思而不学则怠", "思而不学则失", "思而不学则惘"], ans: "思而不学则殆", why: "《论语·为政》"},
         {g: 1, type: "fill", q: "补全诗句：沉舟侧畔千帆过，______。", ans: "病树前头万木春", why: "刘禹锡《酬乐天扬州初逢席上见赠》"},
         {g: 1, type: "choice", q: "「先天下之忧而忧」出自：", opts: ["《岳阳楼记》", "《醉翁亭记》", "《桃花源记》", "《小石潭记》"], ans: "《岳阳楼记》", why: "范仲淹《岳阳楼记》"},
+        {g: 1, type: "choice", q: "「锲而不舍」的下一句是：", opts: ["金石可镂", "朽木不折", "金石可鉴", "朽木难雕"], ans: "金石可镂", why: "《荀子·劝学》"},
+        {g: 1, type: "fill", q: "补全诗句：不畏浮云遮望眼，______。", ans: "自缘身在最高层", why: "王安石《登飞来峰》"},
+        {g: 1, type: "choice", q: "「醉翁之意不在酒」的下一句是：", opts: ["在乎山水之间也", "在乎山水之乐也", "在乎宴酣之乐也", "在乎游人去也"], ans: "在乎山水之间也", why: "欧阳修《醉翁亭记》"},
+        {g: 1, type: "fill", q: "「落红不是无情物」的下一句是「化作春泥更护___」", ans: "花", why: "龚自珍《己亥杂诗》"},
+        {g: 1, type: "choice", q: "「但愿人长久」的下一句是：", opts: ["千里共婵娟", "天涯共此时", "海上生明月", "把酒问青天"], ans: "千里共婵娟", why: "苏轼《水调歌头》"},
         {g: 2, type: "fill", q: "补全诗句：长风破浪会有时，______。", ans: "直挂云帆济沧海", why: "李白《行路难》"},
         {g: 2, type: "choice", q: "「人生自古谁无死」的下一句是：", opts: ["留取丹心照汗青", "留取丹心照汉青", "留得丹心照汗青", "留取真心照汗青"], ans: "留取丹心照汗青", why: "文天祥《过零丁洋》"},
-        {g: 1, type: "choice", q: "「锲而不舍」的下一句是：", opts: ["金石可镂", "朽木不折", "金石可鉴", "朽木难雕"], ans: "金石可镂", why: "《荀子·劝学》"},
+        {g: 2, type: "fill", q: "补全诗句：会挽雕弓如满月，西北望，射___。", ans: "天狼", why: "苏轼《江城子·密州出猎》"},
+        {g: 2, type: "choice", q: "「生于忧患」的下一句是：", opts: ["死于安乐", "死于忧患", "生于安乐", "死于安逸"], ans: "死于安乐", why: "《孟子·告子下》"},
+        {g: 2, type: "fill", q: "补全诗句：春蚕到死丝方尽，______。", ans: "蜡炬成灰泪始干", why: "李商隐《无题》"},
+        {g: 2, type: "choice", q: "《出师表》的作者是：", opts: ["诸葛亮", "曹操", "刘备", "周瑜"], ans: "诸葛亮", why: "诸葛亮《出师表》"},
+        {g: 2, type: "choice", q: "「先帝创业未半而中道崩殂」出自：", opts: ["《出师表》", "《诫子书》", "《隆中对》", "《后出师表》"], ans: "《出师表》", why: "诸葛亮《出师表》开篇"},
       ],
       数学: [
         {g: 0, type: "choice", q: "计算：(-3) × (-4) + (-6) =", opts: ["6", "-6", "18", "-18"], ans: "6", why: "负负得正：12 - 6 = 6"},
         {g: 0, type: "fill", q: "解方程 2x + 6 = 14，x = ___", ans: "4", why: "2x = 8，x = 4"},
+        {g: 0, type: "choice", q: "|-5| 的值是：", opts: ["5", "-5", "0", "±5"], ans: "5", why: "绝对值永远非负"},
+        {g: 0, type: "fill", q: "一个三角形内角和是 ___ 度", ans: "180", why: "三角形内角和 180°"},
+        {g: 0, type: "choice", q: "下列哪个数是无理数？", opts: ["π", "0.5", "1/3", "-2"], ans: "π", why: "π 是无限不循环小数"},
+        {g: 0, type: "fill", q: "|-7| + |-3| = ___", ans: "10", why: "7 + 3 = 10"},
+        {g: 0, type: "choice", q: "化简 3a + 2a 的结果是：", opts: ["5a", "6a", "5a²", "a⁵"], ans: "5a", why: "合并同类项：系数相加"},
+        {g: 0, type: "fill", q: "把 0.25 化成分数是 ___（填如 1/4 的形式）", ans: "1/4", why: "0.25 = 1/4"},
         {g: 1, type: "choice", q: "若 x² = 16，则 x 的值为：", opts: ["4", "±4", "-4", "8"], ans: "±4", why: "平方根有两个"},
         {g: 1, type: "fill", q: "直角三角形两直角边为 3 和 4，斜边长为 ___", ans: "5", why: "勾股定理：3²+4²=5²"},
+        {g: 1, type: "choice", q: "一次函数 y = kx + b 中，k 表示：", opts: ["斜率", "截距", "自变量", "常数"], ans: "斜率", why: "k 是斜率，b 是纵截距"},
+        {g: 1, type: "fill", q: "计算：(-2)³ = ___", ans: "-8", why: "(-2)×(-2)×(-2) = -8"},
+        {g: 1, type: "choice", q: "下列图形中一定是轴对称图形的是：", opts: ["等腰三角形", "平行四边形", "梯形", "直角三角形"], ans: "等腰三角形", why: "等腰三角形底边上的高是对称轴"},
+        {g: 1, type: "fill", q: "分解因式：x² - 9 = (x+3)(x-___)", ans: "3", why: "平方差公式"},
+        {g: 1, type: "choice", q: "不等式 -3x > 6 的解集是：", opts: ["x < -2", "x > -2", "x < 2", "x > 2"], ans: "x < -2", why: "两边同除以负数，不等号变向"},
         {g: 2, type: "choice", q: "一元二次方程 x² - 5x + 6 = 0 的两根之和为：", opts: ["5", "-5", "6", "-6"], ans: "5", why: "韦达定理：两根之和 = -b/a = 5"},
         {g: 2, type: "fill", q: "函数 y = 2x + 1，当 x = 3 时，y = ___", ans: "7", why: "2×3+1 = 7"},
         {g: 2, type: "choice", q: "不等式 2x - 4 > 0 的解集是：", opts: ["x > 2", "x < 2", "x > -2", "x > 4"], ans: "x > 2", why: "2x > 4，x > 2"},
+        {g: 2, type: "fill", q: "sin30° 的值是 ___", ans: "0.5", why: "sin30° = 1/2"},
+        {g: 2, type: "choice", q: "抛物线 y = x² - 2x + 1 的顶点坐标是：", opts: ["(1, 0)", "(0, 1)", "(-1, 0)", "(1, 1)"], ans: "(1, 0)", why: "配方得 (x-1)²，顶点 (1,0)"},
+        {g: 2, type: "fill", q: "半径为 3 的圆，面积是 ___π", ans: "9", why: "S = πr² = 9π"},
+        {g: 2, type: "choice", q: "两组对边分别平行的四边形是：", opts: ["平行四边形", "梯形", "矩形", "菱形"], ans: "平行四边形", why: "平行四边形的定义"},
+        {g: 2, type: "fill", q: "数据 2、4、6、8 的平均数是 ___", ans: "5", why: "(2+4+6+8)/4 = 5"},
       ],
       英语: [
         {g: 0, type: "choice", q: "「library」的意思是：", opts: ["图书馆", "实验室", "食堂", "操场"], ans: "图书馆", why: "library = 图书馆"},
         {g: 0, type: "fill", q: "拼写：学校（英文）___", ans: "school", why: "school"},
         {g: 0, type: "choice", q: "He ______ to school every day.", opts: ["go", "goes", "going", "gone"], ans: "goes", why: "第三人称单数加 -es"},
+        {g: 0, type: "fill", q: "拼写：老师（英文）___", ans: "teacher", why: "teacher"},
+        {g: 0, type: "choice", q: "「I ______ a student.」横线处应填：", opts: ["am", "is", "are", "be"], ans: "am", why: "第一人称 I 搭配 am"},
+        {g: 0, type: "fill", q: "拼写：水（英文）___", ans: "water", why: "water"},
+        {g: 0, type: "choice", q: "「book」的复数形式是：", opts: ["books", "bookes", "book", "bookies"], ans: "books", why: "一般情况直接加 -s"},
         {g: 1, type: "fill", q: "拼写：环境（英文）___", ans: "environment", why: "environment"},
         {g: 1, type: "choice", q: "「I have been here ______ two hours.」", opts: ["for", "since", "in", "at"], ans: "for", why: "for + 一段时间，since + 时间点"},
+        {g: 1, type: "fill", q: "拼写：重要的（英文）___", ans: "important", why: "important"},
+        {g: 1, type: "choice", q: "「If it ______ tomorrow, we will stay at home.」", opts: ["rains", "will rain", "rained", "is raining"], ans: "rains", why: "主将从现：主句将来时，从句一般现在时"},
+        {g: 1, type: "fill", q: "写出「go」的过去式：___", ans: "went", why: "go-went-gone"},
+        {g: 1, type: "choice", q: "「She is ______ than her sister.」", opts: ["taller", "tall", "tallest", "more tall"], ans: "taller", why: "两者比较用比较级"},
         {g: 2, type: "choice", q: "The book ______ by him yesterday.", opts: ["was written", "is written", "wrote", "writes"], ans: "was written", why: "一般过去时的被动语态"},
         {g: 2, type: "fill", q: "拼写：机会（英文）___", ans: "opportunity", why: "opportunity"},
+        {g: 2, type: "choice", q: "「I don't know ______ he will come.」", opts: ["whether", "what", "which", "that"], ans: "whether", why: "whether 表示「是否」"},
+        {g: 2, type: "fill", q: "写出「do」的过去分词：___", ans: "done", why: "do-did-done"},
+        {g: 2, type: "choice", q: "「He asked me ______ I had finished my homework.」", opts: ["if", "that", "what", "which"], ans: "if", why: "if 引导宾语从句，表示「是否」"},
+        {g: 2, type: "fill", q: "拼写：成功（名词，英文）___", ans: "success", why: "success"},
       ],
       物理: [
         {g: 1, type: "choice", q: "光在真空中的传播速度约为：", opts: ["3×10⁸ m/s", "3×10⁶ m/s", "340 m/s", "1500 m/s"], ans: "3×10⁸ m/s", why: "约三十万公里每秒"},
         {g: 1, type: "fill", q: "水的密度是 ___ g/cm³", ans: "1", why: "1 g/cm³，即 1000 kg/m³"},
+        {g: 1, type: "choice", q: "声音在空气中（15℃）的传播速度约为：", opts: ["340 m/s", "340 km/s", "1500 m/s", "3×10⁸ m/s"], ans: "340 m/s", why: "约 340 米每秒"},
+        {g: 1, type: "fill", q: "力的单位是 ___（填中文）", ans: "牛顿", why: "力的单位是牛顿，符号 N"},
+        {g: 1, type: "choice", q: "下列属于光的折射现象的是：", opts: ["筷子在水中看起来弯折", "水中倒影", "影子", "平面镜成像"], ans: "筷子在水中看起来弯折", why: "光从水进入空气发生折射"},
+        {g: 1, type: "fill", q: "1 标准大气压约等于 ___ Pa（填科学记数法如 1.01×10⁵）", ans: "1.01×10⁵", why: "1.01×10⁵ Pa"},
         {g: 2, type: "choice", q: "一个物体受到的重力方向总是：", opts: ["竖直向下", "垂直向下", "指向地心", "向下"], ans: "竖直向下", why: "重力方向竖直向下"},
         {g: 2, type: "fill", q: "欧姆定律：I = U / ___", ans: "R", why: "I = U/R"},
+        {g: 2, type: "choice", q: "串联电路中，各处电流的关系是：", opts: ["处处相等", "与电阻成正比", "与电阻成反比", "越往后越小"], ans: "处处相等", why: "串联电路电流处处相等"},
+        {g: 2, type: "fill", q: "电功率公式 P = ___（用 U 和 I 表示）", ans: "UI", why: "P = UI"},
+        {g: 2, type: "choice", q: "物体做匀速直线运动时，其速度：", opts: ["保持不变", "逐渐增大", "逐渐减小", "先增后减"], ans: "保持不变", why: "匀速即速度不变"},
+        {g: 2, type: "fill", q: "g = 9.8 N/kg 表示质量为 1kg 的物体受到的重力是 ___ N", ans: "9.8", why: "G = mg = 1×9.8 = 9.8N"},
+        {g: 2, type: "choice", q: "下列做法能增大摩擦的是：", opts: ["轮胎上刻花纹", "给轴承加润滑油", "用滚动代替滑动", "使接触面变光滑"], ans: "轮胎上刻花纹", why: "增大接触面粗糙程度可增大摩擦"},
       ],
       化学: [
         {g: 2, type: "choice", q: "水的化学式是：", opts: ["H₂O", "CO₂", "O₂", "H₂O₂"], ans: "H₂O", why: "两个氢原子一个氧原子"},
         {g: 2, type: "fill", q: "空气中体积分数最大的气体是 ___（填化学式）", ans: "N2", why: "氮气约占 78%"},
         {g: 2, type: "choice", q: "下列变化属于化学变化的是：", opts: ["铁生锈", "冰融化", "玻璃破碎", "水蒸发"], ans: "铁生锈", why: "有新物质生成才是化学变化"},
+        {g: 2, type: "choice", q: "二氧化碳的化学式是：", opts: ["CO₂", "CO", "C₂O", "CO₃"], ans: "CO₂", why: "一个碳原子两个氧原子"},
+        {g: 2, type: "fill", q: "氧气的化学式是 ___", ans: "O2", why: "氧气是双原子分子 O₂"},
+        {g: 2, type: "choice", q: "下列物质属于纯净物的是：", opts: ["蒸馏水", "空气", "海水", "食醋"], ans: "蒸馏水", why: "蒸馏水只含水分子"},
+        {g: 2, type: "fill", q: "地壳中含量最多的元素是 ___（填元素符号）", ans: "O", why: "氧元素含量最高"},
+        {g: 2, type: "choice", q: "「Cu」是哪种元素的符号？", opts: ["铜", "钙", "碳", "氯"], ans: "铜", why: "Cu = 铜，Ca = 钙，C = 碳，Cl = 氯"},
+        {g: 2, type: "fill", q: "铁的元素符号是 ___", ans: "Fe", why: "Fe = 铁"},
+        {g: 2, type: "choice", q: "下列气体能使澄清石灰水变浑浊的是：", opts: ["二氧化碳", "氧气", "氮气", "氢气"], ans: "二氧化碳", why: "CO₂ 与石灰水反应生成碳酸钙沉淀"},
       ],
       生物: [
         {g: 0, type: "choice", q: "植物进行光合作用的主要场所是：", opts: ["叶绿体", "线粒体", "细胞核", "液泡"], ans: "叶绿体", why: "叶绿体是光合作用的场所"},
         {g: 0, type: "fill", q: "人体最大的消化腺是 ___", ans: "肝脏", why: "肝脏分泌胆汁"},
+        {g: 0, type: "choice", q: "细胞的控制中心是：", opts: ["细胞核", "细胞膜", "细胞质", "细胞壁"], ans: "细胞核", why: "细胞核含遗传物质"},
+        {g: 0, type: "fill", q: "绿色植物通过光合作用制造的有机物主要是 ___（填一种糖）", ans: "淀粉", why: "光合作用主要产物是淀粉"},
+        {g: 0, type: "choice", q: "下列属于生态系统中的生产者的是：", opts: ["绿色植物", "兔子", "蘑菇", "细菌"], ans: "绿色植物", why: "生产者能自己制造有机物"},
         {g: 1, type: "choice", q: "血液中运输氧气的细胞是：", opts: ["红细胞", "白细胞", "血小板", "血浆"], ans: "红细胞", why: "红细胞含血红蛋白"},
+        {g: 1, type: "fill", q: "人体呼吸系统的主要器官是 ___", ans: "肺", why: "肺是气体交换的主要场所"},
+        {g: 1, type: "choice", q: "人体血液循环的动力器官是：", opts: ["心脏", "肺", "肝脏", "肾脏"], ans: "心脏", why: "心脏是血液循环的泵"},
+        {g: 1, type: "fill", q: "遗传物质 DNA 主要存在于细胞的 ___ 中", ans: "细胞核", why: "DNA 主要在细胞核的染色体上"},
+        {g: 1, type: "choice", q: "下列现象属于条件反射的是：", opts: ["望梅止渴", "膝跳反射", "缩手反射", "眨眼反射"], ans: "望梅止渴", why: "条件反射是后天学习获得的"},
+        {g: 1, type: "fill", q: "人体最大的器官是 ___", ans: "皮肤", why: "皮肤是人体面积最大的器官"},
+        {g: 1, type: "choice", q: "达尔文的进化学说核心是：", opts: ["自然选择", "用进废退", "获得性遗传", "物种不变"], ans: "自然选择", why: "《物种起源》提出自然选择"},
       ],
       历史: [
         {g: 0, type: "choice", q: "中国近代史的开端事件是：", opts: ["鸦片战争", "辛亥革命", "洋务运动", "甲午战争"], ans: "鸦片战争", why: "1840 年鸦片战争"},
         {g: 0, type: "fill", q: "辛亥革命爆发于 ___ 年", ans: "1911", why: "1911 年武昌起义"},
-        {g: 1, type: "choice", q: "「百家争鸣」出现在哪个时期？", opts: ["春秋战国", "秦汉", "隋唐", "宋元"], ans: "春秋战国", why: "春秋战国时期思想大爆发"},
+        {g: 0, type: "choice", q: "「百家争鸣」出现在哪个时期？", opts: ["春秋战国", "秦汉", "隋唐", "宋元"], ans: "春秋战国", why: "春秋战国时期思想大爆发"},
+        {g: 0, type: "fill", q: "中国历史上第一个统一的中央集权封建国家是 ___（填朝代）", ans: "秦朝", why: "公元前 221 年秦统一六国"},
+        {g: 0, type: "choice", q: "「丝绸之路」的起点是：", opts: ["长安", "洛阳", "北京", "咸阳"], ans: "长安", why: "长安是丝绸之路的东方起点"},
+        {g: 1, type: "choice", q: "戊戌变法发生在哪一年？", opts: ["1898", "1895", "1900", "1911"], ans: "1898", why: "1898 年戊戌变法，又称百日维新"},
+        {g: 1, type: "fill", q: "五四运动爆发于 ___ 年", ans: "1919", why: "1919 年 5 月 4 日"},
+        {g: 1, type: "choice", q: "中国近代「睁眼看世界」的第一人是：", opts: ["林则徐", "魏源", "李鸿章", "康有为"], ans: "林则徐", why: "林则徐组织编译《四洲志》"},
+        {g: 1, type: "fill", q: "中国共产党成立于 ___ 年", ans: "1921", why: "1921 年中共一大召开"},
         {g: 2, type: "fill", q: "新中国成立的时间是 ___ 年 10 月 1 日", ans: "1949", why: "1949 年"},
+        {g: 2, type: "choice", q: "标志着中国半殖民地半封建社会结束的事件是：", opts: ["新中国成立", "抗日战争胜利", "辛亥革命", "五四运动"], ans: "新中国成立", why: "1949 年新中国成立"},
+        {g: 2, type: "fill", q: "抗日战争全面爆发的标志是 ___ 事变（填地名）", ans: "卢沟桥", why: "1937 年卢沟桥事变"},
+        {g: 2, type: "choice", q: "世界上现存最早的成文法典之一是：", opts: ["《汉谟拉比法典》", "《十二铜表法》", "《拿破仑法典》", "《民法典》"], ans: "《汉谟拉比法典》", why: "古巴比伦《汉谟拉比法典》"},
       ],
       地理: [
         {g: 0, type: "choice", q: "地球上面积最大的大洋是：", opts: ["太平洋", "大西洋", "印度洋", "北冰洋"], ans: "太平洋", why: "太平洋约占海洋面积一半"},
         {g: 0, type: "fill", q: "中国陆地面积约 ___ 万平方千米", ans: "960", why: "约 960 万平方千米"},
+        {g: 0, type: "choice", q: "地球自转产生的现象是：", opts: ["昼夜交替", "四季变化", "五带划分", "昼夜长短变化"], ans: "昼夜交替", why: "自转产生昼夜交替，公转产生四季"},
+        {g: 0, type: "fill", q: "地球上最大的大陆是 ___ 大陆", ans: "亚欧", why: "亚欧大陆面积最大"},
         {g: 1, type: "choice", q: "云南省的省会是：", opts: ["昆明", "大理", "丽江", "玉溪"], ans: "昆明", why: "昆明，春城"},
+        {g: 1, type: "fill", q: "中国最长的河流是 ___（填河流名）", ans: "长江", why: "长江是中国第一长河"},
+        {g: 1, type: "choice", q: "下列省级行政区中，纬度最低的是：", opts: ["海南省", "广东省", "云南省", "福建省"], ans: "海南省", why: "海南省纬度最低"},
+        {g: 1, type: "fill", q: "地球上热带与温带的分界线叫 ___（填纬线名）", ans: "回归线", why: "南北回归线是热带与温带的分界"},
+        {g: 1, type: "choice", q: "世界上面积最大的国家是：", opts: ["俄罗斯", "加拿大", "中国", "美国"], ans: "俄罗斯", why: "俄罗斯领土面积最大"},
+        {g: 1, type: "fill", q: "亚洲与非洲的分界线是 ___ 运河", ans: "苏伊士", why: "苏伊士运河"},
+        {g: 1, type: "choice", q: "我国地势的特点是：", opts: ["西高东低，呈阶梯状", "东高西低", "中间高四周低", "南高北低"], ans: "西高东低，呈阶梯状", why: "我国地势西高东低，三级阶梯"},
+        {g: 1, type: "fill", q: "世界上最高的山峰是___（填名称）", ans: "珠穆朗玛峰", why: "珠穆朗玛峰，海拔 8848 米以上"},
       ],
       政治: [
         {g: 0, type: "choice", q: "我国的根本政治制度是：", opts: ["人民代表大会制度", "政治协商制度", "民族区域自治制度", "基层群众自治制度"], ans: "人民代表大会制度", why: "根本政治制度"},
-        {g: 1, type: "fill", q: "我国是 ___ 领导的社会主义国家（填两个字的阶级）", ans: "工人", why: "工人阶级领导"},
-        {g: 2, type: "choice", q: "我国处理民族关系的基本原则不包括：", opts: ["民族自决", "民族平等", "民族团结", "各民族共同繁荣"], ans: "民族自决", why: "三大原则是平等、团结、共同繁荣"},
+        {g: 0, type: "fill", q: "我国是 ___ 领导的社会主义国家（填两个字的阶级）", ans: "工人", why: "工人阶级领导"},
+        {g: 0, type: "choice", q: "未成年人的合法权益受哪部法律专门保护？", opts: ["《未成年人保护法》", "《义务教育法》", "《民法典》", "《刑法》"], ans: "《未成年人保护法》", why: "专门保护未成年人的法律"},
+        {g: 0, type: "fill", q: "我国实行 ___ 年义务教育", ans: "九", why: "九年义务教育"},
+        {g: 1, type: "choice", q: "我国处理民族关系的基本原则不包括：", opts: ["民族自决", "民族平等", "民族团结", "各民族共同繁荣"], ans: "民族自决", why: "三大原则是平等、团结、共同繁荣"},
+        {g: 1, type: "fill", q: "我国宪法规定的公民基本权利中，最基本的政治权利是___（填四个字）", ans: "选举权", why: "选举权和被选举权是基本政治权利"},
+        {g: 1, type: "choice", q: "下列属于公民基本义务的是：", opts: ["依法纳税", "自由旅行", "选择职业", "发表言论"], ans: "依法纳税", why: "依法纳税是公民的基本义务"},
+        {g: 1, type: "choice", q: "我国的最高国家权力机关是：", opts: ["全国人民代表大会", "国务院", "中央军委", "最高人民法院"], ans: "全国人民代表大会", why: "全国人大是最高国家权力机关"},
+        {g: 2, type: "fill", q: "中国特色社会主义最本质的特征是___（填四个字）", ans: "党的领导", why: "党的领导是最本质特征"},
+        {g: 2, type: "choice", q: "我国的基本经济制度的基础是：", opts: ["公有制", "私有制", "混合所有制", "个体经济"], ans: "公有制", why: "公有制为主体、多种所有制共同发展"},
+        {g: 2, type: "fill", q: "我国现阶段的主要矛盾是人民日益增长的美好生活需要和___的发展之间的矛盾", ans: "不平衡不充分", why: "党的十九大提出的主要矛盾"},
+        {g: 2, type: "choice", q: "公民在法律面前一律平等，意味着：", opts: ["任何人都不能有超越法律的特权", "所有人权利完全相同", "未成年人可不受约束", "官员享有豁免权"], ans: "任何人都不能有超越法律的特权", why: "法律面前人人平等"},
       ],
     };
 
@@ -5823,23 +6074,145 @@ const SCHOOL_EVENTS = [
       return item;
     }
 
-    /* 填空题的答案比对：去空格、不分大小写、中英文标点都算对 */
+    /* ==================================================================
+     * 填空题的答案比对
+     * ------------------------------------------------------------------
+     * 判卷要宽容 —— 学生答对了意思，就不该因为写法被判错。
+     * 下面这些写法都算对：
+     *   一 / 1 / 1.0 / 01            → 同一个数
+     *   1/2 / 0.5 / 二分之一          → 同一个值
+     *   50% / 0.5                    → 同一个值（百分号可写可不写）
+     *   H₂O / H2O / h2o              → 下标与大小写
+     *   4cm / 4厘米 / 4 厘米          → 单位可写可不写
+     *   《岳阳楼记》/ 岳阳楼记          → 书名号可省
+     *   x=4 若答案是 4                → 只填数字也算对
+     * ================================================================== */
+
+    const CN_DIGIT = {零: "0", 〇: "0", 一: "1", 二: "2", 两: "2", 三: "3", 四: "4",
+      五: "5", 六: "6", 七: "7", 八: "8", 九: "9"};
+
+    /* 中文数字串 → 阿拉伯数字：十 → 10，二十五 → 25，一百 → 100 */
+    function cnNumToArabic(s) {
+      if (!/[零〇一二两三四五六七八九十百千]/.test(s)) return null;
+      let out = "";
+      const UNIT = {千: 1000, 百: 100, 十: 10};
+      let total = 0, cur = 0, has = false;
+      for (const ch of s) {
+        if (CN_DIGIT[ch] != null) {cur = Number(CN_DIGIT[ch]); has = true; continue;}
+        if (UNIT[ch]) {
+          total += (cur || 1) * UNIT[ch];
+          cur = 0; has = true;
+          continue;
+        }
+        // 遇到非数字字符：先把攒下的收进去，其余原样保留
+        if (has) {out += String(total + cur); total = 0; cur = 0; has = false;}
+        out += ch;
+      }
+      if (has) out += String(total + cur);
+      return out;
+    }
+
+    /* 去掉多余的零：4.0 → 4，0.50 → 0.5，01 → 1 */
+    function trimNumZeros(s) {
+      return String(s)
+        .replace(/(\d+)\.0+(?![\d])/g, "$1")     // 4.0 → 4
+        .replace(/(\d+\.\d*?)0+(?![\d])/g, "$1") // 0.50 → 0.5
+        .replace(/(^|[^\d.])0+(\d)/g, "$1$2");   // 01 → 1
+    }
+
+    /* 分数 a/b → 小数（保留 6 位，够用） */
+    function fracToDec(s) {
+      const m = String(s).match(/^(-?[\d.]+)\s*\/\s*(-?[\d.]+)$/);
+      if (!m) return null;
+      const a = parseFloat(m[1]), b = parseFloat(m[2]);
+      if (!isFinite(a) || !isFinite(b) || b === 0) return null;
+      return String(Math.round((a / b) * 1e6) / 1e6);
+    }
+
+    /* 百分号：50% → 0.5（也保留 50 本身作为候选） */
+    function pctVariants(s) {
+      const m = String(s).match(/^(-?[\d.]+)\s*%$/);
+      if (!m) return [];
+      const v = parseFloat(m[1]);
+      if (!isFinite(v)) return [];
+      return [String(Math.round(v / 100 * 1e6) / 1e6), String(v)];
+    }
+
+    /* 把答案归一化成一组「等价写法」，任一相等即判对 */
+    function answerVariants(raw) {
+      let s = String(raw == null ? "" : raw).trim();
+      if (!s) return [];
+      const out = new Set();
+
+      /* ★ 关键：数字中间的小数点必须保留。
+       * 以前把 "." 当成句号一并删掉，结果 "1.0" 变成 "10"、"0.5" 变成 "05"，
+       * 学生明明答对了却被判错。现在只删首尾与中文标点。 */
+      const base = s
+        .toLowerCase()
+        .replace(/\s+/g, "")                                  // 去所有空格
+        .replace(/[（）()]/g, "")                               // 去括号
+        .replace(/[《》〈〉"\[\]【】]/g, "")                     // 去书名号与引号
+        .replace(/[。．、;；:：!！?？]/g, "")                     // 中文标点
+        .replace(/^[.,]+|[.,]+$/g, "")                         // 首尾的点/逗号
+        .replace(/₂/g, "2").replace(/₂/g, "2").replace(/²/g, "2")
+        .replace(/₃/g, "3").replace(/³/g, "3")
+        .replace(/×/g, "*").replace(/÷/g, "/")
+        .replace(/[—–－]/g, "-");                               // 各种横线统一
+      out.add(base);
+
+      // 中文数字 → 阿拉伯数字
+      const cn = cnNumToArabic(base);
+      if (cn && cn !== base) out.add(cn);
+
+      // 中文分数："二分之一" → 0.5
+      const fm = base.match(/^(.+?)分之(.+)$/);
+      if (fm) {
+        const a = Number(cnNumToArabic(fm[1]) || fm[1]);
+        const b = Number(cnNumToArabic(fm[2]) || fm[2]);
+        if (isFinite(a) && isFinite(b) && a !== 0) {
+          out.add(String(Math.round((b / a) * 1e6) / 1e6));
+        }
+      }
+
+      // 逐个变体再做「数字形态」的等价展开（做两轮，覆盖「中文数字 → 分数」这类组合）
+      for (let round = 0; round < 2; round++) {
+        const extra = [];
+        out.forEach(v => {
+          extra.push(trimNumZeros(v));
+          const f = fracToDec(v); if (f) extra.push(f);
+          pctVariants(v).forEach(x => extra.push(x));
+        });
+        extra.forEach(v => {if (v) out.add(v);});
+      }
+
+      return [...out];
+    }
+
+    /* 一个「词」级别的兜底：把常见单位后缀去掉再比一次 */
+    function stripUnits(s) {
+      return String(s).replace(/(厘米|cm|米|m|千克|kg|克|g|秒|s|小时|h|度|°)$/i, "");
+    }
 
     function quizMatch(input, ans) {
-      const norm = s => String(s == null ? "" : s)
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "")
-        .replace(/[（）()]/g, "")
-        .replace(/[。．.,，、]/g, "")
-        .replace(/₂/g, "2").replace(/₂/g, "2")
-        .replace(/²/g, "2")
-        .replace(/×/g, "*");
-      const a = norm(input), b = norm(ans);
+      const a = String(input == null ? "" : input).trim();
       if (!a) return false;
-      if (a === b) return true;
-      // 数学：允许 "x=4" 只填 "4"
-      if (b.indexOf("=") >= 0 && a === b.split("=").pop()) return true;
+      const AV = answerVariants(a);
+      const BV = answerVariants(ans);
+      // 直接命中
+      for (const x of AV) for (const y of BV) if (x === y && x !== "") return true;
+      // 去掉单位后再比一次（4cm ↔ 4）
+      const AU = AV.map(stripUnits), BU = BV.map(stripUnits);
+      for (const x of AU) for (const y of BU) if (x === y && x !== "") return true;
+      // "x=4" 这类：答案是 4，学生写了 x=4
+      const eqTail = a.split("=").pop();
+      if (eqTail && eqTail !== a) {
+        for (const y of BV) if (answerVariants(eqTail).indexOf(y) >= 0 && y !== "") return true;
+      }
+      // 答案是 "x=4"，学生只填了 4
+      const ansTail = String(ans).split("=").pop();
+      if (ansTail && ansTail !== String(ans)) {
+        for (const x of AV) if (answerVariants(ansTail).indexOf(x) >= 0 && x !== "") return true;
+      }
       return false;
     }
 
@@ -5945,8 +6318,8 @@ const SCHOOL_EVENTS = [
               joinClub(c.id);
               showPopup({
                 kind: "free", badge: "🎉 社团", title: `抢到了！${c.icon} ${c.n}`,
-                body: `<div style="line-height:2">系统显示「报名成功」的那一刻，你在宿舍里叫出了声。<br><br>
-                  ${c.desc}<br><br>
+                body: `<div style="line-height:1.62">系统显示「报名成功」的那一刻，你在宿舍里叫出了声。<br>
+                  ${c.desc}<br>
                   <span style="color:var(--dim);font-size:.85rem">此后每周三的社团课会有社团的事。坚持参加 6 次，可能有所收获。</span></div>`,
                 options: [{t: "太好了", fn: () => {ensureActionPanel();}}]
               });
@@ -5954,8 +6327,8 @@ const SCHOOL_EVENTS = [
               say(`😢 ${c.n} 名额满了，你慢了一步。`, "bad");
               showPopup({
                 kind: "free", badge: "😢 社团", title: `没抢上 ${c.icon} ${c.n}`,
-                body: `<div style="line-height:2">页面刷出来的时候，名额已经是灰的了。<br>
-                  「${c.pop >= 4 ? "两百人抢三十个位置" : "今年报的人比往年多"}。」室友在旁边叹气。<br><br>
+                body: `<div style="line-height:1.62">页面刷出来的时候，名额已经是灰的了。<br>
+                  「${c.pop >= 4 ? "两百人抢三十个位置" : "今年报的人比往年多"}。」室友在旁边叹气。<br>
                   <span style="color:var(--dim);font-size:.85rem">下周还有一次机会，也可以看看别的社团。</span></div>`,
                 options: [{t: "下周再试", fn: () => {ensureActionPanel();}}]
               });
@@ -6309,8 +6682,8 @@ const SCHOOL_EVENTS = [
             const hint = OPENING_TALENTS_HINT[rnd(OPENING_TALENTS_HINT.length)];
             const sc = GAME_CONFIG.school;
             showModal(`${sc.name} · 初一开学`,
-              `<div>${line}<br><br><span style='color:var(--gold)'>${S.name}</span>，${gradeName()}${termName()}，正式开始。<br>
-               <span style='color:var(--dim);font-size:.85rem'>${sc.motto}　|　${sc.culture.join(" · ")}</span><br><br>
+              `<div>${line}<br><span style='color:var(--gold)'>${S.name}</span>，${gradeName()}${termName()}，正式开始。<br>
+               <span style='color:var(--dim);font-size:.85rem'>${sc.motto}　|　${sc.culture.join(" · ")}</span><br>
                <span style='color:var(--dim)'>${hint}</span></div>`,
               [{t: "登上立行号", fn: () => { }}], () => {nextWeek();}, false, false, {kind: "fixed"});
           } else {
@@ -6396,7 +6769,7 @@ const SCHOOL_EVENTS = [
      * ================================================================== */
 
     function examDao(v) {
-      showModal("考场悟道", "收卷铃响前的最后一刻，你盯着试卷，忽然觉得天地一静——<br>三年的知识在你脑海中连成了一条线。<br><br><span style='color:var(--gold)'>这是一次顿悟的机会，你选择抓住哪一种「道」？</span>", [
+      showModal("考场悟道", "收卷铃响前的最后一刻，你盯着试卷，忽然觉得天地一静——<br>三年的知识在你脑海中连成了一条线。<br><span style='color:var(--gold)'>这是一次顿悟的机会，你选择抓住哪一种「道」？</span>", [
         {t: "以笔为剑，杀伐果断", sub: "悟【学神降世】Lv.7(需悟性≥100)", disabled: () => S.prop.悟性 < 100, fn: () => {S.daoDone = true; gainTalent("学神降世", "考场悟道"); nextWeek();}},
         {t: "文思泉涌，下笔如有神", sub: "悟【文曲星】Lv.6", fn: () => {S.daoDone = true; gainTalent("文曲星", "考场悟道"); nextWeek();}},
         {t: "返观内照，照见本心", sub: "悟【心如明镜】Lv.6(需心态≥100)", disabled: () => S.prop.心态 < 100, fn: () => {S.daoDone = true; gainTalent("心如明镜", "考场悟道"); nextWeek();}},
@@ -6702,18 +7075,18 @@ const SCHOOL_EVENTS = [
       let got = "";
       if (hit.grant && !Talent.have(hit.grant)) {
         gainTalent(hit.grant, "退化·免费");
-        if (Talent.have(hit.grant)) got = `<div style="margin-top:10px;color:var(--red)">💧 你留下了阴影【${hit.grant}】</div>`;
+        if (Talent.have(hit.grant)) got = `<div style="margin-top:5px;color:var(--red)">💧 你留下了阴影【${hit.grant}】</div>`;
       }
       say(`💧 退化：你失去了【${hit.talent}】。`, "talent");
       toast(`💧 退化：${hit.talent} 已消失`, false);
       checkAch();
       renderHUD();
 
-      const body = `<div style="line-height:2">
+      const body = `<div style="line-height:1.62">
         <div style="color:var(--red);font-size:.9rem">已失去天赋：<b>${hit.talent}</b></div>
-        <div style="margin-top:10px;white-space:pre-wrap">${hit.text}</div>
+        <div style="margin-top:5px;white-space:pre-wrap">${hit.text}</div>
         ${got}
-        <div style="margin-top:12px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
+        <div style="margin-top:6px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
       </div>`;
       showPopup({
         kind: "free", badge: "💧 退化", title: hit.title, body: body,
@@ -6746,18 +7119,18 @@ const SCHOOL_EVENTS = [
       let got = "";
       if (hit.grant && !Talent.have(hit.grant)) {
         gainTalent(hit.grant, "破茧·免费");
-        if (Talent.have(hit.grant)) got = `<div style="margin-top:10px;color:var(--green)">🌱 你同时领悟了新天赋【${hit.grant}】</div>`;
+        if (Talent.have(hit.grant)) got = `<div style="margin-top:5px;color:var(--green)">🌱 你同时领悟了新天赋【${hit.grant}】</div>`;
       }
       say(`🌱 破茧：你走出了【${hit.talent}】的阴影。`, "talent");
       toast(`🌱 破茧：${hit.talent} 已消除`, true);
       checkAch();
       renderHUD();
 
-      const body = `<div style="line-height:2">
+      const body = `<div style="line-height:1.62">
         <div style="color:var(--red);font-size:.9rem">已消除负面天赋：<b>${hit.talent}</b></div>
-        <div style="margin-top:10px;white-space:pre-wrap">${hit.text}</div>
+        <div style="margin-top:5px;white-space:pre-wrap">${hit.text}</div>
         ${got}
-        <div style="margin-top:12px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
+        <div style="margin-top:6px;color:var(--dim);font-size:.82rem;font-style:italic">「${hit.poem}」</div>
       </div>`;
       showPopup({
         kind: "free", badge: "🌱 破茧", title: hit.title, body: body,
@@ -7525,7 +7898,7 @@ function runEffectSpec(spec, S) {
         kind: "free",
         badge: L("alw.badge"),
         title: `${L("alw.title")} · ${title}`,
-        body: `<div style="line-height:2">${line}<br><br>
+        body: `<div style="line-height:1.62">${line}<br>
           <span style="color:var(--dim);font-size:.85rem">${L("alw.hint", Math.round(clampNum(p.亲情, 0, 150, 80)))}</span></div>`,
         options: [{t: g > 0 ? L("alw.thanks") : L("alw.know"), fn: () => {}}]
       }, () => {if (typeof onDone === "function") onDone();});
@@ -7574,7 +7947,7 @@ function runEffectSpec(spec, S) {
       else modProp("心态", 2);
       if (fullMarks.length) {S.cnt.subjFull = (S.cnt.subjFull || 0) + fullMarks.length;}
       if (perfect && subs.length > 0) count("allPerfect");
-      showModal(L("exam.sheet", TZ(name)), `<div>${rows.join("")}</div><div style="margin-top:10px;text-align:right;color:var(--gold)">${L("exam.avg")}:<b>${avg}</b> / ${L("exam.full")}</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">${L("exam.fullMarks", TZ(fullMarks.join("、")))}</div>` : ""}`,
+      showModal(L("exam.sheet", TZ(name)), `<div>${rows.join("")}</div><div style="margin-top:5px;text-align:right;color:var(--gold)">${L("exam.avg")}:<b>${avg}</b> / ${L("exam.full")}</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">${L("exam.fullMarks", TZ(fullMarks.join("、")))}</div>` : ""}`,
         [{
           t: L("exam.accept"), fn: () => {
             if (!S.daoDone && (avg >= 82 || p.悟性 >= 115) && Math.random() < 0.5) {examDao(avg);}
@@ -7605,8 +7978,11 @@ function runEffectSpec(spec, S) {
 
     function nextWeek() {
       if (S.over) return;
+      /* 周存档点：这一周的所有结算（属性、天赋、成就、破茧/退化、
+       * 压力连击、家庭矛盾）都走完之后，才把「下周开始」的状态写进存档。
+       * 读档回来正好回到新周的开端，不会丢任何已结算的内容。 */
       S.week++;
-      saveGame(false);
+      saveGame(false, true);
       startWeek();
     }
 
@@ -7677,7 +8053,7 @@ function runEffectSpec(spec, S) {
         kind: "free",
         badge: "🎉 社团 · 周末",
         title: CLUB_GRAB_EVENT.t,
-        body: `<div style="line-height:2">${String(CLUB_GRAB_EVENT.c).replace(/\n/g, "<br>")}
+        body: `<div style="line-height:1.62">${String(CLUB_GRAB_EVENT.c).replace(/\n/g, "<br>")}
           <br><span style="color:var(--dim);font-size:.85rem">${wi.month}月 · ${wi.seasonIcon}${wi.season} · ${gradeName()}上学期 · 报名窗口只有这一次</span></div>`,
         options: (typeof buildClubGrabOpts === "function") ? buildClubGrabOpts() : [{t: "知道了", fn: () => {ensureActionPanel();}}]
       }, () => {ensureActionPanel();});
@@ -8158,7 +8534,7 @@ function runEffectSpec(spec, S) {
         kind: "event",
         badge: L("ev.resultBadge", clampNum(S.evWeekTotal, 0, 99), GAME_CONFIG.maxEventsPerWeek),
         title: L("ev.result"),
-        body: `<div style="line-height:2.2">${html}</div>`,
+        body: `<div style="line-height:1.7">${html}</div>`,
         options: [{t: L("modal.continue")}]
       }, next);
     }
@@ -8202,7 +8578,7 @@ function runEffectSpec(spec, S) {
           kind: "free",
           badge: L("burn.badge"),
           title: L("burn.warnTitle"),
-          body: `<div style="line-height:2.2">${L("burn.warnBody", left)}</div>`,
+          body: `<div style="line-height:1.7">${L("burn.warnBody", left)}</div>`,
           options: [{t: L("modal.continue")}]
         }, done);
       } else done();
@@ -8284,11 +8660,13 @@ function runEffectSpec(spec, S) {
       S.lastExamScore = S.zhongkao;
       say(L("flow.zhongkao", S.zhongkao), "exam");
       checkAch();
+      saveGame(false, true);      // 中考分数算出来就立刻落盘
       gameOver();
     }
 
     function gameOver() {
       S.over = true;
+      saveGame(false, true);      // 结局也要落盘，否则读档会退回结局前
       const end = ENDINGS.find(e => e.c(S)) || ENDINGS[ENDINGS.length - 1];
       const sc = GAME_CONFIG.school;
       setBackground("end");            // 结局画面切到「立行号」列车背景
@@ -8304,12 +8682,12 @@ function runEffectSpec(spec, S) {
         else if (S.dead === "压力") reasonLine = L("end.reasonStress");
       }
       showModal(L("end.title"),
-        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${TZ(end.n)}</h2><p style="margin-top:12px;line-height:2">${TZ(end.t)}</p>
-     ${reasonLine ? `<p style="margin-top:8px;color:var(--red);font-weight:bold">${reasonLine}</p>` : ""}
-     <p style="margin-top:14px;color:var(--dim);font-size:.9rem">「${sc.motto}」<br>
+        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${TZ(end.n)}</h2><p style="margin-top:6px;line-height:1.62">${TZ(end.t)}</p>
+     ${reasonLine ? `<p style="margin-top:5px;color:var(--red);font-weight:bold">${reasonLine}</p>` : ""}
+     <p style="margin-top:7px;color:var(--dim);font-size:.9rem">「${sc.motto}」<br>
       <span style="font-size:.82rem">${L("end.arrival", sc.train)}</span></p>
-     <p style="margin-top:16px;color:var(--dim)">${L("end.stat", S.week, S.zhongkao < 0 ? "—" : S.zhongkao, Talent.owned.length, S.ach.length, Object.keys(ACHIEVEMENTS).length)}</p>
-     <div style="margin-top:14px;font-size:.85rem;color:var(--dim);text-align:left;line-height:1.9">
+     <p style="margin-top:5px;color:var(--dim)">${L("end.stat", S.week, S.zhongkao < 0 ? "—" : S.zhongkao, Talent.owned.length, S.ach.length, Object.keys(ACHIEVEMENTS).length)}</p>
+     <div style="margin-top:7px;font-size:.85rem;color:var(--dim);text-align:left;line-height:1.6">
        <b style="color:var(--purple)">${L("end.talents")}:</b>${talentList}<br>
        <b style="color:#ffb86b">${L("end.ach")}:</b>${achList}
      </div></div>`,
@@ -8411,7 +8789,7 @@ function runEffectSpec(spec, S) {
       it.eff(S);
       say(L("item.used", TZ(it.n), TZ(it.desc)), "good");
       renderHUD();
-      showModal(L("item.use"), `<div style="line-height:2">${L("item.effect", TZ(it.n))}<br>${TZ(it.desc)}</div>`, [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free", img: it.img});
+      showModal(L("item.use"), `<div style="line-height:1.62">${L("item.effect", TZ(it.n))}<br>${TZ(it.desc)}</div>`, [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free", img: it.img});
     }
 
     const STAT_COLOR = {心态: "#ffb4d1", 经济: "#d9b3ff", 健康: "#7ee0c0", 效率: "#b388ff", 悟性: "#c9a7ff", 社交: "#ffb86b", 压力: "#ff7aa2", 亲情: "#ffd08a"};
@@ -8542,7 +8920,9 @@ function runEffectSpec(spec, S) {
       a.forEach((d, i) => {
         const el = document.createElement("div"); el.className = "slot";
         if (d) {
-          el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)} · ${d.name || L("save.anon")}(${genderName(d.gender)})</b> · ${L("grade." + (Math.min(2, Math.floor(d.term / 2)) + 1))} ${L("hud.week", d.week)}${d.over ? ` · <span style='color:var(--red)'>${L("save.over")}</span>` : ""}<br>${L("save.info", d.zhongkao < 0 ? "—" : d.zhongkao, d.ach.length, d.time)}</div>
+          // 自动存档时记下是哪一周，主菜单能显示"已存到第 N 周"，玩家知道进度被记住了
+          const autoTag = (d.auto && d.autoWeek != null) ? ` · <span style='color:var(--green)'>${L("save.auto")} ${L("hud.week", d.autoWeek)}</span>` : "";
+          el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)} · ${d.name || L("save.anon")}(${genderName(d.gender)})</b> · ${L("grade." + (Math.min(2, Math.floor(d.term / 2)) + 1))} ${L("hud.week", d.week)}${d.over ? ` · <span style='color:var(--red)'>${L("save.over")}</span>` : ""}${autoTag}<br>${L("save.info", d.zhongkao < 0 ? "—" : d.zhongkao, d.ach.length, d.time)}</div>
       <div><button class="btn green" onclick="resumeGame(${i})">${L("save.resume")}</button><button class="btn" onclick="if(confirm('${L("save.confirmOver")}'))newGameAt(${i})">${L("save.restart")}</button><button class="btn" onclick="delSave(${i})">${L("save.delete")}</button></div>`;
         } else {
           el.innerHTML = `<div class="info"><b>${L("save.slot", i + 1)}</b> · ${L("save.empty")}</div><div><button class="btn primary" onclick="newGameAt(${i})">${L("save.new")}</button></div>`;
@@ -8576,6 +8956,35 @@ function runEffectSpec(spec, S) {
 
     function hideModalRaw() {document.getElementById("modalMask").classList.add("hidden")}
 
+    /* 把换行转成 <br>，但只转「真正在文字中间」的那些换行。
+     *
+     * 规则（逐字符扫描，跟踪是否处在 <...> 标签内部）：
+     *   ① 标签内部的换行 —— 原样保留，绝不转换（转了就毁标签）
+     *   ② 标签之间、元素之间的换行 —— 直接丢掉（那是 HTML 源码排版）
+     *   ③ 文字与文字之间的换行 —— 转成 <br>（这是文案作者真实的换行）
+     */
+    function nl2br(src) {
+      if (typeof src !== "string") return src;
+      if (!src.includes("\n")) return src;
+      let out = "", inTag = false;
+      for (let i = 0; i < src.length; i++) {
+        const c = src[i];
+        if (c === "<") {inTag = true; out += c; continue;}
+        if (c === ">") {inTag = false; out += c; continue;}
+        if (c !== "\n") {out += c; continue;}
+        if (inTag) {out += c; continue;}          // ① 标签内：保留
+        // 前后跳过空白，看紧邻的是什么
+        let j = i - 1; while (j >= 0 && /[ \t\r]/.test(src[j])) j--;
+        let k = i + 1; while (k < src.length && /[ \t\r]/.test(src[k])) k++;
+        const prev = j >= 0 ? src[j] : "";
+        const next = k < src.length ? src[k] : "";
+        // ② 挨着标签边界（或开头/结尾）的换行：丢掉
+        if (prev === ">" || next === "<" || prev === "" || next === "") continue;
+        out += "<br>";                            // ③ 文字中间：转 <br>
+      }
+      return out;
+    }
+
     function showModal(title, body, opts, onClose, lock, showClose, meta) {
       const m = document.getElementById("modalMask");
       const modalEl = document.getElementById("modalBox") || m.querySelector(".modal");
@@ -8607,7 +9016,17 @@ function runEffectSpec(spec, S) {
       closeX.onclick = () => closeModal(onClose);
 
       const b = document.getElementById("modalBody");
-      if (typeof body === "string" && body.includes("<")) b.innerHTML = body; else b.textContent = body;
+      /* 正文里的手动换行（事件文案常写 \n）要变成 <br>。
+       * 以前靠弹窗整体的 white-space:pre-wrap 兜着 —— 但那样会把
+       * 模板字符串里的缩进换行也一起渲染出来，窗口凭空长出一大截空行。
+       *
+       * 现在用 nl2br() 精确处理：只有「夹在真实文字之间」的换行才转 <br>，
+       * 标签内部的换行（模板字符串为了好看做的缩进）必须原样保留 ——
+       * 否则 <button ...\n style="..."> 会在标签中间被插入 <br>，
+       * 标签结构被破坏，属性内容会直接显示成文字（曾经让主题卡片上
+       * 出现一整串 style="--c1:#8a2b9c;..." 的代码块）。 */
+      const html = nl2br(body);
+      if (typeof html === "string" && html.includes("<")) b.innerHTML = html; else b.textContent = html;
       const ob = document.getElementById("modalOpts"); ob.innerHTML = "";
       const list = opts || [{t: L("modal.continue"), fn: () => { }}];
       let anyEnabled = false;
@@ -8722,7 +9141,7 @@ function runEffectSpec(spec, S) {
       };
 
       const meta = {kind: "free", badge: L("quiz.badge")};
-      const whyLine = q.why ? `<div style="margin-top:10px;color:var(--dim);font-size:.85rem">${L("quiz.why")} ${q.why}</div>` : "";
+      const whyLine = q.why ? `<div style="margin-top:5px;color:var(--dim);font-size:.85rem">${L("quiz.why")} ${q.why}</div>` : "";
 
       if (q.type === "choice") {
         const opts = q.opts.map((o, i) => ({
@@ -8730,22 +9149,22 @@ function runEffectSpec(spec, S) {
           fn: () => {
             const ok = (i === q.ansIndex);
             finish(ok);
-            showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+            showModal(L("quiz.resultTitle"), `<div style="line-height:1.62">
               <div>${q.q}</div>
-              <div style="margin-top:8px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
+              <div style="margin-top:5px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
               <div style="margin-top:4px">${L("quiz.answer")} <b>${q.opts[q.ansIndex]}</b></div>
               ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
           }
         }));
-        showModal(L("quiz.title", TZ(q.sub)), `<div style="line-height:2">${q.q}</div>
+        showModal(L("quiz.title", TZ(q.sub)), `<div style="line-height:1.62">${q.q}</div>
           <div style="margin-top:6px;color:var(--dim);font-size:.82rem">${L("quiz.tip")}</div>`,
           opts, null, false, false, meta);
         return;
       }
 
       // 填空题：手写一个答案
-      const bodyHtml = `<div style="line-height:2">${q.q}</div>
-        <div style="margin-top:10px"><input id="quizInput" type="text" autocomplete="off"
+      const bodyHtml = `<div style="line-height:1.62">${q.q}</div>
+        <div style="margin-top:5px"><input id="quizInput" type="text" autocomplete="off"
           placeholder="${L("quiz.placeholder")}"
           style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:.95rem"></div>
         <div style="margin-top:6px;color:var(--dim);font-size:.82rem">${L("quiz.fillTip")}</div>`;
@@ -8757,9 +9176,9 @@ function runEffectSpec(spec, S) {
           const val = el ? el.value : "";
           const ok = (typeof quizMatch === "function") ? quizMatch(val, q.ans) : false;
           finish(ok);
-          showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+          showModal(L("quiz.resultTitle"), `<div style="line-height:1.62">
             <div>${q.q}</div>
-            <div style="margin-top:8px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
+            <div style="margin-top:5px;color:${ok ? "var(--green)" : "var(--red)"}">${ok ? L("quiz.correct") : L("quiz.incorrect")}</div>
             <div style="margin-top:4px">${L("quiz.answer")} <b>${q.ans}</b>${val ? `（${L("quiz.yours")} ${val}）` : ""}</div>
             ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
         }
@@ -8768,9 +9187,9 @@ function runEffectSpec(spec, S) {
         fn: () => {
           say(L("quiz.giveupLog", TZ(q.sub)), "sys");
           finish(false);
-          showModal(L("quiz.resultTitle"), `<div style="line-height:2">
+          showModal(L("quiz.resultTitle"), `<div style="line-height:1.62">
             <div>${q.q}</div>
-            <div style="margin-top:8px;color:var(--dim)">${L("quiz.gaveup")}</div>
+            <div style="margin-top:5px;color:var(--dim)">${L("quiz.gaveup")}</div>
             <div style="margin-top:4px">${L("quiz.answer")} <b>${q.ans}</b></div>
             ${whyLine}</div>`, [{t: L("modal.continue")}], () => {if (done) done();}, false, false, meta);
         }
@@ -8830,15 +9249,47 @@ function runEffectSpec(spec, S) {
  * ============================================================ */
 
     const SAVE_KEY = "zhongkao_life_saves_v6";
+    const SAVE_VER = 7;             // 存档结构版本，升级结构时 +1
+    const SAVE_SLOTS = 3;
 
-    function loadSaves() {try {return JSON.parse(localStorage.getItem(SAVE_KEY)) || [null, null, null]} catch (e) {return [null, null, null]} }
+    /* 读存档：任何一条坏数据都不许让主菜单打不开 */
+    function loadSaves() {
+      let raw = null;
+      try {raw = JSON.parse(localStorage.getItem(SAVE_KEY));} catch (e) {raw = null;}
+      if (!Array.isArray(raw)) raw = [];
+      // 补齐 / 截断到固定槽数，脏字段直接丢掉
+      const out = [];
+      for (let i = 0; i < SAVE_SLOTS; i++) out.push(isSaveUsable(raw[i]) ? raw[i] : null);
+      return out;
+    }
 
-    function writeSaves(a) {localStorage.setItem(SAVE_KEY, JSON.stringify(a))}
+    /* 一个存档槽的数据是否还能用（最基本的可读性检查） */
+    function isSaveUsable(d) {
+      if (!d || typeof d !== "object") return false;
+      if (typeof d.name !== "string") return false;
+      if (!isFinite(d.week) || !isFinite(d.term)) return false;
+      if (d.week < 0 || d.term < 0) return false;
+      return true;
+    }
 
-    function saveGame(manual) {
-      if (!S) return;
+    /* 写存档：写不进去（隐私模式 / 空间满）也不能崩 */
+    function writeSaves(a) {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(a));
+        return true;
+      } catch (e) {
+        if (typeof toast === "function") toast(L("save.fail"));
+        return false;
+      }
+    }
+
+    function saveGame(manual, autoSave) {
+      if (!S) return false;
+      // 槽号越界（存档结构变动 / 手动改过 localStorage）时拉回 0 号槽
+      if (!(slotCur >= 0 && slotCur < SAVE_SLOTS)) slotCur = 0;
       const a = loadSaves();
       a[slotCur] = {
+        v: SAVE_VER,
         week: S.week, term: S.term, name: S.name, gender: S.gender,
         evCnt: S.evCnt, daoDone: S.daoDone, subj: S.subj, prop: S.prop,
         score: S.score, lastExamScore: S.lastExamScore, bestExam: S.bestExam, zhongkao: S.zhongkao,
@@ -8861,10 +9312,15 @@ function runEffectSpec(spec, S) {
         didSocialWeek: S.didSocialWeek, didQuizWeek: S.didQuizWeek,
         idleWeeks: S.idleWeeks, stressStreak: S.stressStreak,
         famConflictWeek: S.famConflictWeek, familyMain: S.familyMain,
-        time: new Date().toLocaleString()
+        time: new Date().toLocaleString(),
+        // 周结束自动存档时打标记，主菜单能显示"自动存于第 N 周"
+        autoWeek: num(S.week, 0),
+        auto: !!autoSave
       };
-      writeSaves(a);
-      if (manual) {toast(L("save.saved")); renderSlots();}
+      const ok = writeSaves(a);
+      if (manual) {toast(ok ? L("save.saved") : L("save.fail")); renderSlots();}
+      else if (typeof renderSlots === "function" && autoSave) renderSlots();
+      return ok;
     }
 
     function resumeGame(i) {
@@ -8905,7 +9361,7 @@ function runEffectSpec(spec, S) {
       const _md = document.getElementById("modalMedia"); if (_md) {_md.innerHTML = ""; _md.style.display = "none";}
       document.getElementById("modalTitle").textContent = L("cc.title");
       document.getElementById("modalBody").innerHTML =
-        `<div style="line-height:2.4">
+        `<div style="line-height:1.75">
        ${L("cc.name")}:<input id="inpName" maxlength="8" placeholder="${L("cc.namePh")}" style="background:#0b0818;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 12px;width:60%"><br>
        ${L("cc.gender")}:<label><input type="radio" name="inpGender" value="男" checked> ${L("cc.male")}</label>
             <label style="margin-left:16px"><input type="radio" name="inpGender" value="女"> ${L("cc.female")}</label>

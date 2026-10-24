@@ -357,42 +357,42 @@
       color: var(--gold)
     }
 
-    /* 档位文字：t0 最糟 → t4 最好（压力由 JS 反向传 tone，配色自动对调） */
+    /* 档位文字：t0 最糟 → t4 最好（压力由 JS 反向传 tone，配色自动对调）
+     *
+     * ★ 注意：这里只给 color，绝不能给 background。
+     *   以前文字和背景用了同一个颜色，等于"红字画在红方块上"，
+     *   结果整块变成纯色方块，档位文字完全看不见。
+     *   刻度条的填充色由下面 .segbar i.on 单独负责。
+     */
     .stathead .lv {
       font-size: .74rem;
       letter-spacing: .5px;
-      white-space: nowrap
+      white-space: nowrap;
+      background: none;
+      padding: 0 2px;
+      border-radius: 3px
     }
 
-    .stathead .lv.t0,
-    .segbar.t0 i.on {
-      color: var(--red);
-      background: var(--red)
-    }
+    .stathead .lv.t0 {color: var(--red)}
 
-    .stathead .lv.t1,
-    .segbar.t1 i.on {
-      color: #ffb86b;
-      background: #ffb86b
-    }
+    .stathead .lv.t1 {color: #ffb86b}
 
-    .stathead .lv.t2,
-    .segbar.t2 i.on {
-      color: var(--gold);
-      background: var(--gold)
-    }
+    .stathead .lv.t2 {color: var(--gold)}
 
-    .stathead .lv.t3,
-    .segbar.t3 i.on {
-      color: #b9e37a;
-      background: #b9e37a
-    }
+    .stathead .lv.t3 {color: #b9e37a}
 
-    .stathead .lv.t4,
-    .segbar.t4 i.on {
-      color: var(--green);
-      background: var(--green)
-    }
+    .stathead .lv.t4 {color: var(--green)}
+
+    /* 刻度条的填充色：只画在 segbar 的格子上 */
+    .segbar.t0 i.on {background: var(--red)}
+
+    .segbar.t1 i.on {background: #ffb86b}
+
+    .segbar.t2 i.on {background: var(--gold)}
+
+    .segbar.t3 i.on {background: #b9e37a}
+
+    .segbar.t4 i.on {background: var(--green)}
 
     /* 五格刻度条：只暴露"第几档"，不暴露精确数值 */
     .segbar {
@@ -498,16 +498,25 @@
      * Markdown 文档弹窗
      * ============================================================ */
 
+    /* ★ v1.1 收紧：文档弹窗以前被拉得很长，
+     *   一半是因为段间距和行高都偏大，一半是因为
+     *   guide.md 里几乎每句话之间都有空行（每句一个 <p>）。
+     *   这里把间距压到"看着是一段话"的程度，而不是段与段之间空一大块。 */
+    /* ★ 关键修复：弹窗正文是 white-space: pre-wrap（为了保留事件文案里的手动换行），
+     *   但 Markdown 渲染出来的 HTML 每个标签之间都有一个 "\n"，
+     *   被 pre-wrap 一渲染就成了真实空行 —— 每两个元素之间凭空多出一行，
+     *   整篇文档被拉长一大截。这里把文档区改回 normal。 */
     .markdown {
-      line-height: 1.5;
-      font-size: .85rem
+      line-height: 1.45;
+      font-size: .85rem;
+      white-space: normal
     }
 
     .markdown h2 {
       font-size: .98rem;
       color: var(--gold-soft);
-      margin: 4px 0 6px;
-      padding-bottom: 3px;
+      margin: 2px 0 4px;
+      padding-bottom: 2px;
       border-bottom: 1px solid var(--line)
     }
 
@@ -518,32 +527,37 @@
     .markdown h3 {
       font-size: .9rem;
       color: var(--purple);
-      margin: 10px 0 3px
+      margin: 6px 0 2px
     }
 
     .markdown h4 {
       font-size: .85rem;
       color: var(--txt);
-      margin: 8px 0 2px
+      margin: 5px 0 1px
     }
 
     .markdown p {
-      margin: 4px 0;
+      margin: 1px 0;
       color: var(--txt)
     }
 
+    /* 相邻段落之间留一点点呼吸，但不再是"空一行" */
+    .markdown p + p {
+      margin-top: 2px
+    }
+
     .markdown ul {
-      margin: 3px 0 3px 18px
+      margin: 2px 0 2px 16px
     }
 
     .markdown li {
-      margin: 1px 0
+      margin: 0 0
     }
 
     .markdown blockquote {
-      margin: 6px 0;
-      padding: 6px 10px;
-      line-height: 1.5;
+      margin: 4px 0;
+      padding: 4px 8px;
+      line-height: 1.45;
       border-left: 3px solid var(--gold);
       background: rgba(215, 180, 90, .07);
       color: var(--gold-soft);
@@ -561,7 +575,7 @@
     .markdown hr.mdhr {
       border: 0;
       border-top: 1px dashed var(--line);
-      margin: 9px 0
+      margin: 5px 0
     }
 
     .markdown table.mdtable {

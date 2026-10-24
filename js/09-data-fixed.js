@@ -69,8 +69,8 @@
             const hint = OPENING_TALENTS_HINT[rnd(OPENING_TALENTS_HINT.length)];
             const sc = GAME_CONFIG.school;
             showModal(`${sc.name} · 初一开学`,
-              `<div>${line}<br><br><span style='color:var(--gold)'>${S.name}</span>，${gradeName()}${termName()}，正式开始。<br>
-               <span style='color:var(--dim);font-size:.85rem'>${sc.motto}　|　${sc.culture.join(" · ")}</span><br><br>
+              `<div>${line}<br><span style='color:var(--gold)'>${S.name}</span>，${gradeName()}${termName()}，正式开始。<br>
+               <span style='color:var(--dim);font-size:.85rem'>${sc.motto}　|　${sc.culture.join(" · ")}</span><br>
                <span style='color:var(--dim)'>${hint}</span></div>`,
               [{t: "登上立行号", fn: () => { }}], () => {nextWeek();}, false, false, {kind: "fixed"});
           } else {
@@ -156,7 +156,7 @@
      * ================================================================== */
 
     function examDao(v) {
-      showModal("考场悟道", "收卷铃响前的最后一刻，你盯着试卷，忽然觉得天地一静——<br>三年的知识在你脑海中连成了一条线。<br><br><span style='color:var(--gold)'>这是一次顿悟的机会，你选择抓住哪一种「道」？</span>", [
+      showModal("考场悟道", "收卷铃响前的最后一刻，你盯着试卷，忽然觉得天地一静——<br>三年的知识在你脑海中连成了一条线。<br><span style='color:var(--gold)'>这是一次顿悟的机会，你选择抓住哪一种「道」？</span>", [
         {t: "以笔为剑，杀伐果断", sub: "悟【学神降世】Lv.7(需悟性≥100)", disabled: () => S.prop.悟性 < 100, fn: () => {S.daoDone = true; gainTalent("学神降世", "考场悟道"); nextWeek();}},
         {t: "文思泉涌，下笔如有神", sub: "悟【文曲星】Lv.6", fn: () => {S.daoDone = true; gainTalent("文曲星", "考场悟道"); nextWeek();}},
         {t: "返观内照，照见本心", sub: "悟【心如明镜】Lv.6(需心态≥100)", disabled: () => S.prop.心态 < 100, fn: () => {S.daoDone = true; gainTalent("心如明镜", "考场悟道"); nextWeek();}},

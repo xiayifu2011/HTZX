@@ -142,6 +142,16 @@
         "burn.warnBody": "你已经连续好几周顶着压力硬扛了。\n再这样下去，身体会先替你做决定。\n这周试着休息一次、运动一次，或者找人说说。",
         "burn.over": "🕯 压力连续三周爆表，你没能撑到中考。",
 
+        /* ---------------- 存档 ---------------- */
+        "save.fail": "⚠ 存档没能写入（浏览器隐私模式或空间已满）",
+        "save.auto": "自动存档",
+
+        /* ---------------- 英语模式敬请期待 ---------------- */
+        "lang.pendingTitle": "🌐 英语模式",
+        "lang.pendingLead": "敬请期待",
+        "lang.pendingBody": "英语模式还在翻译中。目前界面只译好了一部分，事件、天赋、书目仍是中文，切换后会出现半中半英和刷新不及时的问题。<br>先把它收起来，等全部译完再开放。",
+        "lang.pendingFoot": "如果已经切到英文了，再点一次这个按钮就能切回中文。",
+
         /* ---------------- 文档实时更新 ---------------- */
         "doc.srcNet": "📄 直接读取 docs/ 里的文件（改完刷新即可）",
         "doc.srcCache": "📄 来自本机导入的版本",
@@ -487,6 +497,16 @@
         "doc.readFail": "Could not read that file",
         "doc.missing": "This document has no content yet",
 
+        /* ---------------- 存档 ---------------- */
+        "save.fail": "⚠ Could not write the save (private mode or storage full)",
+        "save.auto": "Auto-saved",
+
+        /* ---------------- 英语模式敬请期待 ---------------- */
+        "lang.pendingTitle": "🌐 English mode",
+        "lang.pendingLead": "Coming soon",
+        "lang.pendingBody": "English is still being translated. Only part of the interface is done — events, talents and books are still in Chinese, so switching now gives you a half-and-half mess.<br>It is parked until the translation is complete.",
+        "lang.pendingFoot": "If you are already in English, click this button again to switch back to Chinese.",
+
         "act.title": "Choose an action",
         "act.titleN": "Choose an action ({0}/{1})",
         "act.study": "📖 Study hard",
@@ -753,12 +773,48 @@
       return LANG;
     }
 
+    /* ==================================================================
+     * 切换语言
+     * ------------------------------------------------------------------
+     * ★ v1.1 当前状态：英语模式暂停开放。
+     *   已译好的界面只覆盖了一部分，事件、天赋、书目仍是中文，
+     *   切换后会出现"半中半英"和刷新不及时的问题。
+     *   所以点中文界面上的切换按钮时，弹出说明而不是真的切过去。
+     *
+     *   唯一例外：已经处于英文模式的存档 / 玩家，允许切回中文，
+     *   不会把人卡在英文里出不来。
+     *
+     * 将来要重新开放英语模式：把 EN_READY 改成 true 即可，
+     *   下面这段提示逻辑会自动让路，恢复成正常切换。
+     * ============================================================ */
+
+    const EN_READY = false;      // ← 英语模式完工后改成 true
+
     function toggleLang() {
-      setLang(LANG === "zh" ? "en" : "zh");
+      // 已经是英文：无条件放行，让人能切回中文
+      if (LANG === "en") {doSetLang("zh"); return;}
+      // 中文 → 英文：英语还没准备好，弹窗说明
+      if (!EN_READY) {showLangPending(); return;}
+      doSetLang("en");
+    }
+
+    function doSetLang(id) {
+      setLang(id);
       if (typeof ensureActionPanel === "function") {
         const p = document.getElementById("actionPanel");
         if (p && p.innerHTML !== "" && S && !S.over) {p.innerHTML = ""; ensureActionPanel();}
       }
+    }
+
+    function showLangPending() {
+      if (typeof showModal !== "function") {if (typeof toast === "function") toast("英语模式敬请期待"); return;}
+      showModal(L("lang.pendingTitle"),
+        `<div style="line-height:1.6">
+          <div style="font-size:1.05rem;margin-bottom:6px">${L("lang.pendingLead")}</div>
+          <div style="color:var(--dim);font-size:.88rem">${L("lang.pendingBody")}</div>
+          <div style="color:var(--dim);font-size:.82rem;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)">${L("lang.pendingFoot")}</div>
+        </div>`,
+        [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free"});
     }
 
     /* ==================================================================

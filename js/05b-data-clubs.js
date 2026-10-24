@@ -97,8 +97,8 @@
               joinClub(c.id);
               showPopup({
                 kind: "free", badge: "🎉 社团", title: `抢到了！${c.icon} ${c.n}`,
-                body: `<div style="line-height:2">系统显示「报名成功」的那一刻，你在宿舍里叫出了声。<br><br>
-                  ${c.desc}<br><br>
+                body: `<div style="line-height:1.62">系统显示「报名成功」的那一刻，你在宿舍里叫出了声。<br>
+                  ${c.desc}<br>
                   <span style="color:var(--dim);font-size:.85rem">此后每周三的社团课会有社团的事。坚持参加 6 次，可能有所收获。</span></div>`,
                 options: [{t: "太好了", fn: () => {ensureActionPanel();}}]
               });
@@ -106,8 +106,8 @@
               say(`😢 ${c.n} 名额满了，你慢了一步。`, "bad");
               showPopup({
                 kind: "free", badge: "😢 社团", title: `没抢上 ${c.icon} ${c.n}`,
-                body: `<div style="line-height:2">页面刷出来的时候，名额已经是灰的了。<br>
-                  「${c.pop >= 4 ? "两百人抢三十个位置" : "今年报的人比往年多"}。」室友在旁边叹气。<br><br>
+                body: `<div style="line-height:1.62">页面刷出来的时候，名额已经是灰的了。<br>
+                  「${c.pop >= 4 ? "两百人抢三十个位置" : "今年报的人比往年多"}。」室友在旁边叹气。<br>
                   <span style="color:var(--dim);font-size:.85rem">下周还有一次机会，也可以看看别的社团。</span></div>`,
                 options: [{t: "下周再试", fn: () => {ensureActionPanel();}}]
               });

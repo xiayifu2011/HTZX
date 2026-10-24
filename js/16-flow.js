@@ -15,8 +15,11 @@
 
     function nextWeek() {
       if (S.over) return;
+      /* 周存档点：这一周的所有结算（属性、天赋、成就、破茧/退化、
+       * 压力连击、家庭矛盾）都走完之后，才把「下周开始」的状态写进存档。
+       * 读档回来正好回到新周的开端，不会丢任何已结算的内容。 */
       S.week++;
-      saveGame(false);
+      saveGame(false, true);
       startWeek();
     }
 
@@ -87,7 +90,7 @@
         kind: "free",
         badge: "🎉 社团 · 周末",
         title: CLUB_GRAB_EVENT.t,
-        body: `<div style="line-height:2">${String(CLUB_GRAB_EVENT.c).replace(/\n/g, "<br>")}
+        body: `<div style="line-height:1.62">${String(CLUB_GRAB_EVENT.c).replace(/\n/g, "<br>")}
           <br><span style="color:var(--dim);font-size:.85rem">${wi.month}月 · ${wi.seasonIcon}${wi.season} · ${gradeName()}上学期 · 报名窗口只有这一次</span></div>`,
         options: (typeof buildClubGrabOpts === "function") ? buildClubGrabOpts() : [{t: "知道了", fn: () => {ensureActionPanel();}}]
       }, () => {ensureActionPanel();});
@@ -568,7 +571,7 @@
         kind: "event",
         badge: L("ev.resultBadge", clampNum(S.evWeekTotal, 0, 99), GAME_CONFIG.maxEventsPerWeek),
         title: L("ev.result"),
-        body: `<div style="line-height:2.2">${html}</div>`,
+        body: `<div style="line-height:1.7">${html}</div>`,
         options: [{t: L("modal.continue")}]
       }, next);
     }
@@ -612,7 +615,7 @@
           kind: "free",
           badge: L("burn.badge"),
           title: L("burn.warnTitle"),
-          body: `<div style="line-height:2.2">${L("burn.warnBody", left)}</div>`,
+          body: `<div style="line-height:1.7">${L("burn.warnBody", left)}</div>`,
           options: [{t: L("modal.continue")}]
         }, done);
       } else done();
@@ -694,11 +697,13 @@
       S.lastExamScore = S.zhongkao;
       say(L("flow.zhongkao", S.zhongkao), "exam");
       checkAch();
+      saveGame(false, true);      // 中考分数算出来就立刻落盘
       gameOver();
     }
 
     function gameOver() {
       S.over = true;
+      saveGame(false, true);      // 结局也要落盘，否则读档会退回结局前
       const end = ENDINGS.find(e => e.c(S)) || ENDINGS[ENDINGS.length - 1];
       const sc = GAME_CONFIG.school;
       setBackground("end");            // 结局画面切到「立行号」列车背景
@@ -714,12 +719,12 @@
         else if (S.dead === "压力") reasonLine = L("end.reasonStress");
       }
       showModal(L("end.title"),
-        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${TZ(end.n)}</h2><p style="margin-top:12px;line-height:2">${TZ(end.t)}</p>
-     ${reasonLine ? `<p style="margin-top:8px;color:var(--red);font-weight:bold">${reasonLine}</p>` : ""}
-     <p style="margin-top:14px;color:var(--dim);font-size:.9rem">「${sc.motto}」<br>
+        `<div class="endcard"><div class="big">${end.icon}</div><h2 style="color:var(--gold)">${TZ(end.n)}</h2><p style="margin-top:6px;line-height:1.62">${TZ(end.t)}</p>
+     ${reasonLine ? `<p style="margin-top:5px;color:var(--red);font-weight:bold">${reasonLine}</p>` : ""}
+     <p style="margin-top:7px;color:var(--dim);font-size:.9rem">「${sc.motto}」<br>
       <span style="font-size:.82rem">${L("end.arrival", sc.train)}</span></p>
-     <p style="margin-top:16px;color:var(--dim)">${L("end.stat", S.week, S.zhongkao < 0 ? "—" : S.zhongkao, Talent.owned.length, S.ach.length, Object.keys(ACHIEVEMENTS).length)}</p>
-     <div style="margin-top:14px;font-size:.85rem;color:var(--dim);text-align:left;line-height:1.9">
+     <p style="margin-top:5px;color:var(--dim)">${L("end.stat", S.week, S.zhongkao < 0 ? "—" : S.zhongkao, Talent.owned.length, S.ach.length, Object.keys(ACHIEVEMENTS).length)}</p>
+     <div style="margin-top:7px;font-size:.85rem;color:var(--dim);text-align:left;line-height:1.6">
        <b style="color:var(--purple)">${L("end.talents")}:</b>${talentList}<br>
        <b style="color:#ffb86b">${L("end.ach")}:</b>${achList}
      </div></div>`,

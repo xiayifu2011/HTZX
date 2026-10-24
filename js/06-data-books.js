@@ -43,12 +43,19 @@
       recalcScore();
     }
 
-    /* 抽一个「正面且没拥有」的天赋；抽不到就返回 null */
-
+    /* 抽一个「正面且没拥有」的天赋；抽不到就返回 null
+     *
+     * ★ 出身类天赋（家财万贯 / 单亲家庭 / 书香门第 …）不在池子里。
+     *   读书改变的是你这个人，不是你的出身 ——
+     *   读再多书也没法把"家徒四壁"读成"书香门第"。
+     *   清单见 js/03-data-talents.js 的 FAMILY_TALENTS。 */
     function pickGoodTalent(minLv, maxLv) {
       const pool = Object.keys(TALENTS).filter(t => {
         const lv = TALENTS[t].lv;
-        return lv >= minLv && lv <= maxLv && !Talent.have(t) && !isBadTalent(t);
+        if (lv < minLv || lv > maxLv) return false;
+        if (Talent.have(t) || isBadTalent(t)) return false;
+        if (typeof isFamilyTalent === "function" && isFamilyTalent(t)) return false;
+        return true;
       });
       return pool.length ? pool[rnd(pool.length)] : null;
     }
@@ -132,7 +139,7 @@
           read = true;
           say(L("book.read", TZ(b.n)), "good");
           checkAch(); renderHUD();
-          showModal(L("book.title"), `<div style='line-height:2'>${TZ(b.lore) || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
+          showModal(L("book.title"), `<div style='line-height:1.62'>${TZ(b.lore) || "书页翻过，你感到有什么东西在心底沉淀下来。"}</div>`, [{
             t: L("book.close"), fn: () => { }
           }], () => {if (onDone) onDone();}, false, false, {kind: "free", badge: L("book.badge"), img: b.img});
         }
