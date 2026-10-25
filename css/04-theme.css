@@ -75,18 +75,49 @@
       box-shadow: 0 0 30px rgba(255, 209, 102, .6)
     }
 
+    /* 背景三层（由下往上）：
+     *   -3  主题图片 + 多层渐变（图片在上，缺失时自动露出渐变）
+     *   -2  呼吸光晕（.theme-breath，每套主题周期不同）
+     *   -1  压暗层，保证正文可读
+     * 屏幕情绪特效（红雾 / 灰暗）用的是正数 z-index，永远盖在它们之上。 */
     body::before {
       content: "";
       position: fixed;
       inset: 0;
-      z-index: -2;
-      /* 两层：主题图片在上，主题渐变垫底（图片缺失时自动露出渐变） */
-      background-image: var(--bg-image, none), var(--bg-grad, none);
-      background-size: cover, cover;
+      z-index: -3;
+      /* 多层渐变：--bg-grad-1 在最上，3 在最下；某一层留空就自动跳过 */
+      background-image: var(--bg-image, none),
+        var(--bg-grad-1, none), var(--bg-grad-2, none), var(--bg-grad-3, none);
+      background-size: cover, cover, cover, cover;
       background-position: center;
       background-repeat: no-repeat;
       opacity: var(--bg-opacity, 0);
       transition: opacity .6s ease
+    }
+
+    /* ============================================================
+     * 主题呼吸光晕
+     * ------------------------------------------------------------
+     * 主题不再是静止的一张色卡 —— 每套主题有一层极慢的明暗起伏，
+     * 幅度很小（0.35 ↔ 1），是"呼吸"不是"闪烁"。
+     * 周期由主题的 breath 字段决定（深远的慢、轻快的快），
+     * 写在 --breath-dur 上，默认 12s。
+     *
+     * 关掉动画：系统开了「减少动态效果」时会自动停（见文件末尾）。
+     * ============================================================ */
+    .theme-breath {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      background: radial-gradient(1100px 780px at 50% 32%, rgba(var(--glow), .07), transparent 72%);
+      opacity: .5;
+      animation: themeBreath var(--breath-dur, 12s) ease-in-out infinite
+    }
+
+    @keyframes themeBreath {
+      0%, 100% {opacity: .35}
+      50% {opacity: 1}
     }
 
     body::after {
@@ -96,6 +127,14 @@
       z-index: -1;
       pointer-events: none;
       background: radial-gradient(1200px 800px at 50% 0%, transparent, var(--bg-overlay, rgba(18, 10, 24, .82)) 70%)
+    }
+
+    /* 系统开了「减少动态效果」时，呼吸停下来 */
+    @media(prefers-reduced-motion: reduce) {
+      .theme-breath {
+        animation: none;
+        opacity: .6
+      }
     }
 
     /* 学校品牌条：校名 + 校训（不使用校徽） */
@@ -334,3 +373,61 @@
     .nowrap {
       white-space: nowrap
     }
+
+/* ==================================================================
+ * v1.3 四季主题：跟着时间变色
+ * ------------------------------------------------------------------
+ * 四层各季节的渐变叠在一起（z-index -3，盖在基础渐变之上、
+ * 呼吸光晕之下），各自按比重设透明度 —— 相邻两季交叉淡入淡出，
+ * 所以夏→秋之间会自然出现一段「夏末秋初」的中间色。
+ *
+ * 透明度过渡 1.4s：每周推进一格时，颜色是滑过去的，不是硬切。
+ * 主题变量（--brand / --txt 等）的过渡写在下面的 .theme-siji-on 里。
+ * ================================================================== */
+
+.season-veil {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .5s ease;
+  display: none
+}
+
+.season-veil.on {display: block; opacity: 1}
+
+.season-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 1.4s cubic-bezier(.4, 0, .2, 1)
+}
+
+/* 变量的过渡：背景色、文字色、描边都跟着滑，1.4s 与背景层同步 */
+.theme-siji-on body {
+  transition: background-color 1.4s ease, color 1.4s ease
+}
+
+.theme-siji-on .card,
+.theme-siji-on .btn,
+.theme-siji-on .tag-title,
+.theme-siji-on .topline,
+.theme-siji-on .evpill,
+.theme-siji-on .weekpill,
+.theme-siji-on .timepill {
+  transition: background-color 1.4s ease, color 1.4s ease, border-color 1.4s ease
+}
+
+@media(prefers-reduced-motion: reduce) {
+  .season-layer,
+  .theme-siji-on body,
+  .theme-siji-on .card,
+  .theme-siji-on .btn {
+    transition: none
+  }
+}

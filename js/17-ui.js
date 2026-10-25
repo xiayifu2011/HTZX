@@ -139,9 +139,24 @@
 
     function renderHUD() {
       if (!S) return;
+      /* 四季主题：周推进了，季节配色跟着走（内部只在必要时改，不会每帧重算） */
+      if (typeof refreshSeason === "function") refreshSeason(true);
       document.getElementById("hudGrade").textContent = `${S.name}(${genderName(S.gender)}) · ${gradeName()}`;
-      document.getElementById("hudWeekText").textContent = L("hud.week", S.week);
-      document.getElementById("hudTerm").textContent = termName();
+      /* 周数显示：
+       *  · 平时 —— 全局连续周（S.week 从 0 起，显示成第 1~120 周）
+       *  · 假期 —— 假期不计入周数，这里改成显示「❄️ 寒假 / 🌞 暑假」，
+       *             不再出现「第 N 周」的字样（用户要求：假期隐藏对周的描述） */
+      const vacEl = document.getElementById("hudWeekText");
+      if (typeof inVacation === "function" && inVacation() && vacEl) {
+        const isWin = S.vac.kind === "winter";
+        vacEl.textContent = isWin ? "❄️ 寒假" : "🌞 暑假";
+        vacEl.classList.add("vac-pill");
+      } else if (vacEl) {
+        vacEl.textContent = L("hud.week", num(S.week, 0) + 1);
+        vacEl.classList.remove("vac-pill");
+      }
+      const termEl = document.getElementById("hudTerm");
+      if (termEl) termEl.textContent = (typeof inVacation === "function" && inVacation()) ? (S.vac.name || "") : termName();
       // 属性栏：只显示 PROP_HUD 的四项，且除经济外一律只给档位
       document.getElementById("statPanel").innerHTML = renderStatPanel();
       document.getElementById("talentCount").textContent = Talent.owned.length;
@@ -172,7 +187,6 @@
       setText("btnTheme", L("hud.theme"));
       setText("btnSave", L("hud.save"));
       setText("btnHome", L("hud.home"));
-      setText("btnLang", L("hud.lang"));
 
       // 氛围特效：压力红雾 / 心态灰暗 / 健康发虚 / 经济见底
       if (typeof updateMood === "function") updateMood();
@@ -387,6 +401,21 @@
     function showPopup(def, onResolve) {
       showModal(def.title, def.body, def.options, () => onResolve && onResolve(),
         def.lock, def.showClose, {kind: def.kind || "free", img: def.img, badge: def.badge});
+      /* 选项里带 id 的（如旅游地图的「出发」按钮）：
+       * 先按 id 挂到按钮上，再执行 afterRender ——
+       * 顺序不能反，否则 afterRender 里按 id 取按钮时取不到，禁用状态就设不上。 */
+      if (def.options) {
+        def.options.forEach((o, i) => {
+          if (!o.id) return;
+          const bs = document.querySelectorAll("#modalOpts button");
+          if (bs[i]) bs[i].id = o.id;
+        });
+      }
+      /* afterRender：弹窗已经画到页面上之后再执行的回调。
+       * 旅游地图要靠它给景点按钮挂点击事件 —— 元素得先存在才能挂。 */
+      if (typeof def.afterRender === "function") {
+        try {def.afterRender();} catch (e) {console.warn("afterRender:", e);}
+      }
     }
 
     /* ==================================================================

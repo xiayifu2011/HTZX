@@ -7,7 +7,9 @@
  * 维护等级：引擎层（一般不动）
  * ============================================================ */
 
-    function weekInTerm() {return S.week % (WEEKS_PER_TERM + 1)}
+    /* 本学期第几周：1~20（v1.2 起每学期 20 周）。
+     * S.week 是全局连续周（0 起，0~119），除以 20 得到学期、取余得到周次。 */
+    function weekInTerm() {return (S.week % WEEKS_PER_TERM) + 1}
 
     function gradeName() {return L("grade." + (Math.min(2, Math.floor(S.term / 2)) + 1))}
 
@@ -15,6 +17,11 @@
 
     function nextWeek() {
       if (S.over) return;
+      /* 本周收尾：再判定一次成就。
+       * 这是个兜底 —— 固定的日程（月考、体艺节、开学）不一定都调了 checkAch，
+       * 加上这一句，任何在本周达成条件的成就都会在本周结束时就解锁，
+       * 不会拖到下一周的第一次行动才跳出来。 */
+      if (typeof checkAch === "function") checkAch();
       /* 周存档点：这一周的所有结算（属性、天赋、成就、破茧/退化、
        * 压力连击、家庭矛盾）都走完之后，才把「下周开始」的状态写进存档。
        * 读档回来正好回到新周的开端，不会丢任何已结算的内容。 */
@@ -30,12 +37,16 @@
       if (panel.innerHTML !== "") return;
       const wit = weekInTerm();
       const fixed = fixedEventOf(S.term, wit);
-      if (!fixed) offerActions();
+      /* 本周的固定事件已经跑过了（比如开学）→ 照常出行动面板，
+       * 否则那一周就被凭空吃掉了。 */
+      if (!fixed || S.fixedDone) offerActions();
     }
 
     function startWeek() {
       if (S) {
         S.evWeekTotal = 0;           // 新的一周：事件计数清零
+        S.clubOff = false;           // 本周还没「逃社团」
+        S.fixedDone = false;         // 本周的固定日程还没跑
         S.evCountWeek = 0;
         S.evCntWeek = {};
         S.actCount = 0;
@@ -54,10 +65,13 @@
       /* 中考：跑完玩家选的那几个学期就考（默认跑满六年制 → 6 个学期）。
        * 只玩初一 / 只玩初三时，endTerm() 会提前收口。 */
       const last = (typeof endTerm === "function") ? endTerm() : (TERMS - 1);
-      if (S.week > 0 && weekInTerm() === 0 && S.term > last) {return zhongkao();}
+      /* 中考：跑完玩家选的那几个学期就考。
+       * S.term 在假期结束时 +1，超出 endTerm() 说明最后一个学期也读完了。 */
+      if (S.term > last) {return zhongkao();}
       const wit = weekInTerm();
       const wi = weekInfo(S.week, S.term);
-      say(L("flow.weekHead", S.week, gradeName(), termName(), wi.month, wi.seasonIcon, wi.season), "week-head");
+      /* 周头：S.week 内部从 0 起，玩家看到的是第 1~120 周 */
+      say(L("flow.weekHead", num(S.week, 0) + 1, gradeName(), termName(), wi.month, wi.seasonIcon, wi.season), "week-head");
       const fixed = fixedEventOf(S.term, wit);
       if (fixed) runFixed(fixed);
       else offerActions();
@@ -86,11 +100,13 @@
     function showClubGrab() {
       S.clubTerm = clampNum(S.term, 0, 9, 0);     // 这一年只问这一次
       const wi = weekInfo(S.week, S.term);
+      const cur0 = (typeof CLUB_MAP !== "undefined") ? CLUB_MAP[S.club] : null;
       showPopup({
         kind: "free",
         badge: "🎉 社团 · 周末",
         title: CLUB_GRAB_EVENT.t,
         body: `<div style="line-height:1.62">${String(CLUB_GRAB_EVENT.c).replace(/\n/g, "<br>")}
+          ${cur0 ? `<br><span style="color:var(--green);font-size:.85rem">你现在是「${cur0.n}」的成员 —— 可以续留，也可以换一个。</span>` : ""}
           <br><span style="color:var(--dim);font-size:.85rem">${wi.month}月 · ${wi.seasonIcon}${wi.season} · ${gradeName()}上学期 · 报名窗口只有这一次</span></div>`,
         options: (typeof buildClubGrabOpts === "function") ? buildClubGrabOpts() : [{t: "知道了", fn: () => {ensureActionPanel();}}]
       }, () => {ensureActionPanel();});
@@ -154,9 +170,13 @@
       };
 
       mk(`${c ? c.icon : "🎪"} ${L("act.club")}`, c ? TZ(c.n) : "", () => takeAction("club"), "act.club");
-      mk(L("act.clubSkip"), L("act.clubSub"), () => takeAction("study"), "act.clubSkip", "act.clubSub");
-      mk(L("act.clubRest"), L("act.restSub"), () => takeAction("rest"), "act.clubRest", "act.restSub");
-      mk(L("act.clubSocial"), L("act.socialSub"), () => takeAction("social"), "act.clubSocial", "act.socialSub");
+      /* ★ v1.3：选了「不去社团」，本周就不该再有社团里的任何活动。
+       * 以前这里只是走一次普通学习，但通用事件池里仍然可能抽到
+       * cond 为「已加入该社团」的社团事件 —— 人没去，故事却发生在社团教室里。
+       * 打上 S.clubOff 标记，事件抽取时直接跳过所有 cl_ 开头的事件。 */
+      mk(L("act.clubSkip"), L("act.clubSub"), () => {S.clubOff = true; takeAction("study");}, "act.clubSkip", "act.clubSub");
+      mk(L("act.clubRest"), L("act.restSub"), () => {S.clubOff = true; takeAction("rest");}, "act.clubRest", "act.restSub");
+      mk(L("act.clubSocial"), L("act.socialSub"), () => {S.clubOff = true; takeAction("social");}, "act.clubSocial", "act.socialSub");
 
       box.appendChild(grid);
       renderHUD();
@@ -381,6 +401,8 @@
 
     function eventAllowed(e) {
       if (num(e.w, 1) <= 0) return false;              // w:0 = 不走随机池（由固定日程调用）
+      /* 本周选了「不去社团」→ 社团教室里发生的事一律不该出现 */
+      if (S && S.clubOff && /^cl_/.test(e.id || "")) return false;
       const n = S.evCnt[e.id] || 0;
       if (e.once && n >= 1) return false;
       if (e.maxTimes != null && n >= e.maxTimes) return false;
@@ -545,10 +567,14 @@
       /* 单亲 / 留守家庭：事件里爸爸妈妈的称呼要统一，不能一会妈一会爸。
        * 双亲家庭 famText 原样返回，不做任何改动。 */
       const F = (typeof famText === "function") ? famText : (x => x);
-      const body = ev.c;
+      /* 标题与正文支持写成函数 —— 需要按玩家状态变化时用
+       * （例如「初三的学长」对初三玩家不成立，得换成同级同学）。
+       * 写字符串的照旧，完全向后兼容。 */
+      const body = (typeof ev.c === "function") ? ev.c(S) : ev.c;
+      const title = (typeof ev.t === "function") ? ev.t(S) : ev.t;
       return {
         kind: "event",
-        title: F(ev.t),
+        title: F(title),
         body: F(body),
         img: ev.img,
         badge: badge || "",
@@ -673,32 +699,86 @@
       }
     }
 
+    /* ==================================================================
+     * v1.3 中考结算
+     * ------------------------------------------------------------------
+     * 三块分数拼起来才是中考总分（满分 530）：
+     *   ① 初三当期科目：语数英(100) + 物(90+实验10) + 化(90+实验10) + 史政(100)
+     *   ② 生地：初二下「生地会考」时考完并锁死，之后不再变动
+     *   ③ 实验操作：生物 / 物理 / 化学各 10 分，第 14 周的实验考试拿
+     * 然后按权重折算：语数英 100%，物 50%，史政 40%，生 40%，地化 30%
+     * ================================================================== */
     function zhongkao() {
       count("zhongkao");
       /* 中考考哪几科，按「本局最后一个学期」算，而不是当前已经越界的 S.term。
        * 否则只玩初一的局，会拿初三的科目表去考（科目凭空多出物理化学）。 */
       const last = (typeof endTerm === "function") ? endTerm() : clampNum(S.term, 0, TERMS - 1);
       if (S.term !== last) S.term = last;
-      const p = S.prop, subs = subjectsOf(S.term) || [];
+      const p = S.prop;
       for (const k in PROP_RANGE) p[k] = fixProp(k, p[k]);
       ensureSubj();
       const diff = difficultyCurve(S.week, S.term);
       const W = examWeights();
-      let total = 0;
-      for (const sub of subs) {
-        let v = examScoreOf(sub, p, diff, W);
-        if (Talent.have("学神降世")) v += 8;
-        if (Talent.have("学霸光环")) v += 5;
-        if (Talent.have("考场黑马")) v += 3;
-        if (Talent.have("考试焦虑")) v -= 8;
-        total += clampNum(v, 0, 100, 0);
+
+      /* 生地：优先用会考锁死的成绩；没参加过会考（例如只玩初三）就用当前学力估 */
+      const paperOf = (sub, term4Exam) => {
+        const fm = (typeof fullMarkOf === "function") ? fullMarkOf(sub) : 100;
+        if (S.hk && typeof S.hk[sub] === "number") return clampNum(S.hk[sub], 0, fm, 0);
+        if (typeof examScoreOf === "function" && typeof S.subj[sub] === "number") {
+          const t0 = S.term; if (term4Exam != null) S.term = term4Exam;
+          const v = examScoreOf(sub, p, diff, W);
+          S.term = t0;
+          return clampNum((typeof toPaperScore === "function") ? toPaperScore(sub, v) : v, 0, fm, 0);
+        }
+        return Math.round(fm * 0.6);
+      };
+
+      /* 实验操作分（各 10 分，补考也能拿满，但过程要付出代价） */
+      const expOf = sub => ((S.exp && typeof S.exp[sub] === "number") ? clampNum(S.exp[sub], 0, 10, 0) : 0);
+
+      const rows = [];
+      let total = 0, full = 0;
+      const push = (sub, paper, exp, w) => {
+        const fm = (typeof fullMarkOf === "function") ? fullMarkOf(sub) : 100;
+        const raw = clampNum(paper, 0, fm, 0) + clampNum(exp, 0, 10, 0);   // 卷面 + 实验
+        const got = raw * w;                                              // 折算后得分
+        const top = (fm + (sub === "生物" || sub === "物理" || sub === "化学" ? 10 : 0)) * w;
+        total += got; full += top;
+        const pct = top > 0 ? got / top : 0;
+        const color = pct >= 0.9 ? "var(--green)" : (pct >= 0.6 ? "var(--gold)" : "var(--red)");
+        rows.push(`<div class="subjrow"><span style="width:4.2em">${TZ(sub)}${exp ? `<small style="color:var(--green)">+${exp}</small>` : ""}</span>`
+          + `<div class="bar"><i style="width:${Math.round(pct * 100)}%;background:${color}"></i></div>`
+          + `<b style="color:${color};width:3.2em;text-align:right">${got.toFixed(1)}</b>`
+          + `<small style="width:3.2em;color:var(--dim)">/${Math.round(top)}</small>`
+          + `<small style="width:3em;color:var(--dim);text-align:right">${Math.round(w * 100)}%</small></div>`);
+      };
+
+      const cur = subjectsOf(S.term) || [];
+      for (const sub of cur) {
+        if (sub === "生物" || sub === "地理") continue;      // 生地走会考成绩
+        const paper = (typeof examScoreOf === "function")
+          ? clampNum((typeof toPaperScore === "function") ? toPaperScore(sub, examScoreOf(sub, p, diff, W)) : examScoreOf(sub, p, diff, W), 0, fullMarkOf(sub), 0)
+          : 60;
+        push(sub, paper, expOf(sub), (typeof ZK_WEIGHT !== "undefined" ? ZK_WEIGHT[sub] : 1) || 1);
       }
-      S.zhongkao = subs.length ? Math.round(clampNum(total / subs.length, 0, 100, 0)) : 0;
-      S.lastExamScore = S.zhongkao;
-      say(L("flow.zhongkao", S.zhongkao), "exam");
+      // 生地：会考锁死的成绩（生物再 + 实验 10 分）
+      push("生物", paperOf("生物", 3), expOf("生物"), 0.4);
+      push("地理", paperOf("地理", 3), 0, 0.3);
+
+      S.zhongkao = Math.round(clampNum(total, 0, full, 0));
+      S.zkFull = Math.round(full);
+      S.lastExamScore = full > 0 ? Math.round(total / full * 100) : 0;
+      say(`🎓 中考总分 ${S.zhongkao} / ${S.zkFull}`, "exam");
       checkAch();
       saveGame(false, true);      // 中考分数算出来就立刻落盘
-      gameOver();
+
+      /* 成绩单：把折算过程摊开给玩家看 */
+      const body = `<div style="line-height:1.62">
+        <div style="color:var(--dim);font-size:.82rem">卷面分 + 实验分，再按中考权重折算</div>
+        ${rows.join("")}
+        <div style="margin-top:8px;text-align:right;color:var(--gold)">中考总分：<b style="font-size:1.2rem">${S.zhongkao}</b> / ${S.zkFull}</div>
+      </div>`;
+      showModal("🎓 中考成绩单", body, [{t: "查看结局", fn: () => gameOver()}], null, false, false, {kind: "fixed"});
     }
 
     function gameOver() {

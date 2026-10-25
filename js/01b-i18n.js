@@ -1,26 +1,42 @@
 /* ==================================================================
- * 工具层 · 双语（中文 / English）
+ * 工具层 · 文案集中层
  * ==================================================================
  * 用法：
- *   L("ui.save")              → 当前语言的文案
+ *   L("ui.save")              → 取一条文案
  *   L("hud.week", 12)         → 带参数，文案里写 {0} {1}
- *   T({zh:"学习", en:"Study"}) → 双语对象取值（直接传字符串也能用）
- *   TZ("学习")                → 只在英文模式下显示原文（中文内容用）
+ *   T({zh:"学习", en:"…"})     → 双语对象取值（直接传字符串也能用）
+ *   TZ("学习")                → 中文内容原样返回
+ *
+ * ------------------------------------------------------------------
+ * ★ 关于英语模式（v1.2 现状：已下线，但保留了全部接口）
+ * ------------------------------------------------------------------
+ * 之前做过一版英语模式，只译好了一部分界面，事件 / 天赋 / 书目仍是中文，
+ * 切过去会出现半中半英、刷新不及时的问题。v1.2 起整块下线：
+ *   · 页面上的切换按钮已删除
+ *   · I18N 只保留 zh 一张表
+ *   · LANG 固定为 "zh"
+ *
+ * 但下面这些全都留着，将来要重新开放英语模式时不用改任何调用点：
+ *   · L() 里"先查 LANG 表、查不到回退 zh"的逻辑原样保留
+ *   · T() 里"取 v[LANG]"的逻辑原样保留
+ *   · TZ() 保留（英文模式下它决定中文内容要不要显示原文）
+ *   · propName / slotName / genderName / actionName 这些都是走 L() 的
+ *
+ * 恢复步骤（将来接手的人照做即可）：
+ *   1. 在 I18N 里加回 en: { ... } 一张表
+ *   2. 把 LANG 从 const 改成 let，加回 setLang() / applyLangToDom()
+ *   3. 在 index.html 放一个切换按钮，onclick="toggleLang()"
+ *   4. 全项目 276 处 L("key") 一行都不用动
  *
  * 维护约定：
- *   1. 新增界面文案时，zh / en 两边都写；en 没写会自动回退到中文。
- *   2. 旧事件 / 天赋 / 书目文案仍是中文，会逐批补译（不是 bug）。
- *   3. 不要在 key 里放变量，一律用 {0} 占位 + L(key, v0)。
+ *   1. 新增界面文案一律走 L("key")，不要在图里硬写中文 —— 这样才能双语。
+ *   2. 不要在 key 里放变量，一律用 {0} 占位 + L(key, v0)。
  *
  * 维护等级：工具层（加文案时改）
  * ============================================================ */
 
-    const LANGS = [
-      {id: "zh", label: "中文", short: "中"},
-      {id: "en", label: "English", short: "EN"}
-    ];
-
-    let LANG = "zh";
+    /* 当前语言。英语模式恢复后这里改回 let，并配合 setLang() 使用。 */
+    const LANG = "zh";
 
     /* ==================================================================
      * 文案表
@@ -38,14 +54,17 @@
         "menu.changelog": "🆕 更新日志",
         "menu.credits": "🙏 鸣谢列表",
         "menu.about": "游戏说明",
+        "about.fold": "收起",
+        "about.unfold": "展开",
+        "about.foldTip": "把游戏说明收起来，主菜单更短一些",
+        "about.unfoldTip": "展开看看这个游戏怎么玩",
         "menu.theme": "主题色",
-        "menu.lang": "语言",
-        "menu.settings": "设置",
+                "menu.settings": "设置",
         "menu.themeHint": "点一下就换，立刻生效，会记住你的选择",
-        "menu.langHint": "界面与新增内容双语；旧事件文案仍在补译中",
-
+        
         "about.body":
-          `你将经历初一至初三共 <b style="color:var(--gold)">150 周</b>，直至中考。<br>
+          `你将经历初一至初三共 <b style="color:var(--gold)">120 周</b>（每学期 20 周），直至中考。<br>
+           寒暑假不计入周数，它是学期之间的一段独立时间。<br>
            <b style="color:var(--purple)">天赋不会在一开始赠送</b> —— 它们藏在一次次选择里。<br>
            每周可做 <b style="color:var(--gold)">1~2 次本周行动</b>，每次行动后都会跟一个 <b style="color:var(--gold)">⚡ 事件弹窗</b>，偶尔还会连锁出后续事件。<br>
            <b style="color:var(--green)">🎒 小卖铺 / 读书角 / 天赋图鉴 / 成就</b> 属于自由操作，<b>不占用行动次数</b>。<br>
@@ -145,12 +164,6 @@
         /* ---------------- 存档 ---------------- */
         "save.fail": "⚠ 存档没能写入（浏览器隐私模式或空间已满）",
         "save.auto": "自动存档",
-
-        /* ---------------- 英语模式敬请期待 ---------------- */
-        "lang.pendingTitle": "🌐 英语模式",
-        "lang.pendingLead": "敬请期待",
-        "lang.pendingBody": "英语模式还在翻译中。目前界面只译好了一部分，事件、天赋、书目仍是中文，切换后会出现半中半英和刷新不及时的问题。<br>先把它收起来，等全部译完再开放。",
-        "lang.pendingFoot": "如果已经切到英文了，再点一次这个按钮就能切回中文。",
 
         /* ---------------- 文档实时更新 ---------------- */
         "doc.srcNet": "📄 直接读取 docs/ 里的文件（改完刷新即可）",
@@ -263,8 +276,16 @@
         "cc.male": "男",
         "cc.female": "女",
         "cc.planLabel": "玩哪几个学期",
+        "cc.title": "创建角色",
+        "cc.name": "姓名",
+        "cc.namePh": "输入你的名字",
+        "cc.gender": "性别",
+        "cc.male": "男",
+        "cc.female": "女",
+        "cc.planLabel": "玩哪几个学期",
+        "cc.bannedToast": "这个名字不能用来建存档 —— 它的主人正坐在屏幕外面看着你。",
         "cc.plan.full": "初中三年",
-        "cc.plan.fullSub": "初一上 → 初三下，完整 150 周",
+        "cc.plan.fullSub": "初一上 → 初三下，完整 120 周",
         "cc.plan.from2": "初二到初三",
         "cc.plan.from2Sub": "从初二开学开始，跳过初一",
         "cc.plan.only3": "只玩初三",
@@ -306,6 +327,39 @@
         "exam.avg": "均分",
         "exam.full": "满分 100",
         "exam.fullMarks": "🎉 满分科目:{0}",
+        "exam.total": "卷面总分",
+
+        /* ---------------- v1.3 旅游 ---------------- */
+        "travel.title": "🧳 假期 · 要不要出去走走",
+        "travel.lead": "假期长，作业也长。你是想在家待着，还是出去看看？",
+        "travel.money": "手头的钱",
+        "travel.hint": "出门要花路费和门票，但有些东西，只有在路上才能遇到。",
+        "travel.go": "去{0}",
+        "travel.from": "约 {0} 起",
+        "travel.pick": "可去 {0} 站",
+        "travel.stay": "在家待着",
+        "travel.staySub": "省钱，但假期会平淡一些",
+        "travel.mapTitle": "{0} · 选几个地方",
+        "travel.mapLead": "地图上标着能去的地方。点一下选上，再点一下取消。\n{0}这一趟可以走 {1} 站。",
+        "travel.chosen": "已选 {0} / {1}",
+        "travel.spend": "预计花费",
+        "travel.full": "这一趟最多只能去 {0} 站",
+        "travel.poor": "钱不够去{0}了",
+        "travel.confirm": "出发",
+        "travel.back": "再想想",
+        "travel.setoff": "🧳 你出发了。{0}的这一趟，开始了。",
+        "travel.at": "📍 {0}",
+        "travel.shortTitle": "🧳 七天假 · 要不要出去走走",
+        "travel.shortLead": "七天，够去一个地方。\n作业可以回来再写，但有些地方，只有这几天才去得了。",
+        "travel.shortHint": "七天假去不了太远，也去不了太多地方 —— 省内，一站。",
+        "travel.shortGo": "出去走一趟",
+        "travel.shortGoSub": "省内，选一个地方",
+        "travel.shortOpt": "🧳 出门走走",
+        "travel.shortOptSub": "七天假，够去一个地方",
+
+        /* ---------------- v1.3 节假日 ---------------- */
+        "hol.lead": "{0}　{1}",
+        "hol.note": "这一周是{0}。",
         "exam.accept": "收下成绩单",
         "exam.log": "📝【{0}】总分 {1}/{2}，均分 {3}",
         "exam.top": "名列前茅！全年级都听说了你的名字。",
@@ -362,335 +416,9 @@
         /* ---------------- 提示 ---------------- */
         "toast.saved": "💾 已保存",
         "toast.theme": "🎨 主题：{0}",
-        "toast.lang": "🌐 English",
-        "toast.langZh": "🌐 已切换为中文",
-        "doc.missing": "文档还没生成",
+                        "doc.missing": "文档还没生成"
       },
 
-      /* ================================================================== */
-      en: {
-        "app.title": "Life Simulator",
-        "app.suffix": "Edition",
-
-        "menu.slots": "Save Slots",
-        "menu.more": "Learn More",
-        "menu.guide": "📘 Guide",
-        "menu.changelog": "🆕 Changelog",
-        "menu.credits": "🙏 Credits",
-        "menu.about": "About",
-        "menu.theme": "Theme",
-        "menu.lang": "Language",
-        "menu.settings": "Settings",
-        "menu.themeHint": "Tap to switch — applies instantly and remembers your pick",
-        "menu.langHint": "UI and new content are bilingual; older event text is still being translated",
-
-        "about.body":
-          `You will live through <b style="color:var(--gold)">150 weeks</b>, from Grade 7 to the high-school entrance exam.<br>
-           <b style="color:var(--purple)">Talents are never handed out at the start</b> — they grow out of your choices.<br>
-           Each week you take <b style="color:var(--gold)">1~2 actions</b>, and every action is followed by an <b style="color:var(--gold)">⚡ event popup</b>, sometimes chained.<br>
-           <b style="color:var(--green)">🎒 Shop / Book Corner / Talent Codex / Achievements</b> are free actions and <b>cost no action slot</b>.<br>
-           Some negative talents can be <b style="color:var(--green)">broken out of</b> — keep studying, keep resting, and the shadow lifts.<br>
-           <span style="color:var(--dim);font-size:.85rem">"Stand firm, go far." — aboard the train, every step counts.</span>`,
-
-        "hud.week": "Week {0}",
-        "hud.act": "Actions",
-        "hud.ev": "Events",
-        "hud.shop": "🏪 Shop",
-        "hud.talentBook": "📖 Talent Codex",
-        "hud.ach": "🏆 Achievements",
-        "hud.save": "💾 Save",
-        "hud.home": "🏠 Menu",
-        "hud.theme": "🎨 Theme",
-        "hud.lang": "🌐 中/EN",
-
-        "hud.talent": "Talents",
-        "hud.talentHint": "tap for details",
-        "hud.item": "Items",
-        "hud.subjects": "Subjects (this grade)",
-        "hud.score": "Scores",
-        "hud.scoreTotal": "Overall",
-        "hud.lastExam": "Last exam",
-        "hud.rank": "Grade rank (est.)",
-        "hud.rankVal": "Top {0}%",
-        "hud.noTalent": "No talents yet — they awaken through choices",
-        "hud.noItem": "No items — try the shop",
-        "hud.subjToggle": "Subject detail ({0})",
-
-        "prop.心态": "Mind",
-        "prop.经济": "Money",
-        "prop.健康": "Health",
-        "prop.效率": "Focus",
-        "prop.悟性": "Insight",
-        "prop.社交": "Social",
-        "prop.压力": "Stress",
-        "prop.亲情": "Family",
-
-        /* ---------------- 属性档位（模糊化显示） ---------------- */
-        "level.vlow": "Very low",
-        "level.low": "Low",
-        "level.mid": "Fair",
-        "level.high": "High",
-        "level.vhigh": "Very high",
-
-        "mood.stress": "You are about to break.",
-        "mood.dark": "The world has lost its colour.",
-        "mood.weak": "Your body is failing.",
-
-        /* ---------------- 运动锻炼 ---------------- */
-        "sport.log": "🏃 You broke a sweat on the field.",
-        "sport.float": "Getting stronger",
-
-        /* ---------------- 做题 ---------------- */
-        "quiz.badge": "✏️ Action · Problem",
-        "quiz.title": "A {0} question",
-        "quiz.tip": "A correct answer boosts the subject; a wrong one costs you a little.",
-        "quiz.placeholder": "Type your answer",
-        "quiz.fillTip": "Units optional; punctuation is ignored.",
-        "quiz.submit": "Submit",
-        "quiz.giveup": "Skip it",
-        "quiz.giveupLog": "You skipped the {0} question.",
-        "quiz.gaveup": "You handed in a blank.",
-        "quiz.resultTitle": "Check the answer",
-        "quiz.correct": "✔ Correct.",
-        "quiz.incorrect": "✘ Wrong.",
-        "quiz.answer": "Answer: ",
-        "quiz.yours": "Yours: ",
-        "quiz.why": "Why: ",
-        "quiz.right": "{0} — correct. That subject moved forward.",
-        "quiz.wrong": "{0} — wrong. This part still slips.",
-        "quiz.rightFloat": "{0} ▲",
-        "quiz.wrongFloat": "{0} ▼",
-        "quiz.none": "No problem fits your grade yet — you ended up reading instead.",
-
-        /* ---------------- 亲情 / 家庭 ---------------- */
-        "fam.badge": "🏠 Family · Friction",
-        "fam.apologize": "Say sorry",
-        "fam.shutup": "Say nothing",
-        "fam.hug": "Go and hug them",
-        "fam.apologizeLog": "{0} You said sorry. It eased a little, but it still sits heavy.",
-        "fam.shutupLog": "{0} You said nothing. That meal took forever.",
-        "fam.hugLog": "You walked over and hugged them. Shoulders that had been tight for weeks finally loosened.",
-        "fam.conflictLog": "🏠 There was friction at home.",
-
-        /* ---------------- 遗憾离场 ---------------- */
-        "burn.badge": "🕯 Stress · Warning",
-        "burn.warn": "⚠ Stress has been maxed out for {0} week(s) — {1} more and you will break.",
-        "burn.warnTitle": "Last week",
-        "burn.warnBody": "You have been pushing through for weeks.\nKeep going and your body will decide for you.\nRest once, work out, or talk to someone this week.",
-        "burn.over": "🕯 Stress stayed maxed out for three weeks. You did not make it to the exam.",
-
-        /* ---------------- 文档实时更新 ---------------- */
-        "doc.srcNet": "📄 Read straight from docs/ — just refresh after editing",
-        "doc.srcCache": "📄 From the version you imported on this machine",
-        "doc.srcBuiltin": "📄 From the bundled version — import, or run a local server, to see edits",
-        "doc.import": "📥 Import / update",
-        "doc.close": "Close",
-        "doc.importTitle": "Update \"{0}\"",
-        "doc.importTip": "After editing docs/{0}, pick the file here or paste its contents. It applies at once and is remembered on this machine.",
-        "doc.importOr": "—— or just paste the Markdown below ——",
-        "doc.importPh": "Paste the Markdown from docs/ here",
-        "doc.doImport": "Import and view",
-        "doc.clearCache": "Clear local version",
-        "doc.imported": "✅ Updated",
-        "doc.cleared": "Local version cleared",
-        "doc.empty": "Nothing to read",
-        "doc.readFail": "Could not read that file",
-        "doc.missing": "This document has no content yet",
-
-        /* ---------------- 存档 ---------------- */
-        "save.fail": "⚠ Could not write the save (private mode or storage full)",
-        "save.auto": "Auto-saved",
-
-        /* ---------------- 英语模式敬请期待 ---------------- */
-        "lang.pendingTitle": "🌐 English mode",
-        "lang.pendingLead": "Coming soon",
-        "lang.pendingBody": "English is still being translated. Only part of the interface is done — events, talents and books are still in Chinese, so switching now gives you a half-and-half mess.<br>It is parked until the translation is complete.",
-        "lang.pendingFoot": "If you are already in English, click this button again to switch back to Chinese.",
-
-        "act.title": "Choose an action",
-        "act.titleN": "Choose an action ({0}/{1})",
-        "act.study": "📖 Study hard",
-        "act.quiz": "✏️ Do a problem",
-        "act.sport": "🏃 Work out",
-        "act.rest": "😴 Rest",
-        "act.social": "👥 Socialize",
-        "act.fun": "🎮 Slack off",
-        "act.allowance": "🏠 Ask parents for money",
-        "act.read": "📚 Book corner",
-        "act.club": "🎪 Go to club",
-        "act.clubSkip": "📖 Stay and do homework",
-        "act.clubRest": "😴 Back to the dorm",
-        "act.clubSocial": "👥 Hang out instead",
-        "act.clubSub": "skip club this week",
-        "act.restSub": "not in the mood",
-        "act.socialSub": "no club today",
-
-        "modal.close": "Close",
-        "modal.continue": "Continue",
-        "modal.ok": "OK",
-        "modal.cancel": "Cancel",
-
-        "badge.event": "⚡ Event {0}/{1}",
-        "badge.fixed": "📅 Scheduled",
-        "badge.free": "🎒 Free · costs no action",
-        "badge.ending": "🏁 Ending",
-        "ev.result": "Result",
-        "ev.resultBadge": "⚡ Event {0}/{1} · Result",
-
-        "talent.detail": "Talent",
-        "talent.effect": "Effect",
-        "talent.status": "Status",
-        "talent.owned": "Owned",
-        "talent.locked": "Not owned",
-        "talent.conflict": "Conflicts",
-        "talent.none": "None",
-        "talent.book": "Talent Codex",
-        "talent.bookHint": "Unlocked {0} / {1}　·　tap any talent for details",
-
-        "shop.title": "Shop",
-        "shop.body": "You step into the shop by the school gate. The shelves are packed.",
-        "shop.money": "Money: {0}",
-        "shop.price": "Price {0}",
-        "shop.leave": "Leave",
-        "shop.buy": "🏪 You bought [{0}].",
-        "shop.poor": "Not enough money.",
-        "item.use": "Item used",
-        "item.used": "🎒 You used [{0}] — {1}",
-        "item.effect": "[{0}] takes effect:",
-
-        "book.title": "Classroom Book Corner",
-        "book.body": "Books donated by classmates line the back wall. Sunlight falls on one shelf. You pull out a book —",
-        "book.money": "Money: {0}",
-        "book.cost": "Cost {0}",
-        "book.read": "📖 You read {0}.",
-        "book.poor": "Not enough money for this book.",
-        "book.close": "Close the book",
-        "book.putBack": "You put the book back and return to your seat.",
-        "book.badge": "📚 Action · Book Corner",
-
-        "ach.title": "Achievements",
-
-        "save.slot": "Slot {0}",
-        "save.empty": "empty",
-        "save.resume": "Continue",
-        "save.restart": "Restart",
-        "save.delete": "Delete",
-        "save.new": "New game",
-        "save.over": "finished",
-        "save.info": "Exam:{0} · Achievements {1} · {2}",
-        "save.confirmOver": "Overwrite this save?",
-        "save.confirmDel": "Delete this save?",
-        "save.saved": "💾 Saved",
-        "save.loaded": "💾 Save loaded — your middle school life continues!",
-        "save.anon": "Nameless",
-        "save.male": "Male",
-        "save.female": "Female",
-
-        "cc.title": "Create Character",
-        "cc.name": "Name",
-        "cc.namePh": "Enter your name",
-        "cc.gender": "Gender",
-        "cc.male": "Male",
-        "cc.female": "Female",
-        "cc.planLabel": "Which years to play",
-        "cc.plan.full": "All three years",
-        "cc.plan.fullSub": "Term 1 through 6 — the full 150 weeks",
-        "cc.plan.from2": "From year 2",
-        "cc.plan.from2Sub": "Start at the beginning of year 2, skip year 1",
-        "cc.plan.only3": "Year 3 only",
-        "cc.plan.only3Sub": "The shortest run — straight into the final push",
-        "cc.plan.only1": "Year 1 only",
-        "cc.plan.only1Sub": "A taster — one school year and done",
-        "cc.diffLabel": "Difficulty",
-        "cc.diff.story": "Story",
-        "cc.diff.storySub": "Health and mood have a floor. Good for showcases.",
-        "cc.diff.normal": "Standard",
-        "cc.diff.normalSub": "You can really burn out if you mismanage.",
-        "cc.diff.hard": "Hardcore",
-        "cc.diff.hardSub": "Stress and money will drag you down faster.",
-        "cc.setupHint": "Difficulty and range are saved with your save file.",
-        "cc.planNote": "Starting mid-school initialises your subjects at that year's level.",
-        "cc.pick": "Or pick one of these:",
-        "cc.start": "Begin",
-        "cc.begin": "🌅 {0}'s middle school life begins.",
-
-        "flow.weekHead": "—— Week {0} · {1}{2} · {3}月{4}{5} ——",
-        "flow.actionLog": "Action ({0}/{1}): {2} → settled",
-        "flow.clubLog": "🎪 Wednesday club: {0}",
-        "flow.study": "Study hard",
-        "flow.quiz": "Do a problem",
-        "flow.sport": "Work out",
-        "flow.rest": "Rest",
-        "flow.social": "Socialize",
-        "flow.fun": "Slack off",
-        "flow.allowance": "Ask parents for money",
-        "flow.read": "Book corner",
-        "flow.club": "Club",
-        "flow.stressBurst": "Stress overload! Mind -{0}",
-        "flow.healthWarn": "⚠️ Your body is waving a red flag. Rest next week.",
-        "flow.mindWarn": "⚠️ You've been down lately. Take care of yourself.",
-        "flow.zhongkao": "🎓 Results are out! Your average: {0}/100",
-
-        "exam.sheet": "{0} · Report Card",
-        "exam.avg": "Average",
-        "exam.full": "out of 100",
-        "exam.fullMarks": "🎉 Perfect scores: {0}",
-        "exam.accept": "Take the report card",
-        "exam.log": "📝 [{0}] total {1}/{2}, average {3}",
-        "exam.top": "Top of the grade! Everyone knows your name now.",
-        "exam.bad": "You bombed it… Mind -8, Stress +10",
-
-        "alw.title": "Ask Parents for Money",
-        "alw.badge": "🏠 Action · Family",
-        "alw.hint": "Family bond: {0}　·　the closer you are, the more they give and the less they nag",
-        "alw.thanks": "Thanks, Mom and Dad",
-        "alw.know": "Okay",
-        "alw.t1": "They added a bit more",
-        "alw.t2": "Given gladly",
-        "alw.t3": "Given",
-        "alw.t4": "Given with a lecture",
-        "alw.t5": "Refused",
-        "alw.t6": "Only a little",
-        "alw.l1": "Before you finished asking, {0} had the wallet out: \"Don't scrimp at school.\" Then fifteen more.",
-        "alw.l2": "{0} transferred it without a word, then asked whether school has been tiring.",
-        "alw.l3": "{0} counted it out and handed it over, adding \"don't waste it\".",
-        "alw.l4": "\"Didn't I just give you some last week?\" {0} scolded, but paid anyway. Your face went hot.",
-        "alw.l5": "{0} frowned: \"Money is tight at home right now.\" You opened your mouth, then closed it.",
-        "alw.l6": "{0} emptied every pocket and scraped together a few notes. You said thanks, and it tasted strange.",
-        "alw.refusedLog": "You got nothing this time.",
-        "alw.costLog": "The moment you asked, family bond -{0}. Some words cannot be taken back.",
-        "alw.log": "🏠 Ask parents for money: {0}{1}",
-        "alw.got": ", got {0}",
-        "alw.none": ", got nothing",
-
-        "slot.weekday": "Weekdays",
-        "slot.clubday": "Wed club",
-        "slot.weekend": "Weekend",
-        "term.up": "1st term",
-        "term.down": "2nd term",
-        "grade.1": "Grade 7",
-        "grade.2": "Grade 8",
-        "grade.3": "Grade 9",
-
-        "end.title": "Junior High Ends",
-        "end.back": "Back to menu",
-        "end.restart": "Play again",
-        "end.talents": "Talents",
-        "end.ach": "Achievements",
-        "end.none": "none",
-        "end.stat": "{0} weeks · Exam {1} · Talents {2} · Achievements {3}/{4}",
-        "end.arrival": "{0} has arrived. Every step of these three years counted.",
-        "end.reasonHealth": "You left early because of your health.",
-        "end.reasonMind": "You left early under too much pressure.",
-        "end.reasonMoney": "You left early because your family could not afford it.",
-        "end.reasonStress": "You left early after weeks of unrelenting stress.",
-
-        "toast.saved": "💾 Saved",
-        "toast.theme": "🎨 Theme: {0}",
-        "toast.lang": "🌐 English",
-        "toast.langZh": "🌐 Switched to Chinese",
-        "doc.missing": "Document not generated yet",
-      }
     };
 
     /* ==================================================================
@@ -756,77 +484,18 @@
     }
 
     /* ==================================================================
-     * 切换语言
-     * ============================================================ */
-    function setLang(id, silent) {
-      const ok = LANGS.some(l => l.id === id);
-      LANG = ok ? id : "zh";
-      try {localStorage.setItem("htzx_lang", LANG);} catch (e) { }
-      if (typeof applyLangToDom === "function") applyLangToDom();
-      if (typeof saveSettings === "function") saveSettings();
-      if (!silent) toast(LANG === "en" ? L("toast.lang") : L("toast.langZh"));
-      // 主菜单是静态 HTML，标签要靠 renderStartExtras 重刷一遍
-      if (typeof renderStartExtras === "function") renderStartExtras();
-      // 行动按钮是动态生成的，切语言时原地换字（不能重建，会重置本周进度）
-      if (typeof relabelActions === "function") relabelActions();
-      if (typeof renderHUD === "function" && S) renderHUD();
-      return LANG;
-    }
-
-    /* ==================================================================
-     * 切换语言
-     * ------------------------------------------------------------------
-     * ★ v1.1 当前状态：英语模式暂停开放。
-     *   已译好的界面只覆盖了一部分，事件、天赋、书目仍是中文，
-     *   切换后会出现"半中半英"和刷新不及时的问题。
-     *   所以点中文界面上的切换按钮时，弹出说明而不是真的切过去。
-     *
-     *   唯一例外：已经处于英文模式的存档 / 玩家，允许切回中文，
-     *   不会把人卡在英文里出不来。
-     *
-     * 将来要重新开放英语模式：把 EN_READY 改成 true 即可，
-     *   下面这段提示逻辑会自动让路，恢复成正常切换。
-     * ============================================================ */
-
-    const EN_READY = false;      // ← 英语模式完工后改成 true
-
-    function toggleLang() {
-      // 已经是英文：无条件放行，让人能切回中文
-      if (LANG === "en") {doSetLang("zh"); return;}
-      // 中文 → 英文：英语还没准备好，弹窗说明
-      if (!EN_READY) {showLangPending(); return;}
-      doSetLang("en");
-    }
-
-    function doSetLang(id) {
-      setLang(id);
-      if (typeof ensureActionPanel === "function") {
-        const p = document.getElementById("actionPanel");
-        if (p && p.innerHTML !== "" && S && !S.over) {p.innerHTML = ""; ensureActionPanel();}
-      }
-    }
-
-    function showLangPending() {
-      if (typeof showModal !== "function") {if (typeof toast === "function") toast("英语模式敬请期待"); return;}
-      showModal(L("lang.pendingTitle"),
-        `<div style="line-height:1.6">
-          <div style="font-size:1.05rem;margin-bottom:6px">${L("lang.pendingLead")}</div>
-          <div style="color:var(--dim);font-size:.88rem">${L("lang.pendingBody")}</div>
-          <div style="color:var(--dim);font-size:.82rem;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)">${L("lang.pendingFoot")}</div>
-        </div>`,
-        [{t: L("modal.ok"), fn: () => { }}], null, false, false, {kind: "free"});
-    }
-
-    /* ==================================================================
      * 把文案刷到页面上
      * ------------------------------------------------------------------
      * 元素上写 data-i18n="key" 就是改文字，
      * 写 data-i18n-html="key" 支持内联标签，
      * 写 data-i18n-ph="key" 改 placeholder，
      * 写 data-i18n-title="key" 改 title。
+     *
+     * 现在语言固定中文，所以这个函数只在启动时跑一次（见 js/19-boot.js）。
+     * 英语模式恢复后，切换语言时再调一次即可刷新全站文案。
      * ============================================================ */
     function applyLangToDom() {
-      document.documentElement.lang = LANG === "en" ? "en" : "zh-CN";
+      document.documentElement.lang = "zh-CN";
       const root = document.body;
       if (!root) return;
       const list = root.querySelectorAll("[data-i18n],[data-i18n-html],[data-i18n-ph],[data-i18n-title]");

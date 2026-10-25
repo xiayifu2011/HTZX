@@ -134,9 +134,11 @@
       }
     }
 
-    /* 极矮屏（≤680）：把「游戏说明」整段折叠，主菜单就能压进一屏 */
+    /* 极矮屏（≤680）：「游戏说明」默认收起，但绝不彻底消失。
+     * 以前这里直接 display:none，矮屏上玩家就完全看不到说明了 ——
+     * 现在改成默认折叠，点一下「展开」照样能看。 */
     @media(max-height:680px) {
-      #startScreen #aboutBody {
+      #startScreen #aboutBody.collapsed {
         display: none
       }
 
@@ -197,3 +199,54 @@
       color: var(--dim);
       margin: 6px 0 14px
     }
+
+/* ==================================================================
+ * 「游戏说明」的展开 / 收起
+ * ------------------------------------------------------------------
+ * 标题右侧的一枚小胶囊：一枚会转向的箭头 + 一个词。
+ *   展开时 → 箭头朝上，写「收起」
+ *   收起时 → 箭头朝下，写「展开」
+ * 矮屏（≤680 高）默认收起，但按钮一直在，点一下就能看到说明。
+ * ================================================================== */
+
+.about-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 10px 2px 8px;
+  font-size: .74rem;
+  line-height: 1.5;
+  font-family: inherit;
+  color: var(--glow2, #c9a3e0);
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  vertical-align: middle;
+  white-space: nowrap;
+  transition: background .18s ease, border-color .18s ease, color .18s ease
+}
+
+.about-toggle:hover {
+  background: rgba(255, 255, 255, .12);
+  border-color: var(--glow2, #c9a3e0)
+}
+
+.about-toggle:active {transform: translateY(1px)}
+
+/* 箭头：默认朝下（收起态），展开时转 180° 朝上 */
+.about-toggle .chev {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  transition: transform .28s cubic-bezier(.34, 1.4, .64, 1)
+}
+
+.about-toggle.is-open .chev {transform: rotate(180deg)}
+
+@media(prefers-reduced-motion: reduce) {
+  .about-toggle .chev {transition: none}
+}

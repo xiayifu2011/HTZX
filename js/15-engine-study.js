@@ -48,7 +48,8 @@
         examMul: num(c.examMul, 1),
         stressMul: num(c.stressMul, 1),
         stressPenalty: num(c.stressPenalty, 0.30),
-        learnBleed: num(c.learnBleed, 0)
+        learnBleed: num(c.learnBleed, 0),
+        studyCost: c.studyCost || null
       };
     }
 
@@ -95,7 +96,7 @@
        * 现在按本局实际跨度换算：短局第 40 周 ≈ 长局第 120 周的难度。 */
       const from = (typeof startTerm === "function") ? startTerm() : 0;
       const to = (typeof endTerm === "function") ? endTerm() : 5;
-      const spanWeeks = Math.max(1, (to - from + 1)) * (num(WEEKS_PER_TERM, 24) + 1);
+      const spanWeeks = Math.max(1, (to - from + 1)) * num(WEEKS_PER_TERM, 20);
       const t = clampNum(week, 0, 2000) / spanWeeks;
       const tt = clampNum(t, 0, 1);
       const termT = Math.min(1, clampNum(term, 0, 10) / 5);
@@ -307,7 +308,7 @@
       if (typeof checkClubTalent === "function") checkClubTalent();
 
       // 亲情：寄宿制下联系少了会慢慢变淡，需要主动维护
-      // 约每两周 -1（不是每周都掉，否则 150 周会掉光）；
+      // 约每两周 -1（不是每周都掉，否则 120 周会掉光）；
       // 压力过高时额外 -1（情绪不好容易和家人起摩擦）。
       // 想让亲情掉得更慢/更快，改 0.45 这个概率即可。
       const fc = (typeof famCfg === "function") ? famCfg() : {weeklyDrop: 0.45, weeklyDropVal: 4};
@@ -368,6 +369,18 @@
 
       const diff = difficultyCurve(S.week, S.term);
       rate *= diff.gainMul * studyCfg().gainMul;   // v1.1：收益整体下调
+
+      /* v1.3：学习是有代价的 —— 每学一次，健康掉一点、压力涨一点。
+       * 数值按开局难度走（GAME_CONFIG.study.studyCost），
+       * 这样「一直学」不再是稳赚不赔的选项，休息和运动才有意义。 */
+      if (action === "study" || action === "quiz") {
+        const costTable = (studyCfg().studyCost) || {};
+        const lv = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.difficulty) || "normal";
+        const c = costTable[lv] || costTable.normal || {hp: 3, st: 4};
+        const scale = (action === "quiz") ? 0.5 : 1;      // 做题比整周苦读轻松些
+        modProp("健康", -Math.round(num(c.hp, 3) * scale));
+        modProp("压力", Math.round(num(c.st, 4) * scale));
+      }
 
       const subs = subjectsOf(S.term);
       let weekTotal = 0;
@@ -521,7 +534,7 @@
       const subs = subjectsOf(S.term) || [];
       const diff = difficultyCurve(S.week, S.term);
       const W = examWeights();
-      let total = 0, rows = [], fullMarks = [], perfect = subs.length > 0;
+      let total = 0, full = 0, rows = [], fullMarks = [], perfect = subs.length > 0;
       for (const sub of subs) {
         let v = examScoreOf(sub, p, diff, W);
         if (Talent.have("学霸光环")) v += 5;
@@ -539,25 +552,33 @@
         if (Talent.have("博古通今") && ["历史", "政治", "地理"].includes(sub)) v += 5;
         if (Talent.have("融会贯通")) v += 3;
         if (Talent.have("考试焦虑")) v -= 8;
-        v = Math.round(clampNum(v, 0, 100, 0));
-        if (v === 100) fullMarks.push(sub);
-        if (v < 90) perfect = false;
+        /* v1.3：百分制原始分 → 实际卷面分
+         *  · 语文走曲线（87 以上每分要 2.5 倍学力）
+         *  · 物 / 化 / 生 卷面满分 90（另 10 分是实验操作考试，此处不计） */
+        const fm = (typeof fullMarkOf === "function") ? fullMarkOf(sub) : 100;
+        v = Math.round(clampNum((typeof toPaperScore === "function") ? toPaperScore(sub, v) : v, 0, fm, 0));
+        if (v >= fm) fullMarks.push(sub);
+        if (v < fm * 0.9) perfect = false;
         total += v;
-        const color = v >= 90 ? "var(--green)" : (v >= 60 ? "var(--gold)" : "var(--red)");
-        rows.push(`<div class="subjrow"><span style="width:3em">${TZ(sub)}</span><div class="bar"><i style="width:${v}%;background:${color}"></i></div><b style="color:${color};width:2.5em;text-align:right">${v}</b></div>`);
+        full += fm;
+        const color = v >= fm * 0.9 ? "var(--green)" : (v >= fm * 0.6 ? "var(--gold)" : "var(--red)");
+        rows.push(`<div class="subjrow"><span style="width:3em">${TZ(sub)}</span><div class="bar"><i style="width:${fm ? v / fm * 100 : 0}%;background:${color}"></i></div><b style="color:${color};width:2.5em;text-align:right">${v}</b><small style="width:2.2em;color:var(--dim)">/${fm}</small></div>`);
       }
       if (S.examCharm) {S.examCharm = false;}
       if (S.penCharm) {S.penCharm = false;}
-      const avg = subs.length ? Math.round(total / subs.length) : 0;
+      const avg = full > 0 ? Math.round(total / full * 100) : 0;
       S.lastExamScore = clampNum(avg, 0, 100); S.bestExam = Math.max(num(S.bestExam, 0), S.lastExamScore); count("exam");
+      /* 考试相关的成就（「初露锋芒 · 第一次参加月考」等）在分数出来的这一刻判定，
+       * 不等下一次行动 —— 以前要等到下一周第一次行动时的 checkAch 才解锁。 */
+      if (typeof checkAch === "function") checkAch();
       if (avg >= 80) count("goodExam");   // 用于「考试焦虑」的破茧进度
-      say(L("exam.log", TZ(name), Math.round(total), subs.length * 100, avg), "exam");
+      say(L("exam.log", TZ(name), Math.round(total), full, avg), "exam");
       if (avg >= 90) {say(L("exam.top"), "good");}
       else if (avg < 45) {say(L("exam.bad"), "bad"); modProp("心态", -8); modProp("压力", 10);}
       else modProp("心态", 2);
       if (fullMarks.length) {S.cnt.subjFull = (S.cnt.subjFull || 0) + fullMarks.length;}
       if (perfect && subs.length > 0) count("allPerfect");
-      showModal(L("exam.sheet", TZ(name)), `<div>${rows.join("")}</div><div style="margin-top:5px;text-align:right;color:var(--gold)">${L("exam.avg")}:<b>${avg}</b> / ${L("exam.full")}</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">${L("exam.fullMarks", TZ(fullMarks.join("、")))}</div>` : ""}`,
+      showModal(L("exam.sheet", TZ(name)), `<div>${rows.join("")}</div><div style="margin-top:5px;text-align:right;color:var(--gold)">${L("exam.avg")}:<b>${avg}</b> / 100　·　${L("exam.total")} <b>${Math.round(total)}</b> / ${full}</div>${fullMarks.length ? `<div style="color:var(--green);margin-top:6px">${L("exam.fullMarks", TZ(fullMarks.join("、")))}</div>` : ""}`,
         [{
           t: L("exam.accept"), fn: () => {
             if (!S.daoDone && (avg >= 82 || p.悟性 >= 115) && Math.random() < 0.5) {examDao(avg);}

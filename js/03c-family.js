@@ -46,10 +46,11 @@
       grandpa: {zh: "爷爷", en: "Grandpa"}
     };
 
-    /* 这位家长在游戏里叫什么 */
+    /* 这位家长在游戏里叫什么。
+     * en 字段留着 —— 英语模式恢复后这里会自动切换，不用改调用点。 */
     function parentCall(which) {
       const w = PARENT_WORD[which] || PARENT_WORD.mom;
-      return (typeof LANG !== "undefined" && LANG === "en") ? w.en : w.zh;
+      return (typeof LANG !== "undefined" && LANG !== "zh" && w[LANG] != null) ? w[LANG] : w.zh;
     }
 
     /* 家里现在主要靠谁（缓存，避免每次都随机）

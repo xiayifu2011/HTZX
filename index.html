@@ -17,6 +17,8 @@
 </head>
 
 <body>
+    <!-- 主题呼吸光晕：每套主题周期不同，见 css/04-theme.css -->
+    <div class="theme-breath" aria-hidden="true"></div>
 <!-- ============================================================
      页面骨架：这里只有 div 的"位置"，不含任何玩法逻辑。
      想改布局就改这里；想改内容请去 js/ 下的 data-*.js。
@@ -33,16 +35,14 @@
     </div>
 
     <!-- ============================================================
-         设置：主题色 + 语言（两套切换都立刻生效，并写进本地设置）
+         设置：主题色（点一下就换，立刻生效，并写进本地设置）
          ============================================================ -->
     <div class="card" id="settingsCard">
       <div class="setrow">
         <span class="setlabel" id="themeLabel">主题色</span>
-        <button class="btn langbtn" id="langBtn" onclick="toggleLang()">English</button>
       </div>
       <div class="themelist" id="themeList"></div>
       <div style="color:var(--dim);font-size:.76rem;margin-top:6px" id="themeHint"></div>
-      <div style="color:var(--dim);font-size:.76rem;margin-top:2px" id="langHint"></div>
     </div>
 
     <div class="card" style="text-align:center">
@@ -55,7 +55,10 @@
     </div>
 
     <div class="card" style="text-align:center">
-      <div class="tag-title" style="margin-bottom:8px" id="aboutLabel">游戏说明</div>
+      <div class="tag-title" style="margin-bottom:8px">
+        <span id="aboutLabel">游戏说明</span>
+        <button class="about-toggle" id="btnAboutToggle" type="button" aria-expanded="true">收起</button>
+      </div>
       <p style="color:var(--dim);font-size:.9rem;line-height:2" id="aboutBody"></p>
     </div>
   </div>
@@ -74,7 +77,6 @@
         <button class="btn" id="btnTalentBook" onclick="openTalentBook()">📖 天赋图鉴</button>
         <button class="btn" id="btnAch" onclick="openAch()">🏆 成就</button>
         <button class="btn" id="btnTheme" onclick="openThemePicker()">🎨 主题</button>
-        <button class="btn" id="btnLang" onclick="toggleLang()">🌐 中/EN</button>
         <button class="btn" id="btnSave" onclick="saveGame(true)">💾 保存</button>
         <button class="btn" id="btnHome" onclick="toStart()">🏠 主菜单</button>
       </div>
@@ -128,7 +130,7 @@
   <!-- 文档实时更新：改完 docs/*.md 立刻能在游戏里看到 -->
   <script src="js/00b-docs-live.js"></script>
   <script src="js/01-utils.js"></script>
-  <!-- 双语层：中文 / English -->
+  <!-- 文案集中层：界面文案都走 L("key")，方便将来接回双语 -->
   <script src="js/01b-i18n.js"></script>
   <!-- 配置层：学校特色与玩法参数 -->
   <script src="js/02-config.js"></script>
@@ -155,6 +157,9 @@
   <script src="js/05c-data-sport.js"></script>
   <!-- 做题题库与出题逻辑 -->
   <script src="js/05d-data-quiz.js"></script>
+  <!-- 寒暑假：学期之间的独立阶段，不占周数 -->
+  <script src="js/05e-data-vacation.js"></script>
+  <script src="js/05f-data-travel.js"></script>
   <script src="js/05b-data-clubs.js"></script>
   <!-- 固定事件与假期副本 -->
   <script src="js/09-data-fixed.js"></script>

@@ -70,6 +70,8 @@
         }
         say(`🔓 获得天赋【${name}】(Lv.${t.lv})——${t.desc}${reason ? `(${reason})` : ""}`, "talent");
         toast(`🔓 天赋:${name}`);
+        /* 立刻刷新，让新天赋马上出现在左侧面板上，而不是等下一次渲染 */
+        if (typeof renderHUD === "function") renderHUD();
       } else {
         say(`未能获得【${name}】:${msg}。但你在尝试中有所感悟。`, "bad");
         modProp("悟性", 3);

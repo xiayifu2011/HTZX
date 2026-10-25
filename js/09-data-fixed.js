@@ -7,15 +7,18 @@
  * 维护等级：内容层（可改日程）
  * ============================================================ */
 
-    const GRADES = ["初一", "初二", "初三"], WEEKS_PER_TERM = 24, TERMS = 6;
+    /* 每学期 20 周，六个学期共 120 周（v1.2）。
+ * 寒暑假不计入周数 —— 它是独立于 S.week 的一个阶段，见 js/05e-data-vacation.js。
+ * 改这个数字会同时影响：月份分配、固定日程的 wit、中考触发点。 */
+    const GRADES = ["初一", "初二", "初三"], WEEKS_PER_TERM = 20, TERMS = 6;
 
     /* ==================================================================
      * 每学期的固定日程表
      * ------------------------------------------------------------------
-     * wit = 本学期第几周（0~24）。大致对应：
-     *   wit 0 ≈ 9 月初开学      wit 10 ≈ 11 月期中考试
-     *   wit 8 ≈ 10 月底（体艺节） wit 20 ≈ 1 月期末考试
-     *   wit 24 = 学期结束、假期副本
+     * wit = 本学期第几周（1~20，v1.2 起每学期 20 周）。大致对应：
+     *   wit 1  = 开学             wit 11 = 11 月期中考试
+     *   wit 8  = 10 月底（体艺节）  wit 19 = 期末考试
+     *   wit 20 = 学期结束 → 进入假期（假期不算周，见 js/05e-data-vacation.js）
      * ------------------------------------------------------------------
      * ★ 体育艺术文化节：红塔中学一年只办一次。
      *   因此只在「上学期」（term 0 / 2 / 4）的第 8 周出现，
@@ -24,15 +27,125 @@
      * ================================================================== */
     const SPORTS_FEST_WEEK = 8;
 
+    /* ==================================================================
+     * v1.3 节假日
+     * ------------------------------------------------------------------
+     * 长假日（国庆 / 元旦 / 清明 / 劳动节）占掉一整周：
+     *   那一周的行动面板换成节假日专属内容，见 HOLIDAY_EVENTS。
+     * 短假日（中秋 / 端午 / 五四 / 教师节）不占周：
+     *   只是在那一周里插一条事件，弹完照常上课。
+     * ================================================================== */
+
+    const HOLIDAY_EVENTS = {
+      national: {
+        t: "🇨🇳 国庆 · 七天",
+        /* 七天假够出门走一趟 —— 开了这个开关，选项里会多出一个「出门走走」。
+         * 想给别的长假日也开，照抄这一行即可。 */
+        allowTravel: true,
+        c: "校门口挂起了国旗，广播站从早放到晚。\n七天假，作业有三套卷子，还有一张手抄报。\n你打算怎么过这几天？",
+        opts: [
+          {t: "先把作业做完", run: ["效率 +7", "悟性 +4", "心态 +5", "压力 -5", "提示 三天写完三套卷子，剩下的四天你睡了个够。!good"]},
+          {t: "和家里人出去走走", run: ["亲情 +8", "心态 +10", "压力 -12", "健康 +5", "经济 -60", "提示 你去了趟不远的地方，拍了一堆照片。!good"]},
+          {t: "约同学出去玩", run: ["社交 +10", "心态 +8", "压力 -9", "经济 -50", "提示 你们在街上逛了一整天，走到腿酸。!good"]},
+          {t: "在家躺七天", run: ["健康 +8", "压力 -14", "效率 -5", "心态 +6", "提示 你什么也没干，七天就这么过去了。"]},
+          {t: "回一趟老家", run: ["亲情 +12", "心态 +9", "压力 -10", "经济 -40", "提示 奶奶做了一桌子菜，你吃了三碗。!good"]},
+        ]
+      },
+      newyear: {
+        t: "🎆 元旦 · 新年第一天",
+        c: "校门口换了新横幅。班里在筹备元旦联欢，\n黑板上有人写了「新年快乐」四个大字。",
+        opts: [
+          {t: "报名表演节目", run: ["社交 +9", "心态 +10", "压力 -4", "计数 志愿", "提示 你唱完的时候，底下有人在喊安可。!good"]},
+          {t: "帮忙布置教室", run: ["社交 +6", "心态 +7", "效率 +4", "计数 志愿", "提示 你把彩带挂满了整个教室。!good"]},
+          {t: "写一张新年计划", run: ["悟性 +6", "效率 +8", "心态 +5", "学习加成 +10% 2周", "提示 你写下了三条，贴在书桌前面。!good"]},
+          {t: "当观众", run: ["心态 +6", "社交 +3", "压力 -6", "提示 你吃着瓜子看完了整场联欢。!good"]},
+        ]
+      },
+      qingming: {
+        t: "🌿 清明 · 三天",
+        c: "清明前后，雨断断续续下了两天。\n有人说要回老家扫墓，有人说要留在学校补课。",
+        opts: [
+          {t: "回老家扫墓", run: ["亲情 +10", "心态 +7", "压力 -9", "经济 -40", "提示 山上的草长得很高，你跟着走了很远。!good"]},
+          {t: "留在学校自习", run: ["效率 +7", "悟性 +5", "健康 -3", "压力 +4", "提示 空荡荡的教室里只有三个人。"]},
+          {t: "和同学去踏青", run: ["社交 +8", "健康 +7", "心态 +9", "压力 -10", "计数 运动", "提示 雨后的山很干净，你们走到半山腰。!good"]},
+          {t: "在家补觉", run: ["健康 +9", "压力 -12", "效率 -4", "提示 你睡了两天，醒来时天还亮着。"]},
+        ]
+      },
+      labour: {
+        t: "🛠️ 劳动节 · 五天",
+        c: "五一放假五天。\n老师说，这个假期最适合补短板——但也没人真的这么干。",
+        opts: [
+          {t: "补最弱的那一科", run: ["效率 +8", "悟性 +6", "压力 +5", "健康 -4", "学力 最弱 +45", "提示 你把最弱那科的错题重做了一遍。!good"]},
+          {t: "帮家里干活", run: ["亲情 +9", "健康 +5", "心态 +7", "计数 志愿", "提示 你干了一整天活，晚上倒头就睡。!good"]},
+          {t: "出去玩", run: ["心态 +10", "社交 +7", "压力 -11", "经济 -60", "提示 你玩了五天，回来时才想起作业。"]},
+          {t: "做一次志愿服务", run: ["社交 +8", "心态 +8", "计数 志愿", "计数 实践", "提示 你在路口站了一上午，举着小红旗。!good"]},
+        ]
+      },
+      midautumn: {
+        t: "🥮 中秋",
+        c: "食堂窗口摆出了月饼，甜的咸的各一堆。\n晚上月亮很圆，有人在操场上坐着看。",
+        opts: [
+          {t: "和家人一起过", run: ["亲情 +10", "心态 +9", "压力 -8", "提示 你把月饼掰成四份，一人一块。!good"]},
+          {t: "和同学分月饼", run: ["社交 +8", "心态 +7", "经济 -20", "提示 你们在操场上坐着，把一盒月饼分完了。!good"]},
+          {t: "一个人在操场看月亮", run: ["悟性 +6", "心态 +5", "压力 -7", "提示 月亮很亮，操场上有风。"]},
+        ]
+      },
+      dragonboat: {
+        t: "🛶 端午",
+        c: "食堂里粽子的味道飘了一整天。\n有人争论甜的好吃还是咸的好吃，争了一节课。",
+        opts: [
+          {t: "吃甜的", run: ["心态 +7", "健康 +3", "经济 -15", "提示 红枣馅的，你从小吃到大。!good"]},
+          {t: "吃咸的", run: ["心态 +7", "健康 +3", "经济 -15", "提示 肉馅的，第一口有点怪，第二口就上瘾了。!good"]},
+          {t: "去看赛龙舟", run: ["社交 +6", "心态 +8", "悟性 +5", "压力 -6", "提示 鼓点一下一下，船飞快地往前冲。!good"]},
+        ]
+      },
+      youth: {
+        t: "🎓 五四青年节",
+        c: "下午放假半天，初二的入团仪式在礼堂举行。\n念到名字的人一个一个走上台。",
+        opts: [
+          {t: "认真听完仪式", run: ["心态 +9", "悟性 +5", "效率 +4", "提示 念到你名字的时候，你把背挺直了。!good"]},
+          {t: "去操场打球", run: ["健康 +7", "压力 -8", "社交 +5", "计数 运动", "提示 半天假，你打到了天黑。!good"]},
+          {t: "回教室写作业", run: ["效率 +6", "压力 +3", "健康 -2", "提示 礼堂里的声音隔着窗户传过来。"]},
+        ]
+      },
+      teacher: {
+        t: "🍎 教师节",
+        c: "讲台上堆了一排花和卡片。\n有人提议全班凑钱买个大蛋糕。",
+        opts: [
+          {t: "写一张卡片", run: ["心态 +8", "社交 +6", "悟性 +4", "提示 你写了三行字，最后一行是自己想的。!good"]},
+          {t: "跟着凑钱买蛋糕", run: ["社交 +7", "心态 +7", "经济 -20", "提示 蛋糕切开的时候，全班都在笑。!good"]},
+          {t: "什么都不做", run: ["心态 +2", "提示 你什么也没说，只是那天的课听得很认真。"]},
+        ]
+      },
+    };
+
     function fixedEventOf(term, wit) {
-      if (wit === 0) return {id: "newTerm"};
+      /* v1.2：一学期 20 周，日程重新排布。
+       * 期末考放在第 19 周，第 20 周留给「学期结束 → 假期」。
+       *
+       * v1.3：两个特殊考期
+       *   初二下（term 3）第 19 周 = 生地会考 —— 考完生物地理成绩锁死
+       *   初三下（term 5）第 19 周 = 中考   —— 其余科目结算，合上生地成绩
+       * 另外实验操作考试放在第 14 周（临近大考，见 runFixed）。 */
+      /* 节假日：长假日占整周，短假日只在这一周开头弹一条（弹完照常上课）。
+       * 都避开开学周、考试周和假期周 —— 那些更重要。 */
+      if (wit !== 1 && wit !== 5 && wit !== 11 && wit !== 15 && wit !== 19 && wit !== 20) {
+        const hd = (typeof holidayOf === "function") ? holidayOf(term * WEEKS_PER_TERM + (wit - 1), term) : null;
+        if (hd) return {id: "holiday", hid: hd.id};
+      }
+      if (wit === 1) return {id: "newTerm"};
       if (wit === 5) return {id: "exam", name: "月考(一)"};
       if (term % 2 === 0 && wit === SPORTS_FEST_WEEK) return {id: "sportsMeet"};   // 一年一次
-      if (wit === 10) return {id: "exam", name: "期中考试"};
+      if (wit === 11) return {id: "exam", name: "期中考试"};
+      /* 实验操作考试：临近生地会考 / 中考，各 10 分，计入中考总分 */
+      if (term === 3 && wit === 14) return {id: "expExam", name: "生物"};
+      if (term === 5 && wit === 14) return {id: "expExam", name: "物化"};
       if (wit === 15) return {id: "exam", name: "月考(二)"};
-      if (wit === 20) return {id: "exam", name: "期末考试"};
       if (term % 2 === 1 && wit === 17) return {id: "artFest"};                    // 下学期：社团展演季
-      if (wit === 24) return {id: "vacation"};
+      if (term === 3 && wit === 19) return {id: "hk", name: "生地会考"};           // 初二下期末
+      if (term === 5 && wit === 19) return {id: "zhongkao"};                       // 初三下期末 = 中考
+      if (wit === 19) return {id: "exam", name: "期末考试"};
+      if (wit === 20) return {id: "vacation"};
       return null;
     }
 
@@ -64,6 +177,11 @@
     function runFixed(f) {
       switch (f.id) {
         case "newTerm": {
+          /* ★ 开学不占一周。
+           * 以前开学弹窗关掉就直接 nextWeek()，等于把「本学期第 1 周」
+           * 整个跳过去了 —— 20 周的学期实际只有 19 周能玩，
+           * 而且顶栏会从「第 21 周」直接跳到「第 22 周」。
+           * 现在关掉弹窗后照常进入本周行动，第 1 周是一周正经的课。 */
           if (S.term === 0) {
             const line = OPENING_LINES[rnd(OPENING_LINES.length)];
             const hint = OPENING_TALENTS_HINT[rnd(OPENING_TALENTS_HINT.length)];
@@ -72,12 +190,15 @@
               `<div>${line}<br><span style='color:var(--gold)'>${S.name}</span>，${gradeName()}${termName()}，正式开始。<br>
                <span style='color:var(--dim);font-size:.85rem'>${sc.motto}　|　${sc.culture.join(" · ")}</span><br>
                <span style='color:var(--dim)'>${hint}</span></div>`,
-              [{t: "登上立行号", fn: () => { }}], () => {nextWeek();}, false, false, {kind: "fixed"});
+              [{t: "登上立行号", fn: () => { }}],
+              () => {S.fixedDone = true; setTimeout(ensureActionPanel, 0);},
+              false, false, {kind: "fixed"});
           } else {
             say(`🎒 ${gradeName()}${termName()}开学了!`, "sys");
             say(`「${CULTURE_LINES[rnd(CULTURE_LINES.length)]}」`, "sys");
             if (S.term === 4) say("初三了。黑板右上角出现了中考倒计时。", "exam");
-            nextWeek();
+            S.fixedDone = true;
+            offerActions();
           }
           break;
         }
@@ -102,8 +223,187 @@
             {t: "当观众", fn: () => {modProp("心态", 4); modProp("悟性", 2); say("看了场热闹的演出。", "");}},
           ], () => {nextWeek();}, false, false, {kind: "fixed"});
           break;
-        case "vacation": vacationDungeon(); break;
+        case "vacation":
+          /* v1.2：假期不再是一张副本，而是学期之间的独立阶段。
+           * 内容见 js/05e-data-vacation.js。 */
+          if (typeof startVacation === "function") startVacation();
+          else dungeonEnd();      // 兜底：文件没加载时退回旧行为
+          break;
+        /* -------- v1.3：节假日 -------- */
+        case "holiday": {
+          runHoliday(f.hid);
+          break;
+        }
+        /* -------- v1.3：实验操作考试（各 10 分，计入中考） -------- */
+        case "expExam": {
+          runExpExam(f.name);
+          break;
+        }
+        /* -------- v1.3：生地会考（初二下期末，考完成绩锁死） -------- */
+        case "hk": {
+          runHuiKao();
+          break;
+        }
+        /* -------- v1.3：中考（初三下期末） -------- */
+        case "zhongkao": {
+          if (typeof zhongkao === "function") zhongkao();
+          else nextWeek();
+          break;
+        }
       }
+    }
+
+    /* ==================================================================
+     * v1.3 节假日事件
+     * ------------------------------------------------------------------
+     * hid = HOLIDAYS 里的 id。长假日整周替换行动，短假日只弹一条。
+     * ================================================================== */
+    function runHoliday(hid) {
+      if (!S) return;
+      const hd = (typeof HOLIDAYS !== "undefined") ? HOLIDAYS.find(h => h.id === hid) : null;
+      const ev = HOLIDAY_EVENTS[hid];
+      const name = (hd && hd.name) || "节假日";
+      if (!ev) {nextWeek(); return;}
+
+      const long = !!(hd && hd.long);
+      const opts = (ev.opts || []).map(o => ({
+        t: o.t,
+        fn: () => {if (typeof execOption === "function") execOption(o);}
+      }));
+      if (!opts.length) opts.push({t: "继续", fn: () => { }});
+
+      /* 开了 allowTravel 的长假日：多给一个「出门走走」的选项。
+       * 钱不够就不显示 —— 免得点进去才发现去不起。 */
+      const money = clampNum(S.prop && S.prop.经济, 0, 1e9, 0);
+      const canTravel = ev.allowTravel && long
+        && typeof openShortTrip === "function"
+        && money >= 150;
+      if (canTravel) {
+        opts.push({
+          t: L("travel.shortOpt"),
+          sub: L("travel.shortOptSub"),
+          fn: () => {openShortTrip(() => {S.fixedDone = true; nextWeek();}, (hd && hd.icon ? hd.icon + " " : "") + name);}
+        });
+      }
+
+      say(`🎉 ${name} —— ${long ? "这一周放假" : "今天放假"}`, "week-head");
+      showPopup({
+        kind: "fixed",
+        badge: (hd && hd.icon ? hd.icon + " " : "") + name,
+        title: ev.t,
+        body: `<div style="line-height:1.62"><div style="white-space:pre-wrap">${ev.c}</div>
+          <div style="margin-top:6px;color:var(--dim);font-size:.85rem">${hd && hd.desc ? hd.desc : ""}</div></div>`,
+        options: opts
+      }, () => {
+        /* 长假日：这一整周都被节假日占掉了，直接进下一周
+         * 短假日：弹完照常出行动面板 */
+        if (long) {S.fixedDone = true; nextWeek();}
+        else {S.fixedDone = true; setTimeout(ensureActionPanel, 0);}
+      });
+    }
+
+    /* ==================================================================
+     * v1.3 实验操作考试
+     * ------------------------------------------------------------------
+     * 生物 / 物理 / 化学各 10 分，直接计入中考总分。
+     * 规则：第一次认真备考 + 认真做 → 当场拿满 10 分；
+     *      敷衍了事 → 要补考，补考也能拿 10 分，但过程要付出代价
+     *      （压力、心态、健康，以及多搭进去的一段时间）。
+     * ================================================================== */
+    function runExpExam(which) {
+      if (!S) return;
+      S.exp = S.exp || {};
+      const subs = (which === "物化") ? ["物理", "化学"] : ["生物"];
+      const nearHK = which === "生物";
+      const title = nearHK ? "🧪 生物实验操作考试" : "🧪 物理 · 化学实验操作考试";
+      const lead = nearHK
+        ? "生地会考临近，实验操作考试先一步到来。<br>考场里摆着显微镜、载玻片和一台摄像头——你的一举一动都在被录。"
+        : "中考前最后一次实验操作考试。<br>物理是电路，化学是配制溶液。摄像头亮着红灯，监考老师站在你侧后方。";
+
+      const detail = nearHK
+        ? "你要在 10 分钟内完成洋葱表皮细胞的临时装片，并调到清晰。"
+        : "物理：连好电路，让小灯泡亮起来。化学：用量筒量取 10 毫升溶液。";
+
+      /* 补考：也能拿满 10 分，但代价是实打实的 */
+      const makeUp = () => {
+        showModal("🧪 实验操作 · 补考", `<div style="line-height:1.62">
+          ${lead}<br><br>上次没过，这周放学后你得留下来重考。<br>
+          空荡荡的实验室里只剩你和一个监考老师，反而更紧张。
+        </div>`, [
+          {t: "这次一步一步来", fn: () => {
+            subs.forEach(x => {S.exp[x] = 10;});
+            modProp("压力", 8); modProp("心态", -5); modProp("健康", -3);
+            say(`🧪 补考通过，${subs.join("、")}实验操作 +10 分。`, "good");
+            say("你走出实验室时天已经黑了。路灯把影子拉得很长。", "");
+          }},
+        ], () => nextWeek(), false, false, {kind: "fixed"});
+      };
+
+      showModal(title, `<div style="line-height:1.62">
+        ${lead}<br><br><span style="color:var(--dim)">${detail}</span><br>
+        <span style="color:var(--gold);font-size:.85rem">这 10 分直接计入中考总分。</span>
+      </div>`, [
+        {t: "认真备考，认真做", fn: () => {
+          S._expMakeup = false;
+          subs.forEach(x => {S.exp[x] = 10;});
+          modProp("悟性", 3); modProp("效率", 2); modProp("压力", 2);
+          say(`🧪 一次通过！${subs.join("、")}实验操作 +10 分。`, "good");
+          say(nearHK ? "你调出清晰细胞的那一下，监考老师点了点头。"
+                     : "灯泡亮起来的那一刻，你听见自己松了口气。", "good");
+        }},
+        {t: "按自己的感觉做", fn: () => {
+          modProp("压力", 4);
+          say("步骤记得不全，做的时候手忙脚乱。", "bad");
+          say("监考老师在记录表上写了点什么。", "bad");
+          S._expMakeup = true;      // 还有补考，外层先别推进周
+          setTimeout(makeUp, 0);
+        }},
+        {t: "照着同桌的步骤抄", fn: () => {
+          modProp("压力", 5); modProp("心态", -3);
+          say("你盯着同桌的手，跟着做完了。摄像头把这一切都录了下来。", "bad");
+          S._expMakeup = true;
+          setTimeout(makeUp, 0);
+        }},
+      ], () => {if (!S._expMakeup) nextWeek(); S._expMakeup = false;}, false, false, {kind: "fixed"});
+    }
+
+    /* ==================================================================
+     * v1.3 生地会考
+     * ------------------------------------------------------------------
+     * 初二下期末考生物、地理。考完这两科成绩锁死，
+     * 初三不再学生物地理，中考时直接把锁死的成绩按权重折进去。
+     * ================================================================== */
+    function runHuiKao() {
+      if (!S) return;
+      const p = S.prop;
+      for (const k in PROP_RANGE) p[k] = fixProp(k, p[k]);
+      ensureSubj();
+      const diff = difficultyCurve(S.week, S.term);
+      const W = examWeights();
+      S.hk = S.hk || {};
+
+      const rows = [];
+      let total = 0, full = 0;
+      ["生物", "地理"].forEach(sub => {
+        const fm = (typeof fullMarkOf === "function") ? fullMarkOf(sub) : 100;
+        let v = (typeof examScoreOf === "function") ? examScoreOf(sub, p, diff, W) : 60;
+        v = clampNum((typeof toPaperScore === "function") ? toPaperScore(sub, v) : v, 0, fm, 0);
+        S.hk[sub] = Math.round(v);          // ★ 锁死
+        total += v; full += fm;
+        const color = v >= fm * 0.9 ? "var(--green)" : (v >= fm * 0.6 ? "var(--gold)" : "var(--red)");
+        rows.push(`<div class="subjrow"><span style="width:3em">${sub}</span><div class="bar"><i style="width:${fm ? v / fm * 100 : 0}%;background:${color}"></i></div><b style="color:${color};width:2.5em;text-align:right">${Math.round(v)}</b><small style="width:2.2em;color:var(--dim)">/${fm}</small></div>`);
+      });
+      S.hkDone = true;
+      count("exam");
+      say(`📘 生地会考：生物 ${S.hk.生物}、地理 ${S.hk.地理} —— 成绩已锁定。`, "exam");
+
+      showModal("📘 生地会考 · 成绩单", `<div style="line-height:1.62">
+        <div style="color:var(--dim);font-size:.85rem">初二下学期的最后一战。<br>
+        考完这两科，成绩就锁死了——初三不再学生物地理，中考直接按权重折算。</div>
+        ${rows.join("")}
+        <div style="margin-top:8px;text-align:right;color:var(--gold)">卷面合计：<b>${Math.round(total)}</b> / ${full}</div>
+        <div style="margin-top:4px;color:var(--dim);font-size:.82rem">折算进中考：生物 ×40%、地理 ×30%</div>
+      </div>`, [{t: "知道了", fn: () => {}}], () => nextWeek(), false, false, {kind: "fixed"});
     }
 
     function vacationDungeon() {
@@ -116,6 +416,9 @@
       ], null, false, false, {kind: "fixed"});
     }
 
+    /* 假期结束 → 进下一学期。
+     * v1.2 起正常的假期走 js/05e-data-vacation.js 的 endVacation()，
+     * 这个函数只作为兜底（假期文件没加载时不会卡死流程）。 */
     function dungeonEnd() {setBackground("main"); S.term++; nextWeek();}
 
     function dungeonTutor(stage) {

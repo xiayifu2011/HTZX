@@ -189,6 +189,12 @@
       }
     }
 
+    /* 假期期间顶栏的「❄️ 寒假 / 🌞 暑假」—— 这时不显示第几周 */
+    .weekpill .vac-pill {
+      color: var(--gold-soft);
+      font-weight: bold
+    }
+
     .stat {
       margin: 6px 0;
       font-size: .9rem

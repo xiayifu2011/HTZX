@@ -35,6 +35,10 @@
       },
       {
         id: "bully", w: 5, slot: ["weekday", "clubday"], t: "楼梯拐角",
+        /* ★ maxTerm: 3 —— 事件里是「高年级学生」，
+         * 而初三（term 4/5）已经是学校最高年级，没有更高年级可堵你。
+         * 所以这条只在初一初二出现。 */
+        maxTerm: 3,
         c: "几个高年级学生把你堵在楼梯拐角，背影挡住了走廊的光。", opts: [
           {t: "硬刚到底", cond: S => S.prop.健康 > 100, run: S => {if (Talent.have("钢筋铁骨") || Talent.have("运动健将") || Talent.have("天行健")) {modProp("社交", 10); modProp("心态", 8); count("sportWin"); say("你三两下震住了他们，从此名声大噪。", "good"); if (luckyRoll(0.35)) gainTalent("豪", "打出了自信");} else {modProp("健康", -12); modProp("心态", -6); say("你赢了气势，输了架。冰敷的时候，你想了很多。", "bad");} }},
           {t: "冷静周旋", cond: S => S.prop.心态 > 90, run: S => {modProp("心态", 4); modProp("悟性", 3); say("你不慌不忙，几句话把对方绕晕，然后全身而退。", "good"); if (luckyRoll(0.3)) gainTalent("心态大师", "临危不乱");}},

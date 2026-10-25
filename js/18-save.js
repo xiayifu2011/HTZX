@@ -6,6 +6,49 @@
  * 维护等级：存档层（一般不动）
  * ============================================================ */
 
+    /* ==================================================================
+     * 随机名库
+     * ------------------------------------------------------------------
+     * 建角色时点「随机」会从这个池子里取。
+     * en 那份留着 —— 英语模式恢复后只要在取用的地方加一句
+     * (LANG !== "zh" ? NAME_POOL.en : NAME_POOL.zh) 就能切过去。
+     * ============================================================ */
+    const NAME_POOL = {
+      zh: {
+        male: ["李承宇", "王浩然", "张子墨", "刘俊熙", "陈宇航", "杨启航", "赵泽楷", "周天佑",
+          "顾北辰", "沈亦白", "陆时安", "程星野", "谢知遥", "韩煜城", "顾言澈", "林书珩"],
+        female: ["林诗涵", "苏婉清", "沈梦瑶", "顾念之", "叶清欢", "陆雨萱", "唐若曦", "许安然",
+          "江晚吟", "沈知意", "顾星晚", "温以宁", "白书予", "叶挽晴", "林疏桐", "苏可盈"]
+      },
+      en: {
+        male: ["Ethan", "Noah", "Liam", "Lucas", "Mason", "Owen", "Caleb", "Ryan",
+          "Adrian", "Felix", "Julian", "Milo", "Theo", "Ivan", "Oscar", "Leon"],
+        female: ["Emma", "Ava", "Sophia", "Chloe", "Luna", "Mia", "Nora", "Iris",
+          "Elena", "Clara", "Hazel", "Ruby", "Vera", "Stella", "Freya", "Lydia"]
+      }
+    };
+
+    /* ==================================================================
+     * 彩蛋：这几个名字不能用来建存档
+     * ------------------------------------------------------------------
+     * 作者把自己的名字设成了"不可用人名" —— 想用真名建号的玩家
+     * 会收到一句专属提示（不是报错，是彩蛋）。
+     *
+     * 判定规则：
+     *   · 不区分大小写（XYF / Xyf 都拦）
+     *   · 忽略首尾空格
+     *   · 中文名直接比对
+     * 想加名字就往下面数组里加字符串，一行一个。
+     * ============================================================ */
+    const BANNED_NAMES = ["xyf", "xiayifu", "夏毅夫", "夏if"];
+
+    /* 这个名字是不是被彩蛋占用了 */
+    function isBannedName(nm) {
+      const n = String(nm == null ? "" : nm).trim().toLowerCase();
+      if (!n) return false;
+      return BANNED_NAMES.some(b => String(b).trim().toLowerCase() === n);
+    }
+
     const SAVE_KEY = "zhongkao_life_saves_v6";
     const SAVE_VER = 7;             // 存档结构版本，升级结构时 +1
     const SAVE_SLOTS = 3;
@@ -137,6 +180,13 @@
       const btn = document.createElement("button"); btn.className = "btn primary"; btn.textContent = L("cc.start");
       btn.onclick = () => {
         const nm = (document.getElementById("inpName").value || "").trim() || L("save.anon");
+        /* 彩蛋：作者的名字不能用来建存档 */
+        if (isBannedName(nm)) {
+          toast(L("cc.bannedToast"));
+          const _inp = document.getElementById("inpName");
+          if (_inp) {_inp.value = ""; _inp.focus();}
+          return;
+        }
         const gd = document.querySelector("input[name=inpGender]:checked").value;
         const body = document.getElementById("modalBody");
         const planId = (body && body._pickPlan) ? body._pickPlan() : (GAME_CONFIG.TERM_PLAN && GAME_CONFIG.TERM_PLAN[0].id);
@@ -189,12 +239,10 @@
 
         const grid = document.getElementById("nameGrid");
         if (!grid) return;
-        const maleNames = LANG === "en"
-          ? ["Ethan", "Noah", "Liam", "Lucas", "Mason", "Owen", "Caleb", "Ryan", "Adrian", "Felix", "Julian", "Milo", "Theo", "Ivan", "Oscar", "Leon"]
-          : ["李承宇", "王浩然", "张子墨", "刘俊熙", "陈宇航", "杨启航", "赵泽楷", "周天佑", "顾北辰", "沈亦白", "陆时安", "程星野", "谢知遥", "韩煜城", "顾言澈", "林书珩"];
-        const femaleNames = LANG === "en"
-          ? ["Emma", "Ava", "Sophia", "Chloe", "Luna", "Mia", "Nora", "Iris", "Elena", "Clara", "Hazel", "Ruby", "Vera", "Stella", "Freya", "Lydia"]
-          : ["林诗涵", "苏婉清", "沈梦瑶", "顾念之", "叶清欢", "陆雨萱", "唐若曦", "许安然", "江晚吟", "沈知意", "顾星晚", "温以宁", "白书予", "叶挽晴", "林疏桐", "苏可盈"];
+        /* 随机名库。英文名库保留在 NAME_POOL.en 里 ——
+         * 英语模式恢复后把这两行的 LANG 判断加回来即可，不用另找名字。 */
+        const maleNames = NAME_POOL.zh.male;
+        const femaleNames = NAME_POOL.zh.female;
         const getG = () => document.querySelector("input[name=inpGender]:checked").value;
         const renderNames = () => {
           const pool = getG() === "男" ? maleNames : femaleNames;
