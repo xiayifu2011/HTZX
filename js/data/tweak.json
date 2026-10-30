@@ -1,0 +1,60 @@
+{
+  "tweak": {
+    "learnMul": {
+      "story": 1.1,
+      "standard": 0.86,
+      "hard": 0.66
+    },
+    "decayMul": {
+      "story": 0.7,
+      "standard": 1.15,
+      "hard": 1.55
+    },
+    "askCost": {
+      "base": 8,
+      "per100": 3.2,
+      "min": 4,
+      "max": 18
+    },
+    "askFailBond": 30,
+    "askLockBond": 15,
+    "conflictBond": 28,
+    "regretWeeks": 3,
+    "rotWeeks": 3,
+    "rotTarget": [
+      "厌学",
+      "重度厌学",
+      "学习特困生",
+      "注意力涣散",
+      "拖延症",
+      "网瘾"
+    ],
+    "rotRecover": 3,
+    "richWeekly": 70,
+    "richStart": 0.55
+  },
+  "sport": {
+    "perTerm": 2,
+    "maxDepth": 3,
+    "chainChance": [
+      0.75,
+      0.45,
+      0.2
+    ],
+    "nodes": []
+  },
+  "quiz": {
+    "reward": {
+      "subj": 14,
+      "eff": 2,
+      "apt": 1
+    },
+    "penalty": {
+      "subj": 3,
+      "stress": 5,
+      "eff": 1
+    },
+    "fillBonus": 2,
+    "perTerm": 3
+  }
+}

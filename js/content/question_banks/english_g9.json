@@ -1,0 +1,17 @@
+[
+  {
+    "q": "She ______ here since 2020.",
+    "type": "choice",
+    "options": [
+      "works",
+      "worked",
+      "has worked",
+      "is working"
+    ],
+    "answer": 2,
+    "explain": "since+时间点用现在完成时",
+    "subj": "英语",
+    "grade": 9,
+    "diff": 2
+  }
+]
