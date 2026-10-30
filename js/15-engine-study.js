@@ -42,11 +42,15 @@
      * ================================================================== */
     function studyCfg() {
       const c = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.study) || {};
+      /* v1.3：难度档位乘在基础值上。
+       * 三档共用一套基础旋钮已经不够分档了 —— 硬核要真的更难。 */
+      const lv = (typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.difficulty) || "normal";
+      const tune = ((typeof GAME_CONFIG !== "undefined" && GAME_CONFIG.difficultyTune) || {})[lv] || {};
       return {
-        gainMul: num(c.gainMul, 1),
-        decayMul: num(c.decayMul, 1),
-        examMul: num(c.examMul, 1),
-        stressMul: num(c.stressMul, 1),
+        gainMul: num(c.gainMul, 1) * num(tune.gainMul, 1),
+        decayMul: num(c.decayMul, 1) * num(tune.decayMul, 1),
+        examMul: num(c.examMul, 1) * num(tune.examMul, 1),
+        stressMul: num(c.stressMul, 1) * num(tune.stressMul, 1),
         stressPenalty: num(c.stressPenalty, 0.30),
         learnBleed: num(c.learnBleed, 0),
         studyCost: c.studyCost || null

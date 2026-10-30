@@ -207,7 +207,7 @@
         const plans = (GAME_CONFIG.TERM_PLAN || []).slice();
         const diffs = ["story", "normal", "hard"];
         let pickPlan = (GAME_CONFIG.start && GAME_CONFIG.start.planId) || plans[0].id;
-        let pickDiff = (GAME_CONFIG.start && GAME_CONFIG.start.difficulty) || "story";
+        let pickDiff = (GAME_CONFIG.start && GAME_CONFIG.start.difficulty) || "hard";
         if (!plans.some(x => x.id === pickPlan)) pickPlan = plans[0].id;
 
         const drawPlan = () => {

@@ -341,6 +341,27 @@ node sync-docs.js          # 把 docs/*.md 同步进游戏
   箭头是 CSS 三角形 `.chev`，转向靠 `.is-open`。
   ★ 坑：按钮会被 `cloneNode` 换掉，`apply()` 里必须重新取节点
 
+**v1.3 六处调整**
+
+- **主题提亮**：八套主题的 `vars` 整体重写（背景 L 6~9% → 15~22%）。
+  色相重排为 清华紫291 / 群星246 / 深海205 / 风175 / 草原112 / 素墨41 / 晨曦31 / 花灯348。
+  相邻至少差 40°，或靠饱和度差区分（素墨只有 19% 饱和）。
+  ★ 校验：改完跑一遍卡片对比度，正文需 ≥8、描边 ≥3（素墨描边曾只有 2.96）
+- **体艺节主题**：`js/09-data-fixed.js` 的 `SPORTS_FEST_THEMES` +
+  `sportsFestTheme(term)`，按 term 0/2/4 取 少年 / 行者 / 星辰大海
+- **旅游**：景点 `cost` 下调约四成；`TRAVEL_ROUTES` 的 `minMoney` 改成按
+  「该线路最便宜一站」动态算（`cheapestOf()`），不再写死。
+  ★ 关键修复：`openTravelMap()` 里「出发」按钮的启用条件从
+  `chosen.length !== want` 改成 `chosen.length < MIN_PICK`（MIN_PICK=1）——
+  以前钱只够一站时按钮永远灰着，玩家卡死在地图上
+- **四季提鲜**：`SEASON_PALETTES` 四季 vars 饱和度整体提高
+- **事件数**：`GAME_CONFIG.chainChance` `[0.26, 0.10]`、`maxEventsPerWeek` 3、
+  `sport.chainChance` `[0.52, 0.22]`
+- **难度**：`GAME_CONFIG.start.difficulty` 默认 `hard`、`planId` 默认 `full`；
+  新增 `GAME_CONFIG.difficultyTune`（三档各自的 gain/decay/exam/stress 系数），
+  在 `studyCfg()` 里乘到基础值上。
+  ★ 设计前提：以前难度只影响学习代价与保底线，主旋钮三档共用 —— 硬核名不副实
+
 **两份备份****两份备份**
 - `_bak_a/` —— v1.2 改动前的完整副本
 - `_bak_c/` —— 社团事件扩充前的副本

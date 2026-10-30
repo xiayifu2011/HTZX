@@ -28,6 +28,34 @@
     const SPORTS_FEST_WEEK = 8;
 
     /* ==================================================================
+     * v1.3 体育艺术文化节：一年一个主题
+     * ------------------------------------------------------------------
+     * 一年只办一次，所以每一届都有一个自己的名字：
+     *   初一 · 少年   —— 刚进校，一切都是新的
+     *   初二 · 行者   —— 走到一半，开始问"我要往哪去"
+     *   初三 · 星辰大海 —— 要走了，看向外面的世界
+     * 按「第几届」取（term 0/2/4 都是上学期），取不到就退回最后一届。
+     * ================================================================== */
+    const SPORTS_FEST_THEMES = [
+      {grade: "初一", name: "少年",
+       line: "少年二字，写出来只有十一画，读出来却用了整整三年。",
+       desc: "你刚进校，看什么都新鲜。跑道是新刷的，看台上的彩旗也是新的。"},
+      {grade: "初二", name: "行者",
+       line: "行者不仅是赶路的人，更是创造风景的人。",
+       desc: "走到一半了。有人开始加速，有人停下来想自己要去哪。"},
+      {grade: "初三", name: "星辰大海",
+       line: "从红塔出发的人，终会去看更大的世界。",
+       desc: "这是你在红塔的最后一次体艺节。看台还是那个看台，你却已经不一样了。"},
+    ];
+
+    /* 这一届的主题（term 0/2/4 → 少年/行者/星辰大海） */
+    function sportsFestTheme(term) {
+      const t = clampNum(term, 0, 9, 0);
+      const i = clamp(Math.floor(t / 2), 0, SPORTS_FEST_THEMES.length - 1);
+      return SPORTS_FEST_THEMES[i];
+    }
+
+    /* ==================================================================
      * v1.3 节假日
      * ------------------------------------------------------------------
      * 长假日（国庆 / 元旦 / 清明 / 劳动节）占掉一整周：
@@ -207,15 +235,19 @@
           if (f.name === "期末考试" && v >= 85) {modProp("经济", 80); say("压岁钱/奖励到手!经济 +80", "good");}
           break;
         }
-        case "sportsMeet":
-          showModal("体育艺术文化节 · 行者",
-            "今年的体育艺术文化节开幕了，主题是「行者」。<br><span style='color:var(--dim);font-size:.85rem'>行者不仅是赶路的人，更是创造风景的人。</span>", [
+        case "sportsMeet": {
+          const th = sportsFestTheme(S.term);
+          showModal(`体育艺术文化节 · ${th.name}`,
+            `${th.grade}的体育艺术文化节开幕了，今年主题是「${th.name}」。<br>
+             <span style='color:var(--gold)'>${th.line}</span><br>
+             <span style='color:var(--dim);font-size:.85rem'>${th.desc}</span>`, [
             {t: "报 1000 米长跑", fn: () => {count("sport"); if (Talent.have("运动健将") || S.prop.健康 > 115) {modProp("社交", 10); modProp("心态", 10); count("sportWin"); say("🏃 你拿下了长跑冠军，全场都在喊你的名字!", "good");} else if (S.prop.健康 < 70) {modProp("健康", -8); say("你跑到一半被扶下了跑道……", "bad");} else {modProp("健康", 5); modProp("心态", 4); say("完赛就是胜利!", "good");} }},
             {t: "参加文艺汇演", fn: () => {if (S.prop.社交 > 100 || Talent.have("热情")) {modProp("心态", 10); modProp("社交", 8); say("🎨 你的节目惊艳全场!", "good");} else {modProp("心态", -4); modProp("社交", 4); say("上台前手一直在抖，但你还是唱完了。", "");} }},
             {t: "当后勤志愿者", fn: () => {count("volunteer"); modProp("社交", 6); modProp("心态", 5); say("🙏 你搬了一上午的矿泉水，也被记在了表扬名单里。", "good");}},
             {t: "在看台上写作业", fn: () => {S.studyBuff += 0.1; S.buffWeeks = Math.max(S.buffWeeks, 1); say("喧闹与你无关。", "");}},
           ], () => {nextWeek();}, false, false, {kind: "fixed"});
           break;
+        }
         case "artFest":
           showModal("社团展演季", "课后服务展演开始报名了：朗诵、话剧、合唱、黏土国画、英语配音……", [
             {t: "上台表演", fn: () => {if (S.prop.社交 > 100 || Talent.have("热情")) {modProp("心态", 10); modProp("社交", 8); say("🎨 你的节目惊艳全场!", "good");} else {modProp("心态", -4); modProp("社交", 4); say("忘词了，但你撑到了最后。", "");} }},

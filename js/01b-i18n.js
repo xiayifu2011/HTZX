@@ -349,6 +349,7 @@
         "travel.back": "再想想",
         "travel.setoff": "🧳 你出发了。{0}的这一趟，开始了。",
         "travel.at": "📍 {0}",
+        "travel.onlyOne": "钱只够去 {0} 站了 —— 也可以就这样出发",
         "travel.shortTitle": "🧳 七天假 · 要不要出去走走",
         "travel.shortLead": "七天，够去一个地方。\n作业可以回来再写，但有些地方，只有这几天才去得了。",
         "travel.shortHint": "七天假去不了太远，也去不了太多地方 —— 省内，一站。",
