@@ -1,0 +1,10 @@
+/* 接入层：主题字体 + 弹窗响应式 + data-prop 标记约定（需求 1） */
+:root{ font-family:var(--game-font,"Noto Sans SC","PingFang SC",sans-serif); }
+.modal{ max-width:min(92vw,520px); max-height:min(88vh,760px); overflow:auto; }
+[data-theme] body,body{ background-image:var(--theme-bg,none); background-attachment:fixed; }
+/* 属性条请保留 data-prop="心态" 与 .prop-num，本补丁才能注入模糊档；没有该标记的按原样显示 */
+@media (max-width:1100px){ .actgrid{ grid-template-columns:1fr 1fr !important; } }
+@media (max-width:640px){ .actgrid{ grid-template-columns:1fr !important; }
+  .hz-row{flex-direction:column;align-items:flex-start;} .hz-row>span{min-width:0;} }
+body.theme-light{ color-scheme:light; }
+body.theme-light .modal{ background:var(--panel); color:var(--txt); }
